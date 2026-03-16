@@ -23,6 +23,15 @@ function getKpiStatusFromAchievement(achievement: number): string {
   return "1 - Unsatisfactory / Below Expectations";
 }
 
+function getTaskWeightFromPriority(priority: Priority): number {
+  switch (priority) {
+    case "High": return 1;
+    case "Medium": return 0.6;
+    case "Low": return 0.2;
+    default: return 0.6;
+  }
+}
+
 export default function Tasks({ selectedSector }: TasksProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
