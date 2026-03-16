@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 
+export interface FieldChange {
+  field: string;
+  oldValue: string;
+  newValue: string;
+}
+
 export interface ActivityEntry {
   id: string;
   timestamp: Date;
@@ -7,6 +13,7 @@ export interface ActivityEntry {
   taskName: string;
   taskId: string;
   description: string;
+  changes?: FieldChange[];
 }
 
 interface ActivityLogContextType {

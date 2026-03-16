@@ -128,7 +128,23 @@ export default function Dashboard({ selectedSector }: DashboardProps) {
                     <span className="text-xs font-semibold text-foreground">{getActionLabel(entry.action)}</span>
                     <span className="text-xs text-muted-foreground">• Task #{entry.taskId}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{entry.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{entry.description}</p>
+                  {entry.changes && entry.changes.length > 0 && (
+                    <div className="mt-1.5 space-y-1 pl-2 border-l-2 border-border">
+                      {entry.changes.map((change, i) => (
+                        <div key={i} className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                          <span className="font-medium text-foreground/70">{change.field}:</span>
+                          {change.oldValue && (
+                            <>
+                              <span className="line-through opacity-60">{change.oldValue}</span>
+                              <span>→</span>
+                            </>
+                          )}
+                          <span className="text-foreground/80 font-medium">{change.newValue}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <span className="text-[11px] text-muted-foreground shrink-0 mt-0.5">{timeAgo(entry.timestamp)}</span>
               </div>
