@@ -496,6 +496,11 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       </span>
                     </td>
                     <td className="px-3 py-2.5"><StatusBadge status={task.status} /></td>
+                    <td className="px-3 py-2.5 text-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
+                        <Pencil size={14} />
+                      </Button>
+                    </td>
                   </tr>
                   {expandedTask === task.id && (
                     <tr key={`${task.id}-detail`}>
