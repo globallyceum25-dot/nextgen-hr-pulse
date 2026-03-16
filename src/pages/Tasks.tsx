@@ -188,7 +188,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         kpiTargetPercent: formData.kpiTargetPercent,
         kpiAchievement: computedKpiAchievement,
         kpiAchievementStatus: computedKpiStatus,
-        taskWeight: formData.taskWeight,
+        taskWeight: computedTaskWeight,
         weightedScore: computedWeightedScore,
         maxWeight: formData.maxWeight,
         sectorId: formData.sectorId,
