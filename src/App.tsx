@@ -9,6 +9,7 @@ import Tasks from "@/pages/Tasks";
 import Analytics from "@/pages/Analytics";
 import Employees from "@/pages/Employees";
 import NotFound from "@/pages/NotFound";
+import Administration from "@/pages/admin/Administration";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
               <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
               <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
               <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
+              <Route path="/admin" element={<Administration />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           )}

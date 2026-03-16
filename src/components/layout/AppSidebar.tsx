@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { SECTORS } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
-  ChevronLeft, ChevronRight, ChevronDown,
+  ChevronLeft, ChevronRight, ChevronDown, Settings,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -22,6 +22,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
     { label: "Tasks", icon: ListTodo, path: "/tasks" },
     { label: "KPI Analytics", icon: BarChart3, path: "/analytics" },
     { label: "Employees", icon: Users, path: "/employees" },
+    { label: "Administration", icon: Settings, path: "/admin" },
   ];
 
   return (
