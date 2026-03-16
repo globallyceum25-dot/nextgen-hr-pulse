@@ -6,7 +6,7 @@ import {
 } from "@/data/mockData";
 import { StatusBadge, PriorityBadge } from "@/components/dashboard/StatusBadge";
 import ProgressBar from "@/components/dashboard/ProgressBar";
-import { Search, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Plus, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -30,6 +30,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -117,6 +119,79 @@ export default function Tasks({ selectedSector }: TasksProps) {
     resetForm();
     setDialogOpen(false);
     toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.` });
+  };
+
+  const openEditDialog = (task: Task) => {
+    setEditingTask(task);
+    setFormData({
+      name: task.name,
+      description: task.description,
+      responsible: task.responsible,
+      companyName: task.companyName,
+      location: task.location,
+      taskCategory: task.taskCategory,
+      taskType: task.taskType,
+      slaFrequency: task.slaFrequency,
+      priority: task.priority,
+      status: task.status,
+      stage: task.stage,
+      totalTasks: task.totalTasks,
+      completedCount: task.completedCount,
+      pendingCount: task.pendingCount,
+      kpiTargetPercent: task.kpiTargetPercent,
+      taskWeight: task.taskWeight,
+      maxWeight: task.maxWeight,
+      sectorId: task.sectorId,
+      startDate: task.startDate,
+      dueDate: task.dueDate,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    if (!formData.name || !formData.responsible || !formData.location || !formData.dueDate) {
+      toast({ title: "Validation Error", description: "Please fill all required fields.", variant: "destructive" });
+      return;
+    }
+    const pending = formData.totalTasks - formData.completedCount;
+    setTasks(prev => prev.map(t => {
+      if (t.id !== editingTask.id) return t;
+      return {
+        ...t,
+        name: formData.name,
+        description: formData.description,
+        responsible: formData.responsible,
+        companyName: formData.companyName,
+        location: formData.location,
+        taskCategory: formData.taskCategory,
+        taskType: formData.taskType,
+        slaFrequency: formData.slaFrequency,
+        priority: formData.priority,
+        status: formData.status,
+        stage: formData.stage,
+        totalTasks: formData.totalTasks,
+        completedCount: formData.completedCount,
+        pendingCount: pending,
+        progress: computedProgress,
+        kpiTargetPercent: formData.kpiTargetPercent,
+        kpiAchievement: computedKpiAchievement,
+        kpiAchievementStatus: computedKpiStatus,
+        taskWeight: formData.taskWeight,
+        weightedScore: computedWeightedScore,
+        maxWeight: formData.maxWeight,
+        sectorId: formData.sectorId,
+        startDate: formData.startDate,
+        dueDate: formData.dueDate,
+        completionFlag: computedCompletionFlag,
+        kpiScore: Math.round(computedKpiAchievement),
+      };
+    }));
+    setEditDialogOpen(false);
+    setEditingTask(null);
+    resetForm();
+    toast({ title: "Task Updated", description: `"${formData.name}" has been updated successfully.` });
   };
 
   const filtered = useMemo(() => {
@@ -388,6 +463,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground w-28">Progress</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">KPI%</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Status</th>
+                <th className="text-center px-3 py-3 font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -420,10 +496,15 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       </span>
                     </td>
                     <td className="px-3 py-2.5"><StatusBadge status={task.status} /></td>
+                    <td className="px-3 py-2.5 text-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
+                        <Pencil size={14} />
+                      </Button>
+                    </td>
                   </tr>
                   {expandedTask === task.id && (
                     <tr key={`${task.id}-detail`}>
-                      <td colSpan={16} className="bg-muted/20 px-6 py-4">
+                      <td colSpan={17} className="bg-muted/20 px-6 py-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mb-3">
                           <div><span className="text-muted-foreground">Description:</span> <span className="text-card-foreground">{task.description}</span></div>
                           <div><span className="text-muted-foreground">KPI Target:</span> <span className="text-card-foreground">{task.kpiTargetPercent}%</span></div>
@@ -457,7 +538,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={16} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={17} className="px-4 py-12 text-center text-muted-foreground">
                     No tasks found matching your filters.
                   </td>
                 </tr>
@@ -466,6 +547,204 @@ export default function Tasks({ selectedSector }: TasksProps) {
           </table>
         </div>
       </div>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={(open) => { setEditDialogOpen(open); if (!open) { setEditingTask(null); resetForm(); } }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Task — <span className="font-mono text-muted-foreground">{editingTask?.taskId}</span></DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
+            {/* Section 1: Basic Info */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Task ID</label>
+                  <input className={inputClass + " opacity-60"} disabled value={editingTask?.taskId || ""} />
+                </div>
+                <div>
+                  <label className={labelClass}>Task Name *</label>
+                  <input className={inputClass} value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Description</label>
+                <textarea className={inputClass + " min-h-[60px]"} value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Responsible Person *</label>
+                  <select className={inputClass} value={formData.responsible} onChange={e => setFormData(p => ({ ...p, responsible: e.target.value }))}>
+                    <option value="">Select person</option>
+                    {RESPONSIBLE_PERSONS.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Company Name</label>
+                  <select className={inputClass} value={formData.companyName} onChange={e => setFormData(p => ({ ...p, companyName: e.target.value }))}>
+                    {COMPANY_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Location *</label>
+                  <select className={inputClass} value={formData.location} onChange={e => setFormData(p => ({ ...p, location: e.target.value }))}>
+                    <option value="">Select</option>
+                    {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Task Category</label>
+                  <select className={inputClass} value={formData.taskCategory} onChange={e => setFormData(p => ({ ...p, taskCategory: e.target.value }))}>
+                    {TASK_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Sector</label>
+                  <select className={inputClass} value={formData.sectorId} onChange={e => setFormData(p => ({ ...p, sectorId: Number(e.target.value) }))}>
+                    {SECTORS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Task Type & SLA */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Task Type & SLA</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Task Type</label>
+                  <select className={inputClass} value={formData.taskType} onChange={e => setFormData(p => ({ ...p, taskType: e.target.value as TaskType }))}>
+                    {TASK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>SLA / Frequency</label>
+                  <select className={inputClass} value={formData.slaFrequency} onChange={e => setFormData(p => ({ ...p, slaFrequency: e.target.value }))}>
+                    {SLA_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Priority</label>
+                  <select className={inputClass} value={formData.priority} onChange={e => setFormData(p => ({ ...p, priority: e.target.value as Priority }))}>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Progress & KPI */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Progress & KPI Metrics</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Total Tasks</label>
+                  <input type="number" min={0} className={inputClass} value={formData.totalTasks} onChange={e => {
+                    const total = Math.max(0, Number(e.target.value));
+                    setFormData(p => ({ ...p, totalTasks: total, completedCount: Math.min(p.completedCount, total) }));
+                  }} />
+                </div>
+                <div>
+                  <label className={labelClass}>Completed</label>
+                  <input type="number" min={0} max={formData.totalTasks} className={inputClass} value={formData.completedCount} onChange={e => setFormData(p => ({ ...p, completedCount: Math.min(p.totalTasks, Math.max(0, Number(e.target.value))) }))} />
+                </div>
+                <div>
+                  <label className={labelClass}>Pending</label>
+                  <input type="number" disabled className={inputClass + " opacity-60"} value={formData.totalTasks - formData.completedCount} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Progress %</label>
+                  <input type="text" disabled className={inputClass + " opacity-60"} value={`${computedProgress}%`} />
+                </div>
+                <div>
+                  <label className={labelClass}>KPI Target %</label>
+                  <input type="number" min={0} max={100} className={inputClass} value={formData.kpiTargetPercent} onChange={e => setFormData(p => ({ ...p, kpiTargetPercent: Number(e.target.value) }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>KPI Achievement</label>
+                  <input type="text" disabled className={inputClass + " opacity-60"} value={`${computedKpiAchievement}%`} />
+                </div>
+                <div>
+                  <label className={labelClass}>KPI Achievement Status</label>
+                  <input type="text" disabled className={inputClass + " opacity-60"} value={computedKpiStatus} />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Weights */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Weights & Scoring</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Task Weight</label>
+                  <input type="number" step={0.1} min={0} max={1} className={inputClass} value={formData.taskWeight} onChange={e => setFormData(p => ({ ...p, taskWeight: Number(e.target.value) }))} />
+                </div>
+                <div>
+                  <label className={labelClass}>Weighted Score</label>
+                  <input type="text" disabled className={inputClass + " opacity-60"} value={computedWeightedScore} />
+                </div>
+                <div>
+                  <label className={labelClass}>Max Weight</label>
+                  <input type="number" step={0.1} min={0} max={1} className={inputClass} value={formData.maxWeight} onChange={e => setFormData(p => ({ ...p, maxWeight: Number(e.target.value) }))} />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 5: Status & Dates */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Status & Dates</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Status</label>
+                  <select className={inputClass} value={formData.status} onChange={e => setFormData(p => ({ ...p, status: e.target.value as TaskStatus }))}>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Started">Started</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Overdue">Overdue</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Start Date</label>
+                  <input type="date" className={inputClass} value={formData.startDate} onChange={e => setFormData(p => ({ ...p, startDate: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={labelClass}>Due Date *</label>
+                  <input type="date" className={inputClass} value={formData.dueDate} onChange={e => setFormData(p => ({ ...p, dueDate: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Stage</label>
+                  <select className={inputClass} value={formData.stage} onChange={e => setFormData(p => ({ ...p, stage: e.target.value as Stage }))}>
+                    <option value="Planning">Planning</option>
+                    <option value="Execution">Execution</option>
+                    <option value="Review">Review</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Completion Flag</label>
+                  <input type="text" disabled className={inputClass + " opacity-60"} value={computedCompletionFlag} />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+              <Button type="submit">Save Changes</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
