@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import {
   mockTasks, SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
-  type TaskStatus, type Priority, type Stage, type Task, type TaskType,
+  type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
 } from "@/data/mockData";
 import { StatusBadge, PriorityBadge } from "@/components/dashboard/StatusBadge";
 import ProgressBar from "@/components/dashboard/ProgressBar";
