@@ -22,6 +22,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
     { label: "Tasks", icon: ListTodo, path: "/tasks" },
     { label: "KPI Analytics", icon: BarChart3, path: "/analytics" },
     { label: "Employees", icon: Users, path: "/employees" },
+    { label: "Administration", icon: Settings, path: "/admin" },
   ];
 
   return (
