@@ -268,6 +268,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
       });
       return recalcTaskFromSubTasks(t, updatedSubTasks);
     }));
+    const parentTask = tasks.find(t => t.id === taskId);
+    const stAction = subTaskForm.status === "Completed" && subTask.status !== "Completed" ? "subtask_completed" as const : "subtask_updated" as const;
+    const stChanges: string[] = [];
+    if (subTask.name !== subTaskForm.name) stChanges.push(`name → "${subTaskForm.name}"`);
+    if (subTask.responsible !== subTaskForm.responsible) stChanges.push(`responsible → ${subTaskForm.responsible}`);
+    if (subTask.status !== subTaskForm.status) stChanges.push(`status → ${subTaskForm.status}`);
+    addEntry({ action: stAction, taskName: parentTask?.name || "", taskId: parentTask?.taskId || "", description: `Sub-task "${subTaskForm.name}": ${stChanges.length > 0 ? stChanges.join(", ") : "details updated"}` });
     setSubTaskEditOpen(false);
     setEditingSubTask(null);
     toast({ title: "Sub-task Updated", description: `"${subTaskForm.name}" updated. Parent task progress recalculated.` });
