@@ -9,6 +9,7 @@ import Tasks from "@/pages/Tasks";
 import Analytics from "@/pages/Analytics";
 import Employees from "@/pages/Employees";
 import NotFound from "@/pages/NotFound";
+import Administration from "@/pages/admin/Administration";
 
 const queryClient = new QueryClient();
 
