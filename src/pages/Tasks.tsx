@@ -79,7 +79,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const computedProgress = formData.totalTasks > 0
     ? Math.round((formData.completedCount / formData.totalTasks) * 10000) / 100 : 0;
   const computedKpiAchievement = computedProgress;
-  const computedWeightedScore = Math.round((computedKpiAchievement / 100) * formData.taskWeight * 100) / 100;
+  const computedTaskWeight = getTaskWeightFromPriority(formData.priority);
+  const computedWeightedScore = Math.round((computedTaskWeight * (computedProgress / 100)) * 100) / 100;
   const computedKpiStatus = getKpiStatusFromAchievement(computedKpiAchievement);
   const computedCompletionFlag = computedProgress >= 100 ? 1 : 0;
 
