@@ -32,6 +32,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
+  const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: SubTask } | null>(null);
+  const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "In Progress" as TaskStatus, progress: 0, responsible: "", dueDate: "" });
 
   const [formData, setFormData] = useState({
     name: "",
