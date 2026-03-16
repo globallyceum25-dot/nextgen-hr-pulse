@@ -61,9 +61,6 @@ export default function Tasks({ selectedSector }: TasksProps) {
     completedCount: 0,
     pendingCount: 0,
     kpiTargetPercent: 100,
-    taskWeight: 0.6,
-    maxWeight: 0.6,
-    sectorId: 1,
     startDate: new Date().toISOString().split("T")[0],
     dueDate: "",
   });
