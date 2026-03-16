@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import {
   mockTasks, SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
-  type TaskStatus, type Priority, type Stage, type Task, type TaskType,
+  type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
 } from "@/data/mockData";
 import { StatusBadge, PriorityBadge } from "@/components/dashboard/StatusBadge";
 import ProgressBar from "@/components/dashboard/ProgressBar";
@@ -32,6 +32,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
+  const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: SubTask } | null>(null);
+  const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "In Progress" as TaskStatus, progress: 0, responsible: "", dueDate: "" });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -192,6 +195,62 @@ export default function Tasks({ selectedSector }: TasksProps) {
     setEditingTask(null);
     resetForm();
     toast({ title: "Task Updated", description: `"${formData.name}" has been updated successfully.` });
+  };
+
+  const openSubTaskEdit = (taskId: string, st: SubTask) => {
+    setEditingSubTask({ taskId, subTask: st });
+    setSubTaskForm({ name: st.name, status: st.status, progress: st.progress, responsible: st.responsible, dueDate: st.dueDate });
+    setSubTaskEditOpen(true);
+  };
+
+  const recalcTaskFromSubTasks = (task: Task, updatedSubTasks: SubTask[]): Task => {
+    const total = updatedSubTasks.length;
+    const completedCount = updatedSubTasks.filter(s => s.status === "Completed").length;
+    const pendingCount = total - completedCount;
+    const progress = total > 0 ? Math.round((completedCount / total) * 10000) / 100 : 0;
+    const kpiAchievement = progress;
+    const kpiStatus = getKpiStatusFromAchievement(kpiAchievement);
+    const weightedScore = Math.round((kpiAchievement / 100) * task.taskWeight * 100) / 100;
+    const status: TaskStatus = progress >= 100 ? "Completed" : progress > 0 ? "In Progress" : "Started";
+    return {
+      ...task,
+      subTasks: updatedSubTasks,
+      totalTasks: total,
+      completedCount,
+      pendingCount,
+      progress,
+      kpiAchievement,
+      kpiAchievementStatus: kpiStatus,
+      weightedScore,
+      status,
+      completionFlag: progress >= 100 ? 1 : 0,
+      kpiScore: Math.round(kpiAchievement),
+    };
+  };
+
+  const handleSubTaskEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSubTask) return;
+    const { taskId, subTask } = editingSubTask;
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const updatedSubTasks = t.subTasks.map(st => {
+        if (st.id !== subTask.id) return st;
+        return {
+          ...st,
+          name: subTaskForm.name,
+          status: subTaskForm.status,
+          progress: subTaskForm.status === "Completed" ? 100 : subTaskForm.progress,
+          responsible: subTaskForm.responsible,
+          dueDate: subTaskForm.dueDate,
+          completedDate: subTaskForm.status === "Completed" ? new Date().toISOString().split("T")[0] : undefined,
+        };
+      });
+      return recalcTaskFromSubTasks(t, updatedSubTasks);
+    }));
+    setSubTaskEditOpen(false);
+    setEditingSubTask(null);
+    toast({ title: "Sub-task Updated", description: `"${subTaskForm.name}" updated. Parent task progress recalculated.` });
   };
 
   const filtered = useMemo(() => {
@@ -526,6 +585,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                   <span className="text-muted-foreground">{st.responsible}</span>
                                   <StatusBadge status={st.status} />
                                   <div className="w-24"><ProgressBar value={st.progress} size="sm" /></div>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
+                                    <Pencil size={12} />
+                                  </Button>
                                 </div>
                               ))}
                             </div>
@@ -740,6 +802,60 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+              <Button type="submit">Save Changes</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sub-task Edit Dialog */}
+      <Dialog open={subTaskEditOpen} onOpenChange={(open) => { setSubTaskEditOpen(open); if (!open) setEditingSubTask(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Sub-task — <span className="font-mono text-muted-foreground">{editingSubTask?.subTask.id}</span></DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubTaskEditSubmit} className="space-y-3 mt-2">
+            <div>
+              <label className={labelClass}>Sub-task ID</label>
+              <input className={inputClass + " opacity-60"} disabled value={editingSubTask?.subTask.id || ""} />
+            </div>
+            <div>
+              <label className={labelClass}>Name</label>
+              <input className={inputClass} value={subTaskForm.name} onChange={e => setSubTaskForm(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Status</label>
+                <select className={inputClass} value={subTaskForm.status} onChange={e => {
+                  const newStatus = e.target.value as TaskStatus;
+                  setSubTaskForm(p => ({ ...p, status: newStatus, progress: newStatus === "Completed" ? 100 : p.progress }));
+                }}>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Started">Started</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Overdue">Overdue</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Progress %</label>
+                <input type="number" min={0} max={100} className={inputClass} disabled={subTaskForm.status === "Completed"} value={subTaskForm.progress} onChange={e => setSubTaskForm(p => ({ ...p, progress: Math.min(100, Math.max(0, Number(e.target.value))) }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Responsible</label>
+                <select className={inputClass} value={subTaskForm.responsible} onChange={e => setSubTaskForm(p => ({ ...p, responsible: e.target.value }))}>
+                  {RESPONSIBLE_PERSONS.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Due Date</label>
+                <input type="date" className={inputClass} value={subTaskForm.dueDate} onChange={e => setSubTaskForm(p => ({ ...p, dueDate: e.target.value }))} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setSubTaskEditOpen(false)}>Cancel</Button>
               <Button type="submit">Save Changes</Button>
             </div>
           </form>
