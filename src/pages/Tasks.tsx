@@ -30,6 +30,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
