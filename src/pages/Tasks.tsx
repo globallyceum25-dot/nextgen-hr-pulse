@@ -807,6 +807,60 @@ export default function Tasks({ selectedSector }: TasksProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Sub-task Edit Dialog */}
+      <Dialog open={subTaskEditOpen} onOpenChange={(open) => { setSubTaskEditOpen(open); if (!open) setEditingSubTask(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Sub-task — <span className="font-mono text-muted-foreground">{editingSubTask?.subTask.id}</span></DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubTaskEditSubmit} className="space-y-3 mt-2">
+            <div>
+              <label className={labelClass}>Sub-task ID</label>
+              <input className={inputClass + " opacity-60"} disabled value={editingSubTask?.subTask.id || ""} />
+            </div>
+            <div>
+              <label className={labelClass}>Name</label>
+              <input className={inputClass} value={subTaskForm.name} onChange={e => setSubTaskForm(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Status</label>
+                <select className={inputClass} value={subTaskForm.status} onChange={e => {
+                  const newStatus = e.target.value as TaskStatus;
+                  setSubTaskForm(p => ({ ...p, status: newStatus, progress: newStatus === "Completed" ? 100 : p.progress }));
+                }}>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Started">Started</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Overdue">Overdue</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Progress %</label>
+                <input type="number" min={0} max={100} className={inputClass} disabled={subTaskForm.status === "Completed"} value={subTaskForm.progress} onChange={e => setSubTaskForm(p => ({ ...p, progress: Math.min(100, Math.max(0, Number(e.target.value))) }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Responsible</label>
+                <select className={inputClass} value={subTaskForm.responsible} onChange={e => setSubTaskForm(p => ({ ...p, responsible: e.target.value }))}>
+                  {RESPONSIBLE_PERSONS.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Due Date</label>
+                <input type="date" className={inputClass} value={subTaskForm.dueDate} onChange={e => setSubTaskForm(p => ({ ...p, dueDate: e.target.value }))} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setSubTaskEditOpen(false)}>Cancel</Button>
+              <Button type="submit">Save Changes</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
