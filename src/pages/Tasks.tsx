@@ -121,6 +121,79 @@ export default function Tasks({ selectedSector }: TasksProps) {
     toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.` });
   };
 
+  const openEditDialog = (task: Task) => {
+    setEditingTask(task);
+    setFormData({
+      name: task.name,
+      description: task.description,
+      responsible: task.responsible,
+      companyName: task.companyName,
+      location: task.location,
+      taskCategory: task.taskCategory,
+      taskType: task.taskType,
+      slaFrequency: task.slaFrequency,
+      priority: task.priority,
+      status: task.status,
+      stage: task.stage,
+      totalTasks: task.totalTasks,
+      completedCount: task.completedCount,
+      pendingCount: task.pendingCount,
+      kpiTargetPercent: task.kpiTargetPercent,
+      taskWeight: task.taskWeight,
+      maxWeight: task.maxWeight,
+      sectorId: task.sectorId,
+      startDate: task.startDate,
+      dueDate: task.dueDate,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    if (!formData.name || !formData.responsible || !formData.location || !formData.dueDate) {
+      toast({ title: "Validation Error", description: "Please fill all required fields.", variant: "destructive" });
+      return;
+    }
+    const pending = formData.totalTasks - formData.completedCount;
+    setTasks(prev => prev.map(t => {
+      if (t.id !== editingTask.id) return t;
+      return {
+        ...t,
+        name: formData.name,
+        description: formData.description,
+        responsible: formData.responsible,
+        companyName: formData.companyName,
+        location: formData.location,
+        taskCategory: formData.taskCategory,
+        taskType: formData.taskType,
+        slaFrequency: formData.slaFrequency,
+        priority: formData.priority,
+        status: formData.status,
+        stage: formData.stage,
+        totalTasks: formData.totalTasks,
+        completedCount: formData.completedCount,
+        pendingCount: pending,
+        progress: computedProgress,
+        kpiTargetPercent: formData.kpiTargetPercent,
+        kpiAchievement: computedKpiAchievement,
+        kpiAchievementStatus: computedKpiStatus,
+        taskWeight: formData.taskWeight,
+        weightedScore: computedWeightedScore,
+        maxWeight: formData.maxWeight,
+        sectorId: formData.sectorId,
+        startDate: formData.startDate,
+        dueDate: formData.dueDate,
+        completionFlag: computedCompletionFlag,
+        kpiScore: Math.round(computedKpiAchievement),
+      };
+    }));
+    setEditDialogOpen(false);
+    setEditingTask(null);
+    resetForm();
+    toast({ title: "Task Updated", description: `"${formData.name}" has been updated successfully.` });
+  };
+
   const filtered = useMemo(() => {
     return tasks.filter(t => {
       if (selectedSector && t.sectorId !== selectedSector) return false;
