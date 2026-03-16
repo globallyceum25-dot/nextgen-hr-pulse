@@ -129,6 +129,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       subTasks: [],
     };
     setTasks(prev => [newTask, ...prev]);
+    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task "${newTask.name}" created, assigned to ${newTask.responsible}.` });
     resetForm();
     setDialogOpen(false);
     toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.` });
