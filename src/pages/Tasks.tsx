@@ -416,8 +416,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Weights & Scoring</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className={labelClass}>Task Weight</label>
-                    <input type="number" step={0.1} min={0} max={1} className={inputClass} value={formData.taskWeight} onChange={e => setFormData(p => ({ ...p, taskWeight: Number(e.target.value) }))} />
+                    <label className={labelClass}>Task Weight (Auto)</label>
+                    <input type="text" disabled className={inputClass + " opacity-60"} value={computedTaskWeight} />
                   </div>
                   <div>
                     <label className={labelClass}>Weighted Score</label>
