@@ -201,6 +201,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
         kpiScore: Math.round(computedKpiAchievement),
       };
     }));
+    // Build change description
+    const changes: string[] = [];
+    if (editingTask.name !== formData.name) changes.push(`name → "${formData.name}"`);
+    if (editingTask.responsible !== formData.responsible) changes.push(`responsible → ${formData.responsible}`);
+    if (editingTask.status !== formData.status) changes.push(`status → ${formData.status}`);
+    if (editingTask.priority !== formData.priority) changes.push(`priority → ${formData.priority}`);
+    if (editingTask.location !== formData.location) changes.push(`location → ${formData.location}`);
+    const desc = changes.length > 0 ? changes.join(", ") : "Task details updated";
+    const action = formData.status === "Completed" && editingTask.status !== "Completed" ? "completed" as const : "updated" as const;
+    addEntry({ action, taskName: formData.name, taskId: editingTask.taskId, description: desc });
     setEditDialogOpen(false);
     setEditingTask(null);
     resetForm();
