@@ -10,6 +10,7 @@ import { Search, ChevronDown, ChevronRight, Plus, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useActivityLog } from "@/contexts/ActivityLogContext";
 
 interface TasksProps {
   selectedSector: number | null;
