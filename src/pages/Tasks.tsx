@@ -208,16 +208,19 @@ export default function Tasks({ selectedSector }: TasksProps) {
         kpiScore: Math.round(computedKpiAchievement),
       };
     }));
-    // Build change description
-    const changes: string[] = [];
-    if (editingTask.name !== formData.name) changes.push(`name → "${formData.name}"`);
-    if (editingTask.responsible !== formData.responsible) changes.push(`responsible → ${formData.responsible}`);
-    if (editingTask.status !== formData.status) changes.push(`status → ${formData.status}`);
-    if (editingTask.priority !== formData.priority) changes.push(`priority → ${formData.priority}`);
-    if (editingTask.location !== formData.location) changes.push(`location → ${formData.location}`);
-    const desc = changes.length > 0 ? changes.join(", ") : "Task details updated";
+    // Build change description with field-level detail
+    const fieldChanges: FieldChange[] = [];
+    if (editingTask.name !== formData.name) fieldChanges.push({ field: "Name", oldValue: editingTask.name, newValue: formData.name });
+    if (editingTask.responsible !== formData.responsible) fieldChanges.push({ field: "Responsible", oldValue: editingTask.responsible, newValue: formData.responsible });
+    if (editingTask.status !== formData.status) fieldChanges.push({ field: "Status", oldValue: editingTask.status, newValue: formData.status });
+    if (editingTask.priority !== formData.priority) fieldChanges.push({ field: "Priority", oldValue: editingTask.priority, newValue: formData.priority });
+    if (editingTask.location !== formData.location) fieldChanges.push({ field: "Location", oldValue: editingTask.location, newValue: formData.location });
+    if (editingTask.stage !== formData.stage) fieldChanges.push({ field: "Stage", oldValue: editingTask.stage, newValue: formData.stage });
+    if (editingTask.dueDate !== formData.dueDate) fieldChanges.push({ field: "Due Date", oldValue: editingTask.dueDate, newValue: formData.dueDate });
+    if (editingTask.description !== formData.description) fieldChanges.push({ field: "Description", oldValue: editingTask.description || "", newValue: formData.description });
+    const desc = fieldChanges.length > 0 ? `${fieldChanges.length} field(s) changed` : "Task details updated";
     const action = formData.status === "Completed" && editingTask.status !== "Completed" ? "completed" as const : "updated" as const;
-    addEntry({ action, taskName: formData.name, taskId: editingTask.taskId, description: desc });
+    addEntry({ action, taskName: formData.name, taskId: editingTask.taskId, description: desc, changes: fieldChanges });
     setEditDialogOpen(false);
     setEditingTask(null);
     resetForm();
