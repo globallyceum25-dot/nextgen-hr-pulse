@@ -197,6 +197,62 @@ export default function Tasks({ selectedSector }: TasksProps) {
     toast({ title: "Task Updated", description: `"${formData.name}" has been updated successfully.` });
   };
 
+  const openSubTaskEdit = (taskId: string, st: SubTask) => {
+    setEditingSubTask({ taskId, subTask: st });
+    setSubTaskForm({ name: st.name, status: st.status, progress: st.progress, responsible: st.responsible, dueDate: st.dueDate });
+    setSubTaskEditOpen(true);
+  };
+
+  const recalcTaskFromSubTasks = (task: Task, updatedSubTasks: SubTask[]): Task => {
+    const total = updatedSubTasks.length;
+    const completedCount = updatedSubTasks.filter(s => s.status === "Completed").length;
+    const pendingCount = total - completedCount;
+    const progress = total > 0 ? Math.round((completedCount / total) * 10000) / 100 : 0;
+    const kpiAchievement = progress;
+    const kpiStatus = getKpiStatusFromAchievement(kpiAchievement);
+    const weightedScore = Math.round((kpiAchievement / 100) * task.taskWeight * 100) / 100;
+    const status: TaskStatus = progress >= 100 ? "Completed" : progress > 0 ? "In Progress" : "Started";
+    return {
+      ...task,
+      subTasks: updatedSubTasks,
+      totalTasks: total,
+      completedCount,
+      pendingCount,
+      progress,
+      kpiAchievement,
+      kpiAchievementStatus: kpiStatus,
+      weightedScore,
+      status,
+      completionFlag: progress >= 100 ? 1 : 0,
+      kpiScore: Math.round(kpiAchievement),
+    };
+  };
+
+  const handleSubTaskEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSubTask) return;
+    const { taskId, subTask } = editingSubTask;
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const updatedSubTasks = t.subTasks.map(st => {
+        if (st.id !== subTask.id) return st;
+        return {
+          ...st,
+          name: subTaskForm.name,
+          status: subTaskForm.status,
+          progress: subTaskForm.status === "Completed" ? 100 : subTaskForm.progress,
+          responsible: subTaskForm.responsible,
+          dueDate: subTaskForm.dueDate,
+          completedDate: subTaskForm.status === "Completed" ? new Date().toISOString().split("T")[0] : undefined,
+        };
+      });
+      return recalcTaskFromSubTasks(t, updatedSubTasks);
+    }));
+    setSubTaskEditOpen(false);
+    setEditingSubTask(null);
+    toast({ title: "Sub-task Updated", description: `"${subTaskForm.name}" updated. Parent task progress recalculated.` });
+  };
+
   const filtered = useMemo(() => {
     return tasks.filter(t => {
       if (selectedSector && t.sectorId !== selectedSector) return false;
