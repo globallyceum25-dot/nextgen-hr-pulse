@@ -150,7 +150,6 @@ export default function Tasks({ selectedSector }: TasksProps) {
       completedCount: task.completedCount,
       pendingCount: task.pendingCount,
       kpiTargetPercent: task.kpiTargetPercent,
-      taskWeight: task.taskWeight,
       maxWeight: task.maxWeight,
       sectorId: task.sectorId,
       startDate: task.startDate,
