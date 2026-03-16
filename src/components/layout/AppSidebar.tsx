@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { SECTORS } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
-  ChevronLeft, ChevronRight, ChevronDown,
+  ChevronLeft, ChevronRight, ChevronDown, Settings,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
