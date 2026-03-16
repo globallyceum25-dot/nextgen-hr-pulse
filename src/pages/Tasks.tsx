@@ -10,6 +10,7 @@ import { Search, ChevronDown, ChevronRight, Plus, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useActivityLog } from "@/contexts/ActivityLogContext";
 
 interface TasksProps {
   selectedSector: number | null;
@@ -33,6 +34,7 @@ function getTaskWeightFromPriority(priority: Priority): number {
 }
 
 export default function Tasks({ selectedSector }: TasksProps) {
+  const { addEntry } = useActivityLog();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
@@ -127,6 +129,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       subTasks: [],
     };
     setTasks(prev => [newTask, ...prev]);
+    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task "${newTask.name}" created, assigned to ${newTask.responsible}.` });
     resetForm();
     setDialogOpen(false);
     toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.` });
@@ -198,6 +201,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
         kpiScore: Math.round(computedKpiAchievement),
       };
     }));
+    // Build change description
+    const changes: string[] = [];
+    if (editingTask.name !== formData.name) changes.push(`name → "${formData.name}"`);
+    if (editingTask.responsible !== formData.responsible) changes.push(`responsible → ${formData.responsible}`);
+    if (editingTask.status !== formData.status) changes.push(`status → ${formData.status}`);
+    if (editingTask.priority !== formData.priority) changes.push(`priority → ${formData.priority}`);
+    if (editingTask.location !== formData.location) changes.push(`location → ${formData.location}`);
+    const desc = changes.length > 0 ? changes.join(", ") : "Task details updated";
+    const action = formData.status === "Completed" && editingTask.status !== "Completed" ? "completed" as const : "updated" as const;
+    addEntry({ action, taskName: formData.name, taskId: editingTask.taskId, description: desc });
     setEditDialogOpen(false);
     setEditingTask(null);
     resetForm();
@@ -255,6 +268,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
       });
       return recalcTaskFromSubTasks(t, updatedSubTasks);
     }));
+    const parentTask = tasks.find(t => t.id === taskId);
+    const stAction = subTaskForm.status === "Completed" && subTask.status !== "Completed" ? "subtask_completed" as const : "subtask_updated" as const;
+    const stChanges: string[] = [];
+    if (subTask.name !== subTaskForm.name) stChanges.push(`name → "${subTaskForm.name}"`);
+    if (subTask.responsible !== subTaskForm.responsible) stChanges.push(`responsible → ${subTaskForm.responsible}`);
+    if (subTask.status !== subTaskForm.status) stChanges.push(`status → ${subTaskForm.status}`);
+    addEntry({ action: stAction, taskName: parentTask?.name || "", taskId: parentTask?.taskId || "", description: `Sub-task "${subTaskForm.name}": ${stChanges.length > 0 ? stChanges.join(", ") : "details updated"}` });
     setSubTaskEditOpen(false);
     setEditingSubTask(null);
     toast({ title: "Sub-task Updated", description: `"${subTaskForm.name}" updated. Parent task progress recalculated.` });

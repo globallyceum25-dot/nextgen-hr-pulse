@@ -2,15 +2,48 @@ import { useMemo } from "react";
 import KPICard from "@/components/dashboard/KPICard";
 import { getKPIData, getMonthlyTrend, getSectorPerformance, SECTORS } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Cell } from "recharts";
+import { useActivityLog, type ActivityEntry } from "@/contexts/ActivityLogContext";
+import { Clock, Plus, Pencil, CheckCircle2, ListChecks } from "lucide-react";
 
 interface DashboardProps {
   selectedSector: number | null;
+}
+
+function getActionIcon(action: ActivityEntry["action"]) {
+  switch (action) {
+    case "created": return <Plus className="h-4 w-4 text-emerald-500" />;
+    case "updated": return <Pencil className="h-4 w-4 text-blue-500" />;
+    case "completed": return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
+    case "subtask_updated": return <ListChecks className="h-4 w-4 text-orange-500" />;
+    case "subtask_completed": return <CheckCircle2 className="h-4 w-4 text-teal-500" />;
+  }
+}
+
+function getActionLabel(action: ActivityEntry["action"]) {
+  switch (action) {
+    case "created": return "Task Created";
+    case "updated": return "Task Updated";
+    case "completed": return "Task Completed";
+    case "subtask_updated": return "Sub-task Updated";
+    case "subtask_completed": return "Sub-task Completed";
+  }
+}
+
+function timeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 export default function Dashboard({ selectedSector }: DashboardProps) {
   const kpis = useMemo(() => getKPIData(selectedSector ?? undefined), [selectedSector]);
   const monthlyTrend = useMemo(() => getMonthlyTrend(), []);
   const sectorPerf = useMemo(() => getSectorPerformance(), []);
+  const { entries } = useActivityLog();
 
   const sectorName = selectedSector
     ? SECTORS.find(s => s.id === selectedSector)?.name
@@ -75,6 +108,33 @@ export default function Dashboard({ selectedSector }: DashboardProps) {
             </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Recent Transactions / Activity Log */}
+      <div className="bg-card rounded-lg border p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-card-foreground">Recent Transactions</h2>
+        </div>
+        {entries.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">No recent activity. Changes made in Tasks will appear here.</p>
+        ) : (
+          <div className="divide-y divide-border max-h-[360px] overflow-y-auto">
+            {entries.slice(0, 20).map(entry => (
+              <div key={entry.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="mt-0.5 shrink-0">{getActionIcon(entry.action)}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-foreground">{getActionLabel(entry.action)}</span>
+                    <span className="text-xs text-muted-foreground">• Task #{entry.taskId}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{entry.description}</p>
+                </div>
+                <span className="text-[11px] text-muted-foreground shrink-0 mt-0.5">{timeAgo(entry.timestamp)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Sector Performance */}
