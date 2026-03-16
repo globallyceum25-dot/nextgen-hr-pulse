@@ -35,6 +35,7 @@ function getTaskWeightFromPriority(priority: Priority): number {
 
 export default function Tasks({ selectedSector }: TasksProps) {
   const { addEntry } = useActivityLog();
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
