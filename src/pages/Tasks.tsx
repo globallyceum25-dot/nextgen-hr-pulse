@@ -280,11 +280,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
     }));
     const parentTask = tasks.find(t => t.id === taskId);
     const stAction = subTaskForm.status === "Completed" && subTask.status !== "Completed" ? "subtask_completed" as const : "subtask_updated" as const;
-    const stChanges: string[] = [];
-    if (subTask.name !== subTaskForm.name) stChanges.push(`name → "${subTaskForm.name}"`);
-    if (subTask.responsible !== subTaskForm.responsible) stChanges.push(`responsible → ${subTaskForm.responsible}`);
-    if (subTask.status !== subTaskForm.status) stChanges.push(`status → ${subTaskForm.status}`);
-    addEntry({ action: stAction, taskName: parentTask?.name || "", taskId: parentTask?.taskId || "", description: `Sub-task "${subTaskForm.name}": ${stChanges.length > 0 ? stChanges.join(", ") : "details updated"}` });
+    const stFieldChanges: FieldChange[] = [];
+    if (subTask.name !== subTaskForm.name) stFieldChanges.push({ field: "Name", oldValue: subTask.name, newValue: subTaskForm.name });
+    if (subTask.responsible !== subTaskForm.responsible) stFieldChanges.push({ field: "Responsible", oldValue: subTask.responsible, newValue: subTaskForm.responsible });
+    if (subTask.status !== subTaskForm.status) stFieldChanges.push({ field: "Status", oldValue: subTask.status, newValue: subTaskForm.status });
+    if (String(subTask.progress) !== String(subTaskForm.progress)) stFieldChanges.push({ field: "Progress", oldValue: `${subTask.progress}%`, newValue: `${subTaskForm.progress}%` });
+    addEntry({ action: stAction, taskName: parentTask?.name || "", taskId: parentTask?.taskId || "", description: `Sub-task "${subTaskForm.name}": ${stFieldChanges.length > 0 ? `${stFieldChanges.length} field(s) changed` : "details updated"}`, changes: stFieldChanges });
     setSubTaskEditOpen(false);
     setEditingSubTask(null);
     toast({ title: "Sub-task Updated", description: `"${subTaskForm.name}" updated. Parent task progress recalculated.` });
