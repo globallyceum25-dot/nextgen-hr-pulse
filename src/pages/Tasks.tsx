@@ -585,6 +585,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                   <span className="text-muted-foreground">{st.responsible}</span>
                                   <StatusBadge status={st.status} />
                                   <div className="w-24"><ProgressBar value={st.progress} size="sm" /></div>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
+                                    <Pencil size={12} />
+                                  </Button>
                                 </div>
                               ))}
                             </div>
