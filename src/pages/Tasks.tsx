@@ -23,6 +23,15 @@ function getKpiStatusFromAchievement(achievement: number): string {
   return "1 - Unsatisfactory / Below Expectations";
 }
 
+function getTaskWeightFromPriority(priority: Priority): number {
+  switch (priority) {
+    case "High": return 1;
+    case "Medium": return 0.6;
+    case "Low": return 0.2;
+    default: return 0.6;
+  }
+}
+
 export default function Tasks({ selectedSector }: TasksProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
@@ -52,7 +61,6 @@ export default function Tasks({ selectedSector }: TasksProps) {
     completedCount: 0,
     pendingCount: 0,
     kpiTargetPercent: 100,
-    taskWeight: 0.6,
     maxWeight: 0.6,
     sectorId: 1,
     startDate: new Date().toISOString().split("T")[0],
@@ -65,8 +73,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       location: "", taskCategory: "Daily", taskType: "Process",
       slaFrequency: "Day 1", priority: "Medium", status: "In Progress",
       stage: "Planning", totalTasks: 0, completedCount: 0, pendingCount: 0,
-      kpiTargetPercent: 100, taskWeight: 0.6, maxWeight: 0.6,
-      sectorId: selectedSector || 1,
+      kpiTargetPercent: 100, maxWeight: 0.6, sectorId: selectedSector || 1,
       startDate: new Date().toISOString().split("T")[0], dueDate: "",
     });
   };
@@ -74,7 +81,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const computedProgress = formData.totalTasks > 0
     ? Math.round((formData.completedCount / formData.totalTasks) * 10000) / 100 : 0;
   const computedKpiAchievement = computedProgress;
-  const computedWeightedScore = Math.round((computedKpiAchievement / 100) * formData.taskWeight * 100) / 100;
+  const computedTaskWeight = getTaskWeightFromPriority(formData.priority);
+  const computedWeightedScore = Math.round((computedTaskWeight * (computedProgress / 100)) * 100) / 100;
   const computedKpiStatus = getKpiStatusFromAchievement(computedKpiAchievement);
   const computedCompletionFlag = computedProgress >= 100 ? 1 : 0;
 
@@ -106,7 +114,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       kpiTargetPercent: formData.kpiTargetPercent,
       kpiAchievement: computedKpiAchievement,
       kpiAchievementStatus: computedKpiStatus,
-      taskWeight: formData.taskWeight,
+      taskWeight: computedTaskWeight,
       weightedScore: computedWeightedScore,
       maxWeight: formData.maxWeight,
       startDate: formData.startDate,
@@ -142,7 +150,6 @@ export default function Tasks({ selectedSector }: TasksProps) {
       completedCount: task.completedCount,
       pendingCount: task.pendingCount,
       kpiTargetPercent: task.kpiTargetPercent,
-      taskWeight: task.taskWeight,
       maxWeight: task.maxWeight,
       sectorId: task.sectorId,
       startDate: task.startDate,
@@ -181,7 +188,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         kpiTargetPercent: formData.kpiTargetPercent,
         kpiAchievement: computedKpiAchievement,
         kpiAchievementStatus: computedKpiStatus,
-        taskWeight: formData.taskWeight,
+        taskWeight: computedTaskWeight,
         weightedScore: computedWeightedScore,
         maxWeight: formData.maxWeight,
         sectorId: formData.sectorId,
@@ -210,7 +217,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     const progress = total > 0 ? Math.round((completedCount / total) * 10000) / 100 : 0;
     const kpiAchievement = progress;
     const kpiStatus = getKpiStatusFromAchievement(kpiAchievement);
-    const weightedScore = Math.round((kpiAchievement / 100) * task.taskWeight * 100) / 100;
+    const weightedScore = Math.round(task.taskWeight * (progress / 100) * 100) / 100;
     const status: TaskStatus = progress >= 100 ? "Completed" : progress > 0 ? "In Progress" : "Started";
     return {
       ...task,
@@ -409,8 +416,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Weights & Scoring</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className={labelClass}>Task Weight</label>
-                    <input type="number" step={0.1} min={0} max={1} className={inputClass} value={formData.taskWeight} onChange={e => setFormData(p => ({ ...p, taskWeight: Number(e.target.value) }))} />
+                    <label className={labelClass}>Task Weight (Auto)</label>
+                    <input type="text" disabled className={inputClass + " opacity-60"} value={computedTaskWeight} />
                   </div>
                   <div>
                     <label className={labelClass}>Weighted Score</label>
@@ -746,8 +753,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Weights & Scoring</h3>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className={labelClass}>Task Weight</label>
-                  <input type="number" step={0.1} min={0} max={1} className={inputClass} value={formData.taskWeight} onChange={e => setFormData(p => ({ ...p, taskWeight: Number(e.target.value) }))} />
+                  <label className={labelClass}>Task Weight (Auto)</label>
+                  <input type="text" disabled className={inputClass + " opacity-60"} value={computedTaskWeight} />
                 </div>
                 <div>
                   <label className={labelClass}>Weighted Score</label>
