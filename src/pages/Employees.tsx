@@ -1,9 +1,11 @@
 import { useState, useRef } from "react";
 import { useEmployees, useAddEmployee, useUpdateEmployee, useDeleteEmployee, type Employee } from "@/hooks/useEmployees";
-import { LOCATIONS, COMPANY_NAMES } from "@/data/mockData";
-import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2 } from "lucide-react";
+import { useCompanies, useAddCompany, useUpdateCompany, useDeleteCompany, type Company } from "@/hooks/useCompanies";
+import { useLocations, useAddLocation, useUpdateLocation, useDeleteLocation, type Location } from "@/hooks/useLocations";
+import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2, Building2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as XLSX from "xlsx";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -24,18 +26,262 @@ const DESIGNATIONS = [
   "Compliance Officer", "HR Intern",
 ];
 
-const emptyForm = {
-  employee_name: "",
-  company_name: COMPANY_NAMES[0],
-  location: "" as string | null,
-  designation: "" as string | null,
-  reporting_manager: "" as string | null,
-  employment_status: "Active",
-  date_joined: "" as string | null,
-};
+const inputClass = "w-full px-3 py-2 text-sm rounded-md border bg-card text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring";
+const labelClass = "block text-xs font-medium text-foreground mb-1";
 
-export default function Employees({ selectedSector }: EmployeesProps) {
+// ─── Company Master Tab ───
+function CompanyMasterTab() {
+  const { data: companies = [], isLoading } = useCompanies();
+  const addCompany = useAddCompany();
+  const updateCompany = useUpdateCompany();
+  const deleteCompany = useDeleteCompany();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Company | null>(null);
+  const [search, setSearch] = useState("");
+
+  const emptyForm = { company_name: "", registration_no: "" as string | null, address: "" as string | null, contact_number: "" as string | null, email: "" as string | null, status: "Active" };
+  const [form, setForm] = useState(emptyForm);
+  const resetForm = () => setForm(emptyForm);
+
+  const filtered = companies.filter(c =>
+    !search || c.company_name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.company_name) { toast({ title: "Error", description: "Company name is required.", variant: "destructive" }); return; }
+    try {
+      await addCompany.mutateAsync({ ...form, registration_no: form.registration_no || null, address: form.address || null, contact_number: form.contact_number || null, email: form.email || null });
+      toast({ title: "Company Added", description: `${form.company_name} added.` });
+      resetForm(); setDialogOpen(false);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const openEdit = (c: Company) => {
+    setEditing(c);
+    setForm({ company_name: c.company_name, registration_no: c.registration_no, address: c.address, contact_number: c.contact_number, email: c.email, status: c.status });
+    setEditDialogOpen(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    try {
+      await updateCompany.mutateAsync({ id: editing.id, ...form, registration_no: form.registration_no || null, address: form.address || null, contact_number: form.contact_number || null, email: form.email || null });
+      toast({ title: "Company Updated" });
+      resetForm(); setEditDialogOpen(false); setEditing(null);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const handleDelete = async (c: Company) => {
+    try { await deleteCompany.mutateAsync(c.id); toast({ title: "Company Deleted" }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (
+    <form onSubmit={onSubmit} className="space-y-4 mt-2">
+      <div className="grid grid-cols-2 gap-3">
+        <div><label className={labelClass}>Company Name *</label><input className={inputClass} value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} /></div>
+        <div><label className={labelClass}>Registration No</label><input className={inputClass} value={form.registration_no || ""} onChange={e => setForm(p => ({ ...p, registration_no: e.target.value }))} /></div>
+      </div>
+      <div><label className={labelClass}>Address</label><input className={inputClass} value={form.address || ""} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><label className={labelClass}>Contact Number</label><input className={inputClass} value={form.contact_number || ""} onChange={e => setForm(p => ({ ...p, contact_number: e.target.value }))} /></div>
+        <div><label className={labelClass}>Email</label><input className={inputClass} type="email" value={form.email || ""} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
+      </div>
+      <div className="w-1/2">
+        <label className={labelClass}>Status</label>
+        <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+          <option value="Active">Active</option><option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <div className="flex justify-end pt-2"><Button type="submit" disabled={addCompany.isPending || updateCompany.isPending}>{label}</Button></div>
+    </form>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{filtered.length} compan{filtered.length !== 1 ? "ies" : "y"}</p>
+        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Company</Button></DialogTrigger>
+          <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Company</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Company")}</DialogContent>
+        </Dialog>
+      </div>
+      <div className="relative max-w-xs">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input className={inputClass + " pl-9"} placeholder="Search companies..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Company Name</TableHead><TableHead>Reg No</TableHead><TableHead>Address</TableHead><TableHead>Contact</TableHead><TableHead>Email</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No companies found</TableCell></TableRow> :
+                filtered.map(c => (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-semibold">{c.company_name}</TableCell>
+                    <TableCell className="text-sm">{c.registration_no || "—"}</TableCell>
+                    <TableCell className="text-sm">{c.address || "—"}</TableCell>
+                    <TableCell className="text-sm">{c.contact_number || "—"}</TableCell>
+                    <TableCell className="text-sm">{c.email || "—"}</TableCell>
+                    <TableCell><Badge variant={c.status === "Active" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Company</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {c.company_name}?</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(c)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      <Dialog open={editDialogOpen} onOpenChange={o => { setEditDialogOpen(o); if (!o) { resetForm(); setEditing(null); } }}>
+        <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Edit Company</DialogTitle></DialogHeader>{renderForm(handleEdit, "Save Changes")}</DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Location Master Tab ───
+function LocationMasterTab() {
+  const { data: locations = [], isLoading } = useLocations();
+  const { data: companies = [] } = useCompanies();
+  const addLocation = useAddLocation();
+  const updateLocation = useUpdateLocation();
+  const deleteLocation = useDeleteLocation();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Location | null>(null);
+  const [search, setSearch] = useState("");
+
+  const emptyForm = { location_name: "", address: "" as string | null, city: "" as string | null, country: "Sri Lanka" as string | null, status: "Active", company_id: "" as string | null };
+  const [form, setForm] = useState(emptyForm);
+  const resetForm = () => setForm(emptyForm);
+
+  const filtered = locations.filter(l => !search || l.location_name.toLowerCase().includes(search.toLowerCase()));
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.location_name) { toast({ title: "Error", description: "Location name is required.", variant: "destructive" }); return; }
+    try {
+      await addLocation.mutateAsync({ ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null });
+      toast({ title: "Location Added", description: `${form.location_name} added.` });
+      resetForm(); setDialogOpen(false);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const openEdit = (l: Location) => {
+    setEditing(l);
+    setForm({ location_name: l.location_name, address: l.address, city: l.city, country: l.country, status: l.status, company_id: l.company_id });
+    setEditDialogOpen(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    try {
+      await updateLocation.mutateAsync({ id: editing.id, ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null });
+      toast({ title: "Location Updated" });
+      resetForm(); setEditDialogOpen(false); setEditing(null);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const handleDelete = async (l: Location) => {
+    try { await deleteLocation.mutateAsync(l.id); toast({ title: "Location Deleted" }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
+
+  const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (
+    <form onSubmit={onSubmit} className="space-y-4 mt-2">
+      <div className="grid grid-cols-2 gap-3">
+        <div><label className={labelClass}>Location Name *</label><input className={inputClass} value={form.location_name} onChange={e => setForm(p => ({ ...p, location_name: e.target.value }))} /></div>
+        <div><label className={labelClass}>City</label><input className={inputClass} value={form.city || ""} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} /></div>
+      </div>
+      <div><label className={labelClass}>Address</label><input className={inputClass} value={form.address || ""} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><label className={labelClass}>Country</label><input className={inputClass} value={form.country || ""} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} /></div>
+        <div>
+          <label className={labelClass}>Linked Company</label>
+          <select className={inputClass} value={form.company_id || ""} onChange={e => setForm(p => ({ ...p, company_id: e.target.value || null }))}>
+            <option value="">— None —</option>
+            {companies.filter(c => c.status === "Active").map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="w-1/2">
+        <label className={labelClass}>Status</label>
+        <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+          <option value="Active">Active</option><option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <div className="flex justify-end pt-2"><Button type="submit" disabled={addLocation.isPending || updateLocation.isPending}>{label}</Button></div>
+    </form>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{filtered.length} location{filtered.length !== 1 ? "s" : ""}</p>
+        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Location</Button></DialogTrigger>
+          <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Location</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Location")}</DialogContent>
+        </Dialog>
+      </div>
+      <div className="relative max-w-xs">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input className={inputClass + " pl-9"} placeholder="Search locations..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Location Name</TableHead><TableHead>City</TableHead><TableHead>Country</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No locations found</TableCell></TableRow> :
+                filtered.map(l => (
+                  <TableRow key={l.id}>
+                    <TableCell className="font-semibold">{l.location_name}</TableCell>
+                    <TableCell className="text-sm">{l.city || "—"}</TableCell>
+                    <TableCell className="text-sm">{l.country || "—"}</TableCell>
+                    <TableCell className="text-sm">{getCompanyName(l.company_id)}</TableCell>
+                    <TableCell><Badge variant={l.status === "Active" ? "default" : "secondary"}>{l.status}</Badge></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Location</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {l.location_name}?</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(l)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      <Dialog open={editDialogOpen} onOpenChange={o => { setEditDialogOpen(o); if (!o) { resetForm(); setEditing(null); } }}>
+        <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Edit Location</DialogTitle></DialogHeader>{renderForm(handleEdit, "Save Changes")}</DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Employee Master Tab ───
+function EmployeeMasterTab() {
   const { data: employees = [], isLoading } = useEmployees();
+  const { data: companies = [] } = useCompanies();
+  const { data: locations = [] } = useLocations();
   const addEmployee = useAddEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
@@ -45,14 +291,27 @@ export default function Employees({ selectedSector }: EmployeesProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [form, setForm] = useState(emptyForm);
   const [addMode, setAddMode] = useState<"single" | "bulk">("single");
   const [bulkData, setBulkData] = useState<typeof emptyForm[]>([]);
   const [bulkFileName, setBulkFileName] = useState("");
   const [isBulkAdding, setIsBulkAdding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const resetForm = () => { setForm(emptyForm); setBulkData([]); setBulkFileName(""); setAddMode("single"); };
+  const activeCompanies = companies.filter(c => c.status === "Active");
+  const activeLocations = locations.filter(l => l.status === "Active");
+
+  const emptyForm = {
+    employee_name: "",
+    company_name: activeCompanies[0]?.company_name || "",
+    location: "" as string | null,
+    designation: "" as string | null,
+    reporting_manager: "" as string | null,
+    employment_status: "Active",
+    date_joined: "" as string | null,
+  };
+
+  const [form, setForm] = useState(emptyForm);
+  const resetForm = () => { setForm({ ...emptyForm, company_name: activeCompanies[0]?.company_name || "" }); setBulkData([]); setBulkFileName(""); setAddMode("single"); };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,7 +325,7 @@ export default function Employees({ selectedSector }: EmployeesProps) {
       const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
       const parsed = rows.map(row => ({
         employee_name: String(row["Employee Name"] || row["employee_name"] || "").trim(),
-        company_name: String(row["Company Name"] || row["company_name"] || COMPANY_NAMES[0]).trim(),
+        company_name: String(row["Company Name"] || row["company_name"] || activeCompanies[0]?.company_name || "").trim(),
         location: String(row["Location"] || row["location"] || "").trim() || null,
         designation: String(row["Designation"] || row["designation"] || "").trim() || null,
         reporting_manager: String(row["Reporting Manager"] || row["reporting_manager"] || "").trim() || null,
@@ -84,25 +343,10 @@ export default function Employees({ selectedSector }: EmployeesProps) {
     setIsBulkAdding(true);
     let success = 0, failed = 0;
     for (const emp of bulkData) {
-      try {
-        await addEmployee.mutateAsync({
-          employee_name: emp.employee_name,
-          company_name: emp.company_name,
-          location: emp.location,
-          designation: emp.designation,
-          reporting_manager: emp.reporting_manager,
-          employment_status: emp.employment_status,
-          date_joined: emp.date_joined,
-        });
-        success++;
-      } catch { failed++; }
+      try { await addEmployee.mutateAsync(emp); success++; } catch { failed++; }
     }
     toast({ title: "Bulk Import Complete", description: `${success} added, ${failed} failed.` });
-    setBulkData([]);
-    setBulkFileName("");
-    setAddMode("single");
-    setDialogOpen(false);
-    setIsBulkAdding(false);
+    setBulkData([]); setBulkFileName(""); setAddMode("single"); setDialogOpen(false); setIsBulkAdding(false);
   };
 
   const removeBulkRow = (index: number) => setBulkData(prev => prev.filter((_, i) => i !== index));
@@ -119,46 +363,23 @@ export default function Employees({ selectedSector }: EmployeesProps) {
 
   const filtered = employees.filter(e => {
     if (statusFilter !== "All" && e.employment_status !== statusFilter) return false;
-    if (search && !e.employee_name.toLowerCase().includes(search.toLowerCase()) &&
-        !e.employee_id.includes(search)) return false;
+    if (search && !e.employee_name.toLowerCase().includes(search.toLowerCase()) && !e.employee_id.includes(search)) return false;
     return true;
   });
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.employee_name) {
-      toast({ title: "Validation Error", description: "Employee name is required.", variant: "destructive" });
-      return;
-    }
+    if (!form.employee_name) { toast({ title: "Validation Error", description: "Employee name is required.", variant: "destructive" }); return; }
     try {
-      await addEmployee.mutateAsync({
-        employee_name: form.employee_name,
-        company_name: form.company_name,
-        location: form.location || null,
-        designation: form.designation || null,
-        reporting_manager: form.reporting_manager || null,
-        employment_status: form.employment_status,
-        date_joined: form.date_joined || null,
-      });
+      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
       toast({ title: "Employee Added", description: `${form.employee_name} has been added.` });
-      resetForm();
-      setDialogOpen(false);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    }
+      resetForm(); setDialogOpen(false);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
   };
 
   const openEdit = (emp: Employee) => {
     setEditingEmployee(emp);
-    setForm({
-      employee_name: emp.employee_name,
-      company_name: emp.company_name,
-      location: emp.location,
-      designation: emp.designation,
-      reporting_manager: emp.reporting_manager,
-      employment_status: emp.employment_status,
-      date_joined: emp.date_joined,
-    });
+    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined });
     setEditDialogOpen(true);
   };
 
@@ -166,66 +387,39 @@ export default function Employees({ selectedSector }: EmployeesProps) {
     e.preventDefault();
     if (!editingEmployee) return;
     try {
-      await updateEmployee.mutateAsync({
-        id: editingEmployee.id,
-        employee_name: form.employee_name,
-        company_name: form.company_name,
-        location: form.location || null,
-        designation: form.designation || null,
-        reporting_manager: form.reporting_manager || null,
-        employment_status: form.employment_status,
-        date_joined: form.date_joined || null,
-      });
+      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
       toast({ title: "Employee Updated", description: `${form.employee_name} has been updated.` });
-      resetForm();
-      setEditDialogOpen(false);
-      setEditingEmployee(null);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    }
+      resetForm(); setEditDialogOpen(false); setEditingEmployee(null);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
   };
 
   const handleDelete = async (emp: Employee) => {
-    try {
-      await deleteEmployee.mutateAsync(emp.id);
-      toast({ title: "Employee Deleted", description: `${emp.employee_name} has been removed.` });
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    }
+    try { await deleteEmployee.mutateAsync(emp.id); toast({ title: "Employee Deleted", description: `${emp.employee_name} has been removed.` }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
   };
-
-  const inputClass = "w-full px-3 py-2 text-sm rounded-md border bg-card text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring";
-  const labelClass = "block text-xs font-medium text-foreground mb-1";
 
   const renderForm = (onSubmit: (e: React.FormEvent) => void, submitLabel: string) => (
     <form onSubmit={onSubmit} className="space-y-4 mt-2">
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Employee Name *</label>
-          <input className={inputClass} placeholder="Full name" value={form.employee_name}
-            onChange={e => setForm(p => ({ ...p, employee_name: e.target.value }))} />
-        </div>
+        <div><label className={labelClass}>Employee Name *</label><input className={inputClass} placeholder="Full name" value={form.employee_name} onChange={e => setForm(p => ({ ...p, employee_name: e.target.value }))} /></div>
         <div>
           <label className={labelClass}>Company Name</label>
-          <select className={inputClass} value={form.company_name}
-            onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))}>
-            {COMPANY_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
+          <select className={inputClass} value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))}>
+            {activeCompanies.map(c => <option key={c.id} value={c.company_name}>{c.company_name}</option>)}
           </select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Location</label>
-          <select className={inputClass} value={form.location || ""}
-            onChange={e => setForm(p => ({ ...p, location: e.target.value || null }))}>
+          <select className={inputClass} value={form.location || ""} onChange={e => setForm(p => ({ ...p, location: e.target.value || null }))}>
             <option value="">Select location</option>
-            {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+            {activeLocations.map(l => <option key={l.id} value={l.location_name}>{l.location_name}</option>)}
           </select>
         </div>
         <div>
           <label className={labelClass}>Designation</label>
-          <select className={inputClass} value={form.designation || ""}
-            onChange={e => setForm(p => ({ ...p, designation: e.target.value || null }))}>
+          <select className={inputClass} value={form.designation || ""} onChange={e => setForm(p => ({ ...p, designation: e.target.value || null }))}>
             <option value="">Select designation</option>
             {DESIGNATIONS.map(d => <option key={d} value={d}>{d}</option>)}
           </select>
@@ -234,109 +428,58 @@ export default function Employees({ selectedSector }: EmployeesProps) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Reporting Manager</label>
-          <select className={inputClass} value={form.reporting_manager || ""}
-            onChange={e => setForm(p => ({ ...p, reporting_manager: e.target.value || null }))}>
+          <select className={inputClass} value={form.reporting_manager || ""} onChange={e => setForm(p => ({ ...p, reporting_manager: e.target.value || null }))}>
             <option value="">Select manager</option>
-            {employees.filter(emp => emp.employee_name !== form.employee_name).map(emp => (
-              <option key={emp.id} value={emp.employee_name}>{emp.employee_name}</option>
-            ))}
+            {employees.filter(emp => emp.employee_name !== form.employee_name).map(emp => <option key={emp.id} value={emp.employee_name}>{emp.employee_name}</option>)}
           </select>
         </div>
         <div>
           <label className={labelClass}>Employment Status</label>
-          <select className={inputClass} value={form.employment_status}
-            onChange={e => setForm(p => ({ ...p, employment_status: e.target.value }))}>
+          <select className={inputClass} value={form.employment_status} onChange={e => setForm(p => ({ ...p, employment_status: e.target.value }))}>
             {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Date Joined</label>
-          <input type="date" className={inputClass} value={form.date_joined || ""}
-            onChange={e => setForm(p => ({ ...p, date_joined: e.target.value || null }))} />
-        </div>
+        <div><label className={labelClass}>Date Joined</label><input type="date" className={inputClass} value={form.date_joined || ""} onChange={e => setForm(p => ({ ...p, date_joined: e.target.value || null }))} /></div>
       </div>
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="submit" disabled={addEmployee.isPending || updateEmployee.isPending}>
-          {submitLabel}
-        </Button>
-      </div>
+      <div className="flex justify-end gap-2 pt-2"><Button type="submit" disabled={addEmployee.isPending || updateEmployee.isPending}>{submitLabel}</Button></div>
     </form>
   );
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Employee Master
-          </h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} employee{filtered.length !== 1 ? "s" : ""}</p>
-        </div>
+        <p className="text-sm text-muted-foreground">{filtered.length} employee{filtered.length !== 1 ? "s" : ""}</p>
         <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2"><Plus size={16} /> Add Employee</Button>
-          </DialogTrigger>
+          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Employee</Button></DialogTrigger>
           <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Add New Employee</DialogTitle></DialogHeader>
-            {/* Mode Toggle */}
             <div className="flex gap-2 mt-1">
-              <Button variant={addMode === "single" ? "default" : "outline"} size="sm" onClick={() => setAddMode("single")} className="gap-1.5">
-                <Plus size={14} /> Single Entry
-              </Button>
-              <Button variant={addMode === "bulk" ? "default" : "outline"} size="sm" onClick={() => setAddMode("bulk")} className="gap-1.5">
-                <FileSpreadsheet size={14} /> Bulk Upload (Excel)
-              </Button>
+              <Button variant={addMode === "single" ? "default" : "outline"} size="sm" onClick={() => setAddMode("single")} className="gap-1.5"><Plus size={14} /> Single Entry</Button>
+              <Button variant={addMode === "bulk" ? "default" : "outline"} size="sm" onClick={() => setAddMode("bulk")} className="gap-1.5"><FileSpreadsheet size={14} /> Bulk Upload</Button>
             </div>
-
-            {addMode === "single" ? (
-              renderForm(handleAdd, "Add Employee")
-            ) : (
+            {addMode === "single" ? renderForm(handleAdd, "Add Employee") : (
               <div className="space-y-4 mt-2">
-                {/* Upload area */}
                 <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3 bg-muted/30">
                   <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Upload Excel File (.xlsx, .xls, .csv)</p>
-                    <p className="text-xs text-muted-foreground mt-1">File should have columns: Employee Name, Company Name, Location, Designation, etc.</p>
-                  </div>
+                  <div><p className="text-sm font-medium text-foreground">Upload Excel File (.xlsx, .xls, .csv)</p><p className="text-xs text-muted-foreground mt-1">File should have columns: Employee Name, Company Name, Location, Designation, etc.</p></div>
                   <div className="flex gap-2 justify-center">
-                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1.5">
-                      <Upload size={14} /> Choose File
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={downloadTemplate} className="gap-1.5">
-                      <FileSpreadsheet size={14} /> Download Template
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1.5"><Upload size={14} /> Choose File</Button>
+                    <Button variant="ghost" size="sm" onClick={downloadTemplate} className="gap-1.5"><FileSpreadsheet size={14} /> Download Template</Button>
                   </div>
                   <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
                   {bulkFileName && <p className="text-xs text-primary font-medium">📎 {bulkFileName}</p>}
                 </div>
-
-                {/* Preview table */}
                 {bulkData.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                        <CheckCircle2 className="h-4 w-4 text-primary" /> Preview — {bulkData.length} employee{bulkData.length !== 1 ? "s" : ""} found
-                      </p>
-                      <Button variant="ghost" size="sm" onClick={() => { setBulkData([]); setBulkFileName(""); }}>
-                        <X size={14} className="mr-1" /> Clear
-                      </Button>
+                      <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> Preview — {bulkData.length} employee{bulkData.length !== 1 ? "s" : ""}</p>
+                      <Button variant="ghost" size="sm" onClick={() => { setBulkData([]); setBulkFileName(""); }}><X size={14} className="mr-1" /> Clear</Button>
                     </div>
                     <div className="max-h-60 overflow-auto border rounded-md">
                       <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-8">#</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Company</TableHead>
-                            <TableHead>Location</TableHead>
-                            <TableHead>Designation</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="w-10"></TableHead>
-                          </TableRow>
-                        </TableHeader>
+                        <TableHeader><TableRow><TableHead className="w-8">#</TableHead><TableHead>Name</TableHead><TableHead>Company</TableHead><TableHead>Location</TableHead><TableHead>Designation</TableHead><TableHead>Status</TableHead><TableHead className="w-10"></TableHead></TableRow></TableHeader>
                         <TableBody>
                           {bulkData.map((row, i) => (
                             <TableRow key={i}>
@@ -345,26 +488,14 @@ export default function Employees({ selectedSector }: EmployeesProps) {
                               <TableCell className="text-xs">{row.company_name}</TableCell>
                               <TableCell className="text-xs">{row.location || "—"}</TableCell>
                               <TableCell className="text-xs">{row.designation || "—"}</TableCell>
-                              <TableCell>
-                                <Badge variant={row.employment_status === "Active" ? "default" : "secondary"} className="text-[10px]">
-                                  {row.employment_status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeBulkRow(i)}>
-                                  <X size={12} />
-                                </Button>
-                              </TableCell>
+                              <TableCell><Badge variant={row.employment_status === "Active" ? "default" : "secondary"} className="text-[10px]">{row.employment_status}</Badge></TableCell>
+                              <TableCell><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeBulkRow(i)}><X size={12} /></Button></TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     </div>
-                    <div className="flex justify-end pt-2">
-                      <Button onClick={handleBulkAdd} disabled={isBulkAdding} className="gap-1.5">
-                        {isBulkAdding ? "Adding..." : `Add ${bulkData.length} Employees`}
-                      </Button>
-                    </div>
+                    <div className="flex justify-end pt-2"><Button onClick={handleBulkAdd} disabled={isBulkAdding} className="gap-1.5">{isBulkAdding ? "Adding..." : `Add ${bulkData.length} Employees`}</Button></div>
                   </div>
                 )}
               </div>
@@ -373,100 +504,79 @@ export default function Employees({ selectedSector }: EmployeesProps) {
         </Dialog>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-3 items-center">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input className={inputClass + " pl-9"} placeholder="Search by name or ID..."
-            value={search} onChange={e => setSearch(e.target.value)} />
+          <input className={inputClass + " pl-9"} placeholder="Search by name or ID..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <select className={inputClass + " w-auto"} value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}>
+        <select className={inputClass + " w-auto"} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="All">All Statuses</option>
           {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
 
-      {/* Table */}
-      {isLoading ? (
-        <div className="text-center text-muted-foreground py-8">Loading employees...</div>
-      ) : (
+      {isLoading ? <div className="text-center text-muted-foreground py-8">Loading employees...</div> : (
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-20">Emp ID</TableHead>
-                <TableHead>Employee Name</TableHead>
-                <TableHead>Company Name</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Designation</TableHead>
-                <TableHead>Reporting Manager</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date Joined</TableHead>
-                <TableHead className="w-20">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow>
+              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Designation</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
+            </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                    No employees found
-                  </TableCell>
-                </TableRow>
-              ) : filtered.map(emp => (
-                <TableRow key={emp.id}>
-                  <TableCell className="font-mono text-xs font-semibold">{emp.employee_id}</TableCell>
-                  <TableCell className="font-semibold">{emp.employee_name}</TableCell>
-                  <TableCell className="text-sm">{emp.company_name}</TableCell>
-                  <TableCell className="text-sm">{emp.location || "—"}</TableCell>
-                  <TableCell className="text-sm">{emp.designation || "—"}</TableCell>
-                  <TableCell className="text-sm">{emp.reporting_manager || "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant={emp.employment_status === "Active" ? "default" : "secondary"}>
-                      {emp.employment_status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">{emp.date_joined || "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(emp)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete {emp.employee_name}?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(emp)}>Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No employees found</TableCell></TableRow> :
+                filtered.map(emp => (
+                  <TableRow key={emp.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{emp.employee_id}</TableCell>
+                    <TableCell className="font-semibold">{emp.employee_name}</TableCell>
+                    <TableCell className="text-sm">{emp.company_name}</TableCell>
+                    <TableCell className="text-sm">{emp.location || "—"}</TableCell>
+                    <TableCell className="text-sm">{emp.designation || "—"}</TableCell>
+                    <TableCell className="text-sm">{emp.reporting_manager || "—"}</TableCell>
+                    <TableCell><Badge variant={emp.employment_status === "Active" ? "default" : "secondary"}>{emp.employment_status}</Badge></TableCell>
+                    <TableCell className="text-sm">{emp.date_joined || "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(emp)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Employee</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {emp.employee_name}?</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(emp)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </div>
       )}
 
-      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={open => { setEditDialogOpen(open); if (!open) { resetForm(); setEditingEmployee(null); } }}>
         <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Employee — {editingEmployee?.employee_id}</DialogTitle></DialogHeader>
           {renderForm(handleEdit, "Save Changes")}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ─── Main Employees Page ───
+export default function Employees({ selectedSector }: EmployeesProps) {
+  return (
+    <div className="p-6 space-y-4">
+      <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+        <Users className="h-5 w-5 text-primary" /> Employees Module
+      </h1>
+
+      <Tabs defaultValue="employees" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsTrigger value="employees" className="gap-1.5 text-xs"><Users className="h-3.5 w-3.5" /> Employee Master</TabsTrigger>
+          <TabsTrigger value="companies" className="gap-1.5 text-xs"><Building2 className="h-3.5 w-3.5" /> Company Master</TabsTrigger>
+          <TabsTrigger value="locations" className="gap-1.5 text-xs"><MapPin className="h-3.5 w-3.5" /> Location Master</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="employees"><EmployeeMasterTab /></TabsContent>
+        <TabsContent value="companies"><CompanyMasterTab /></TabsContent>
+        <TabsContent value="locations"><LocationMasterTab /></TabsContent>
+      </Tabs>
     </div>
   );
 }
