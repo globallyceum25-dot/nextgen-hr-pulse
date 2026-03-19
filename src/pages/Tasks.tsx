@@ -96,6 +96,18 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const computedKpiStatus = getKpiStatusFromAchievement(computedKpiAchievement);
   const computedCompletionFlag = computedProgress >= 100 ? 1 : 0;
 
+  const handleDeleteTask = (task: Task) => {
+    setTasks(prev => prev.filter(t => t.id !== task.id));
+    addEntry({
+      action: "updated",
+      taskName: task.name,
+      taskId: task.taskId,
+      description: `Task deleted`,
+      changes: [{ field: "Action", oldValue: "Active", newValue: "Deleted" }],
+    });
+    toast({ title: "Task Deleted", description: `"${task.name}" has been removed.` });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.responsible || !formData.location || !formData.dueDate) {
