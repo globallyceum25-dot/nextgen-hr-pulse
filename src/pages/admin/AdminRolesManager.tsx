@@ -122,6 +122,7 @@ export default function AdminRolesManager() {
                 <TableRow>
                   <TableHead>Role</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead>Modules</TableHead>
                   <TableHead>Permissions</TableHead>
                   <TableHead className="text-right">Users</TableHead>
                 </TableRow>
