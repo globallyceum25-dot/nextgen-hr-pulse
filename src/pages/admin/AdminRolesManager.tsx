@@ -40,6 +40,13 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
   viewer: ["View dashboards", "View tasks", "View analytics"],
 };
 
+const ROLE_MODULES: Record<AppRole, string[]> = {
+  super_admin: ["Dashboard", "Tasks", "Employees", "Analytics", "Administration"],
+  sector_hr_admin: ["Dashboard", "Tasks", "Employees", "Analytics"],
+  responsible_person: ["Dashboard", "Tasks"],
+  viewer: ["Dashboard", "Tasks", "Analytics"],
+};
+
 export default function AdminRolesManager() {
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -115,6 +122,7 @@ export default function AdminRolesManager() {
                 <TableRow>
                   <TableHead>Role</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead>Modules</TableHead>
                   <TableHead>Permissions</TableHead>
                   <TableHead className="text-right">Users</TableHead>
                 </TableRow>
@@ -129,6 +137,15 @@ export default function AdminRolesManager() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-[300px]">
                       {ROLE_DESCRIPTIONS[role]}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {ROLE_MODULES[role].map((mod) => (
+                          <Badge key={mod} variant="outline" className="text-[10px] font-normal">
+                            {mod}
+                          </Badge>
+                        ))}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
