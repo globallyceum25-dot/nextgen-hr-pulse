@@ -934,7 +934,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div>
                 <label className={labelClass}>Responsible</label>
                 <select className={inputClass} value={subTaskForm.responsible} onChange={e => setSubTaskForm(p => ({ ...p, responsible: e.target.value }))}>
-                  {RESPONSIBLE_PERSONS.map(p => <option key={p} value={p}>{p}</option>)}
+                  {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
                 </select>
               </div>
               <div>
