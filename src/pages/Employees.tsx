@@ -303,6 +303,7 @@ function EmployeeMasterTab() {
 
   const activeCompanies = companies.filter(c => c.status === "Active");
   const activeLocations = locations.filter(l => l.status === "Active");
+  const activeDepartments = departments.filter(d => d.status === "Active");
 
   const emptyForm = {
     employee_name: "",
