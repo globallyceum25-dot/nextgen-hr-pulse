@@ -613,9 +613,32 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     </td>
                     <td className="px-3 py-2.5"><StatusBadge status={task.status} /></td>
                     <td className="px-3 py-2.5 text-center">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
-                        <Pencil size={14} />
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
+                          <Pencil size={14} />
+                        </Button>
+                        {isAdmin && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => e.stopPropagation()}>
+                                <Trash2 size={14} />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "<strong>{task.name}</strong>"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDeleteTask(task)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </td>
                   </tr>
                   {expandedTask === task.id && (
