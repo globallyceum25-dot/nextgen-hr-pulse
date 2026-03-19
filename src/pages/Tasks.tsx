@@ -7,7 +7,13 @@ import {
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
 import { StatusBadge, PriorityBadge } from "@/components/dashboard/StatusBadge";
 import ProgressBar from "@/components/dashboard/ProgressBar";
-import { Search, ChevronDown, ChevronRight, Plus, Pencil } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useUserRole";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
