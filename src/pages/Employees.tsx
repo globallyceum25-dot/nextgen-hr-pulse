@@ -568,6 +568,127 @@ function EmployeeMasterTab() {
   );
 }
 
+// ─── Department Master Tab ───
+function DepartmentMasterTab() {
+  const { data: departments = [], isLoading } = useDepartments();
+  const { data: companies = [] } = useCompanies();
+  const addDepartment = useAddDepartment();
+  const updateDepartment = useUpdateDepartment();
+  const deleteDepartment = useDeleteDepartment();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Department | null>(null);
+  const [search, setSearch] = useState("");
+
+  const emptyForm = { department_name: "", company_id: "" as string | null, status: "Active" };
+  const [form, setForm] = useState(emptyForm);
+  const resetForm = () => setForm(emptyForm);
+
+  const filtered = departments.filter(d => !search || d.department_name.toLowerCase().includes(search.toLowerCase()));
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.department_name) { toast({ title: "Error", description: "Department name is required.", variant: "destructive" }); return; }
+    try {
+      await addDepartment.mutateAsync({ department_name: form.department_name, company_id: form.company_id || null, status: form.status });
+      toast({ title: "Department Added", description: `${form.department_name} added.` });
+      resetForm(); setDialogOpen(false);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const openEdit = (d: Department) => {
+    setEditing(d);
+    setForm({ department_name: d.department_name, company_id: d.company_id, status: d.status });
+    setEditDialogOpen(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    try {
+      await updateDepartment.mutateAsync({ id: editing.id, department_name: form.department_name, company_id: form.company_id || null, status: form.status });
+      toast({ title: "Department Updated" });
+      resetForm(); setEditDialogOpen(false); setEditing(null);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const handleDelete = async (d: Department) => {
+    try { await deleteDepartment.mutateAsync(d.id); toast({ title: "Department Deleted" }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
+
+  const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (
+    <form onSubmit={onSubmit} className="space-y-4 mt-2">
+      <div><label className={labelClass}>Department Name *</label><input className={inputClass} value={form.department_name} onChange={e => setForm(p => ({ ...p, department_name: e.target.value }))} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Linked Company</label>
+          <select className={inputClass} value={form.company_id || ""} onChange={e => setForm(p => ({ ...p, company_id: e.target.value || null }))}>
+            <option value="">— None —</option>
+            {companies.filter(c => c.status === "Active").map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Status</label>
+          <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+            <option value="Active">Active</option><option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div className="flex justify-end pt-2"><Button type="submit" disabled={addDepartment.isPending || updateDepartment.isPending}>{label}</Button></div>
+    </form>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{filtered.length} department{filtered.length !== 1 ? "s" : ""}</p>
+        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Department</Button></DialogTrigger>
+          <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Department")}</DialogContent>
+        </Dialog>
+      </div>
+      <div className="relative max-w-xs">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input className={inputClass + " pl-9"} placeholder="Search departments..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead className="w-20">ID</TableHead><TableHead>Department Name</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No departments found</TableCell></TableRow> :
+                filtered.map(d => (
+                  <TableRow key={d.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{d.department_code}</TableCell>
+                    <TableCell className="font-semibold">{d.department_name}</TableCell>
+                    <TableCell className="text-sm">{getCompanyName(d.company_id)}</TableCell>
+                    <TableCell><Badge variant={d.status === "Active" ? "default" : "secondary"}>{d.status}</Badge></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Department</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {d.department_name}?</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(d)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      <Dialog open={editDialogOpen} onOpenChange={o => { setEditDialogOpen(o); if (!o) { resetForm(); setEditing(null); } }}>
+        <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Edit Department</DialogTitle></DialogHeader>{renderForm(handleEdit, "Save Changes")}</DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ─── Main Employees Page ───
 export default function Employees({ selectedSector }: EmployeesProps) {
   return (
@@ -577,15 +698,17 @@ export default function Employees({ selectedSector }: EmployeesProps) {
       </h1>
 
       <Tabs defaultValue="employees" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-4 max-w-xl">
           <TabsTrigger value="employees" className="gap-1.5 text-xs"><Users className="h-3.5 w-3.5" /> Employee Master</TabsTrigger>
           <TabsTrigger value="companies" className="gap-1.5 text-xs"><Building2 className="h-3.5 w-3.5" /> Company Master</TabsTrigger>
           <TabsTrigger value="locations" className="gap-1.5 text-xs"><MapPin className="h-3.5 w-3.5" /> Location Master</TabsTrigger>
+          <TabsTrigger value="departments" className="gap-1.5 text-xs"><Briefcase className="h-3.5 w-3.5" /> Department Master</TabsTrigger>
         </TabsList>
 
         <TabsContent value="employees"><EmployeeMasterTab /></TabsContent>
         <TabsContent value="companies"><CompanyMasterTab /></TabsContent>
         <TabsContent value="locations"><LocationMasterTab /></TabsContent>
+        <TabsContent value="departments"><DepartmentMasterTab /></TabsContent>
       </Tabs>
     </div>
   );
