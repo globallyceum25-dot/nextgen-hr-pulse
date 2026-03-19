@@ -374,7 +374,7 @@ function EmployeeMasterTab() {
     e.preventDefault();
     if (!form.employee_name) { toast({ title: "Validation Error", description: "Employee name is required.", variant: "destructive" }); return; }
     try {
-      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
+      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
       toast({ title: "Employee Added", description: `${form.employee_name} has been added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
