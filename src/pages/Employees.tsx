@@ -537,6 +537,7 @@ function EmployeeMasterTab() {
                     <TableCell className="font-semibold">{emp.employee_name}</TableCell>
                     <TableCell className="text-sm">{emp.company_name}</TableCell>
                     <TableCell className="text-sm">{emp.location || "—"}</TableCell>
+                    <TableCell className="text-sm">{emp.department || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.designation || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.reporting_manager || "—"}</TableCell>
                     <TableCell><Badge variant={emp.employment_status === "Active" ? "default" : "secondary"}>{emp.employment_status}</Badge></TableCell>
