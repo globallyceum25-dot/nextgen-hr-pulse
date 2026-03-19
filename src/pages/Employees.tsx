@@ -390,7 +390,7 @@ function EmployeeMasterTab() {
     e.preventDefault();
     if (!editingEmployee) return;
     try {
-      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
+      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
       toast({ title: "Employee Updated", description: `${form.employee_name} has been updated.` });
       resetForm(); setEditDialogOpen(false); setEditingEmployee(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
