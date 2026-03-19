@@ -731,7 +731,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div>
                   <label className={labelClass}>Company Name</label>
-                  <input className={inputClass} value={formData.companyName} readOnly />
+                  <input className={inputClass + " opacity-60"} value={formData.companyName} readOnly placeholder="Auto-filled from employee" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
