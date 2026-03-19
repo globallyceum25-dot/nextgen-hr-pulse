@@ -285,6 +285,7 @@ function EmployeeMasterTab() {
   const { data: employees = [], isLoading } = useEmployees();
   const { data: companies = [] } = useCompanies();
   const { data: locations = [] } = useLocations();
+  const { data: departments = [] } = useDepartments();
   const addEmployee = useAddEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
