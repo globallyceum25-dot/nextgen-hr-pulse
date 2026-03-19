@@ -318,7 +318,7 @@ export default function Employees({ selectedSector }: EmployeesProps) {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" /> Preview — {bulkData.length} employee{bulkData.length !== 1 ? "s" : ""} found
+                        <CheckCircle2 className="h-4 w-4 text-primary" /> Preview — {bulkData.length} employee{bulkData.length !== 1 ? "s" : ""} found
                       </p>
                       <Button variant="ghost" size="sm" onClick={() => { setBulkData([]); setBulkFileName(""); }}>
                         <X size={14} className="mr-1" /> Clear
