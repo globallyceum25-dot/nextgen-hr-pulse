@@ -382,7 +382,7 @@ function EmployeeMasterTab() {
 
   const openEdit = (emp: Employee) => {
     setEditingEmployee(emp);
-    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined });
+    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, department: emp.department, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined });
     setEditDialogOpen(true);
   };
 
