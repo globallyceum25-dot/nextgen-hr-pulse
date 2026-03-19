@@ -58,6 +58,7 @@ export type Database = {
           company_name: string
           created_at: string
           date_joined: string | null
+          department: string | null
           designation: string | null
           employee_id: string
           employee_name: string
@@ -71,6 +72,7 @@ export type Database = {
           company_name?: string
           created_at?: string
           date_joined?: string | null
+          department?: string | null
           designation?: string | null
           employee_id: string
           employee_name: string
@@ -84,6 +86,7 @@ export type Database = {
           company_name?: string
           created_at?: string
           date_joined?: string | null
+          department?: string | null
           designation?: string | null
           employee_id?: string
           employee_name?: string
