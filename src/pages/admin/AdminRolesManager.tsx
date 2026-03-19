@@ -40,6 +40,13 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
   viewer: ["View dashboards", "View tasks", "View analytics"],
 };
 
+const ROLE_MODULES: Record<AppRole, string[]> = {
+  super_admin: ["Dashboard", "Tasks", "Employees", "Analytics", "Administration"],
+  sector_hr_admin: ["Dashboard", "Tasks", "Employees", "Analytics"],
+  responsible_person: ["Dashboard", "Tasks"],
+  viewer: ["Dashboard", "Tasks", "Analytics"],
+};
+
 export default function AdminRolesManager() {
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
