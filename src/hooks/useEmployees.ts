@@ -8,6 +8,7 @@ export interface Employee {
   company_name: string;
   location: string | null;
   designation: string | null;
+  department: string | null;
   reporting_manager: string | null;
   employment_status: string;
   date_joined: string | null;

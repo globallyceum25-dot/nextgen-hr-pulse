@@ -307,6 +307,7 @@ function EmployeeMasterTab() {
     company_name: activeCompanies[0]?.company_name || "",
     location: "" as string | null,
     designation: "" as string | null,
+    department: "" as string | null,
     reporting_manager: "" as string | null,
     employment_status: "Active",
     date_joined: "" as string | null,
@@ -330,6 +331,7 @@ function EmployeeMasterTab() {
         company_name: String(row["Company Name"] || row["company_name"] || activeCompanies[0]?.company_name || "").trim(),
         location: String(row["Location"] || row["location"] || "").trim() || null,
         designation: String(row["Designation"] || row["designation"] || "").trim() || null,
+        department: String(row["Department"] || row["department"] || "").trim() || null,
         reporting_manager: String(row["Reporting Manager"] || row["reporting_manager"] || "").trim() || null,
         employment_status: String(row["Employment Status"] || row["employment_status"] || "Active").trim(),
         date_joined: row["Date Joined"] || row["date_joined"] ? String(row["Date Joined"] || row["date_joined"]).trim() : null,
@@ -373,7 +375,7 @@ function EmployeeMasterTab() {
     e.preventDefault();
     if (!form.employee_name) { toast({ title: "Validation Error", description: "Employee name is required.", variant: "destructive" }); return; }
     try {
-      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
+      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
       toast({ title: "Employee Added", description: `${form.employee_name} has been added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -381,7 +383,7 @@ function EmployeeMasterTab() {
 
   const openEdit = (emp: Employee) => {
     setEditingEmployee(emp);
-    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined });
+    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, department: emp.department, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined });
     setEditDialogOpen(true);
   };
 
@@ -389,7 +391,7 @@ function EmployeeMasterTab() {
     e.preventDefault();
     if (!editingEmployee) return;
     try {
-      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
+      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
       toast({ title: "Employee Updated", description: `${form.employee_name} has been updated.` });
       resetForm(); setEditDialogOpen(false); setEditingEmployee(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -428,6 +430,10 @@ function EmployeeMasterTab() {
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Department</label>
+          <input className={inputClass} placeholder="e.g. Human Resources" value={form.department || ""} onChange={e => setForm(p => ({ ...p, department: e.target.value || null }))} />
+        </div>
         <div>
           <label className={labelClass}>Reporting Manager</label>
           <select className={inputClass} value={form.reporting_manager || ""} onChange={e => setForm(p => ({ ...p, reporting_manager: e.target.value || null }))}>
@@ -521,16 +527,17 @@ function EmployeeMasterTab() {
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Designation</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Department</TableHead><TableHead>Designation</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No employees found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No employees found</TableCell></TableRow> :
                 filtered.map(emp => (
                   <TableRow key={emp.id}>
                     <TableCell className="font-mono text-xs font-semibold">{emp.employee_id}</TableCell>
                     <TableCell className="font-semibold">{emp.employee_name}</TableCell>
                     <TableCell className="text-sm">{emp.company_name}</TableCell>
                     <TableCell className="text-sm">{emp.location || "—"}</TableCell>
+                    <TableCell className="text-sm">{emp.department || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.designation || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.reporting_manager || "—"}</TableCell>
                     <TableCell><Badge variant={emp.employment_status === "Active" ? "default" : "secondary"}>{emp.employment_status}</Badge></TableCell>
