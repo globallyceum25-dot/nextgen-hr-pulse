@@ -307,6 +307,7 @@ function EmployeeMasterTab() {
     company_name: activeCompanies[0]?.company_name || "",
     location: "" as string | null,
     designation: "" as string | null,
+    department: "" as string | null,
     reporting_manager: "" as string | null,
     employment_status: "Active",
     date_joined: "" as string | null,
