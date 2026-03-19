@@ -285,6 +285,7 @@ function EmployeeMasterTab() {
   const { data: employees = [], isLoading } = useEmployees();
   const { data: companies = [] } = useCompanies();
   const { data: locations = [] } = useLocations();
+  const { data: departments = [] } = useDepartments();
   const addEmployee = useAddEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
@@ -302,6 +303,7 @@ function EmployeeMasterTab() {
 
   const activeCompanies = companies.filter(c => c.status === "Active");
   const activeLocations = locations.filter(l => l.status === "Active");
+  const activeDepartments = departments.filter(d => d.status === "Active");
 
   const emptyForm = {
     employee_name: "",
@@ -433,7 +435,10 @@ function EmployeeMasterTab() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Department</label>
-          <input className={inputClass} placeholder="e.g. Human Resources" value={form.department || ""} onChange={e => setForm(p => ({ ...p, department: e.target.value || null }))} />
+          <select className={inputClass} value={form.department || ""} onChange={e => setForm(p => ({ ...p, department: e.target.value || null }))}>
+            <option value="">Select department</option>
+            {activeDepartments.map(d => <option key={d.id} value={d.department_name}>{d.department_name}</option>)}
+          </select>
         </div>
         <div>
           <label className={labelClass}>Reporting Manager</label>
