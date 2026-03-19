@@ -737,10 +737,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className={labelClass}>Location *</label>
-                  <select className={inputClass} value={formData.location} onChange={e => setFormData(p => ({ ...p, location: e.target.value }))}>
-                    <option value="">Select</option>
-                    {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
+                  <input className={inputClass + " opacity-60"} value={formData.location} readOnly placeholder="Auto-filled from employee" />
                 </div>
                 <div>
                   <label className={labelClass}>Task Category</label>
