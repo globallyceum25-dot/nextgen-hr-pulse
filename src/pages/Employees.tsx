@@ -46,6 +46,11 @@ export default function Employees({ selectedSector }: EmployeesProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [addMode, setAddMode] = useState<"single" | "bulk">("single");
+  const [bulkData, setBulkData] = useState<typeof emptyForm[]>([]);
+  const [bulkFileName, setBulkFileName] = useState("");
+  const [isBulkAdding, setIsBulkAdding] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => setForm(emptyForm);
 
