@@ -53,6 +53,44 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          department_code: string
+          department_name: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          department_code: string
+          department_name: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          department_code?: string
+          department_name?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           company_name: string
