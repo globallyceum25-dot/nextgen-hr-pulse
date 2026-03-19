@@ -32,7 +32,7 @@ export function useAddLocation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (loc: { location_name: string; address?: string | null; city?: string | null; country?: string | null; status?: string; company_id?: string | null }) => {
-      const { data, error } = await supabase.from("locations").insert([{ location_name: loc.location_name, address: loc.address, city: loc.city, country: loc.country, status: loc.status, company_id: loc.company_id }]).select().single();
+      const { data, error } = await supabase.from("locations").insert([{ location_name: loc.location_name, address: loc.address, city: loc.city, country: loc.country, status: loc.status, company_id: loc.company_id } as any]).select().single();
       if (error) throw error;
       return data as Location;
     },

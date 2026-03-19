@@ -32,7 +32,7 @@ export function useAddCompany() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (company: { company_name: string; registration_no?: string | null; address?: string | null; contact_number?: string | null; email?: string | null; status?: string }) => {
-      const { data, error } = await supabase.from("companies").insert([{ company_name: company.company_name, registration_no: company.registration_no, address: company.address, contact_number: company.contact_number, email: company.email, status: company.status }]).select().single();
+      const { data, error } = await supabase.from("companies").insert([{ company_name: company.company_name, registration_no: company.registration_no, address: company.address, contact_number: company.contact_number, email: company.email, status: company.status } as any]).select().single();
       if (error) throw error;
       return data as Company;
     },
