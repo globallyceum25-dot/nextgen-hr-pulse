@@ -7,7 +7,13 @@ import {
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
 import { StatusBadge, PriorityBadge } from "@/components/dashboard/StatusBadge";
 import ProgressBar from "@/components/dashboard/ProgressBar";
-import { Search, ChevronDown, ChevronRight, Plus, Pencil } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useUserRole";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -36,6 +42,7 @@ function getTaskWeightFromPriority(priority: Priority): number {
 
 export default function Tasks({ selectedSector }: TasksProps) {
   const { addEntry } = useActivityLog();
+  const { isAdmin } = useIsAdmin();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
@@ -88,6 +95,18 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const computedWeightedScore = Math.round((computedTaskWeight * (computedProgress / 100)) * 100) / 100;
   const computedKpiStatus = getKpiStatusFromAchievement(computedKpiAchievement);
   const computedCompletionFlag = computedProgress >= 100 ? 1 : 0;
+
+  const handleDeleteTask = (task: Task) => {
+    setTasks(prev => prev.filter(t => t.id !== task.id));
+    addEntry({
+      action: "updated",
+      taskName: task.name,
+      taskId: task.taskId,
+      description: `Task deleted`,
+      changes: [{ field: "Action", oldValue: "Active", newValue: "Deleted" }],
+    });
+    toast({ title: "Task Deleted", description: `"${task.name}" has been removed.` });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -594,9 +613,32 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     </td>
                     <td className="px-3 py-2.5"><StatusBadge status={task.status} /></td>
                     <td className="px-3 py-2.5 text-center">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
-                        <Pencil size={14} />
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
+                          <Pencil size={14} />
+                        </Button>
+                        {isAdmin && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => e.stopPropagation()}>
+                                <Trash2 size={14} />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "<strong>{task.name}</strong>"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDeleteTask(task)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </td>
                   </tr>
                   {expandedTask === task.id && (
