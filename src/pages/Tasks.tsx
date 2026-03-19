@@ -44,6 +44,17 @@ function getTaskWeightFromPriority(priority: Priority): number {
 export default function Tasks({ selectedSector }: TasksProps) {
   const { addEntry } = useActivityLog();
   const { isAdmin } = useIsAdmin();
+  const { data: employeesList = [] } = useEmployees();
+
+  const handleResponsibleChange = (name: string, setter: React.Dispatch<React.SetStateAction<typeof formData>>) => {
+    const emp = employeesList.find(e => e.employee_name === name);
+    setter(p => ({
+      ...p,
+      responsible: name,
+      companyName: emp?.company_name || p.companyName,
+      location: emp?.location || p.location,
+    }));
+  };
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
