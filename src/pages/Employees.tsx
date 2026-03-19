@@ -278,9 +278,97 @@ export default function Employees({ selectedSector }: EmployeesProps) {
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus size={16} /> Add Employee</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Add New Employee</DialogTitle></DialogHeader>
-            {renderForm(handleAdd, "Add Employee")}
+            {/* Mode Toggle */}
+            <div className="flex gap-2 mt-1">
+              <Button variant={addMode === "single" ? "default" : "outline"} size="sm" onClick={() => setAddMode("single")} className="gap-1.5">
+                <Plus size={14} /> Single Entry
+              </Button>
+              <Button variant={addMode === "bulk" ? "default" : "outline"} size="sm" onClick={() => setAddMode("bulk")} className="gap-1.5">
+                <FileSpreadsheet size={14} /> Bulk Upload (Excel)
+              </Button>
+            </div>
+
+            {addMode === "single" ? (
+              renderForm(handleAdd, "Add Employee")
+            ) : (
+              <div className="space-y-4 mt-2">
+                {/* Upload area */}
+                <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3 bg-muted/30">
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Upload Excel File (.xlsx, .xls, .csv)</p>
+                    <p className="text-xs text-muted-foreground mt-1">File should have columns: Employee Name, Company Name, Location, Designation, etc.</p>
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1.5">
+                      <Upload size={14} /> Choose File
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={downloadTemplate} className="gap-1.5">
+                      <FileSpreadsheet size={14} /> Download Template
+                    </Button>
+                  </div>
+                  <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
+                  {bulkFileName && <p className="text-xs text-primary font-medium">📎 {bulkFileName}</p>}
+                </div>
+
+                {/* Preview table */}
+                {bulkData.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" /> Preview — {bulkData.length} employee{bulkData.length !== 1 ? "s" : ""} found
+                      </p>
+                      <Button variant="ghost" size="sm" onClick={() => { setBulkData([]); setBulkFileName(""); }}>
+                        <X size={14} className="mr-1" /> Clear
+                      </Button>
+                    </div>
+                    <div className="max-h-60 overflow-auto border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-8">#</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Company</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Designation</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="w-10"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {bulkData.map((row, i) => (
+                            <TableRow key={i}>
+                              <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
+                              <TableCell className="text-sm font-medium">{row.employee_name}</TableCell>
+                              <TableCell className="text-xs">{row.company_name}</TableCell>
+                              <TableCell className="text-xs">{row.location || "—"}</TableCell>
+                              <TableCell className="text-xs">{row.designation || "—"}</TableCell>
+                              <TableCell>
+                                <Badge variant={row.employment_status === "Active" ? "default" : "secondary"} className="text-[10px]">
+                                  {row.employment_status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeBulkRow(i)}>
+                                  <X size={12} />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <div className="flex justify-end pt-2">
+                      <Button onClick={handleBulkAdd} disabled={isBulkAdding} className="gap-1.5">
+                        {isBulkAdding ? "Adding..." : `Add ${bulkData.length} Employees`}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
