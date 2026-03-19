@@ -331,6 +331,7 @@ function EmployeeMasterTab() {
         company_name: String(row["Company Name"] || row["company_name"] || activeCompanies[0]?.company_name || "").trim(),
         location: String(row["Location"] || row["location"] || "").trim() || null,
         designation: String(row["Designation"] || row["designation"] || "").trim() || null,
+        department: String(row["Department"] || row["department"] || "").trim() || null,
         reporting_manager: String(row["Reporting Manager"] || row["reporting_manager"] || "").trim() || null,
         employment_status: String(row["Employment Status"] || row["employment_status"] || "Active").trim(),
         date_joined: row["Date Joined"] || row["date_joined"] ? String(row["Date Joined"] || row["date_joined"]).trim() : null,
