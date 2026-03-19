@@ -116,23 +116,224 @@ export default function AdminBackend() {
         ))}
       </div>
 
-      {/* Database Tables */}
+      {/* Database Schema & Connections */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Database Tables</CardTitle>
-          <CardDescription>Tables provisioned in the system</CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-md bg-primary/10">
+              <Table2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Database Schema & Connections</CardTitle>
+              <CardDescription>Tables, columns, relationships, and security policies</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {["profiles", "user_roles"].map((table) => (
-              <div key={table} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">
-                <div className="flex items-center gap-2">
-                  <Database className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">{table}</span>
-                </div>
-                <Badge variant="secondary" className="text-xs">RLS Enabled</Badge>
+        <CardContent className="space-y-3">
+          {/* Profiles Table */}
+          <Collapsible>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-md bg-muted/50 border border-border hover:bg-muted transition-colors">
+              <div className="flex items-center gap-2">
+                <Database className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">profiles</span>
+                <Badge variant="secondary" className="text-[10px]">7 columns</Badge>
               </div>
-            ))}
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-success border-success/30 text-[10px]">
+                  <Lock className="h-3 w-3 mr-1" /> RLS Enabled
+                </Badge>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 border border-border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Column</TableHead>
+                    <TableHead className="text-xs">Type</TableHead>
+                    <TableHead className="text-xs">Nullable</TableHead>
+                    <TableHead className="text-xs">Default</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[
+                    { col: "id", type: "uuid", nullable: "No", def: "gen_random_uuid()", isPk: true },
+                    { col: "user_id", type: "uuid", nullable: "No", def: "—", isFk: false },
+                    { col: "email", type: "text", nullable: "Yes", def: "—" },
+                    { col: "full_name", type: "text", nullable: "Yes", def: "—" },
+                    { col: "avatar_url", type: "text", nullable: "Yes", def: "—" },
+                    { col: "sector_id", type: "integer", nullable: "Yes", def: "—" },
+                    { col: "created_at", type: "timestamptz", nullable: "No", def: "now()" },
+                    { col: "updated_at", type: "timestamptz", nullable: "No", def: "now()" },
+                  ].map((c) => (
+                    <TableRow key={c.col}>
+                      <TableCell className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                        {c.isPk && <Key className="h-3 w-3 text-amber-500" />}
+                        {c.col}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">{c.type}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{c.nullable}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">{c.def}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="p-3 border-t border-border bg-muted/30 space-y-2">
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Lock className="h-3 w-3 text-primary" /> RLS Policies (4)
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {[
+                    { name: "Admins can view all profiles", cmd: "SELECT" },
+                    { name: "Users can view their own profile", cmd: "SELECT" },
+                    { name: "Users can insert their own profile", cmd: "INSERT" },
+                    { name: "Users can update their own profile", cmd: "UPDATE" },
+                  ].map((p) => (
+                    <div key={p.name} className="flex items-center gap-2 text-xs p-2 rounded bg-background border border-border">
+                      <Badge variant="outline" className="text-[10px] shrink-0">{p.cmd}</Badge>
+                      <span className="text-muted-foreground">{p.name}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5 mt-3">
+                  <Activity className="h-3 w-3 text-primary" /> Triggers
+                </p>
+                <div className="text-xs p-2 rounded bg-background border border-border text-muted-foreground">
+                  <span className="font-medium text-foreground">handle_new_user</span> — Auto-creates profile on user sign-up
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* User Roles Table */}
+          <Collapsible>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-md bg-muted/50 border border-border hover:bg-muted transition-colors">
+              <div className="flex items-center gap-2">
+                <Database className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">user_roles</span>
+                <Badge variant="secondary" className="text-[10px]">4 columns</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-success border-success/30 text-[10px]">
+                  <Lock className="h-3 w-3 mr-1" /> RLS Enabled
+                </Badge>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 border border-border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Column</TableHead>
+                    <TableHead className="text-xs">Type</TableHead>
+                    <TableHead className="text-xs">Nullable</TableHead>
+                    <TableHead className="text-xs">Default</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[
+                    { col: "id", type: "uuid", nullable: "No", def: "gen_random_uuid()", isPk: true },
+                    { col: "user_id", type: "uuid", nullable: "No", def: "—" },
+                    { col: "role", type: "app_role (enum)", nullable: "No", def: "—" },
+                    { col: "created_at", type: "timestamptz", nullable: "No", def: "now()" },
+                  ].map((c) => (
+                    <TableRow key={c.col}>
+                      <TableCell className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                        {c.isPk && <Key className="h-3 w-3 text-amber-500" />}
+                        {c.col}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">{c.type}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{c.nullable}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">{c.def}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="p-3 border-t border-border bg-muted/30 space-y-2">
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Lock className="h-3 w-3 text-primary" /> RLS Policies (3)
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {[
+                    { name: "Admins can manage roles", cmd: "ALL" },
+                    { name: "Admins can view all roles", cmd: "SELECT" },
+                    { name: "Users can view their own roles", cmd: "SELECT" },
+                  ].map((p) => (
+                    <div key={p.name} className="flex items-center gap-2 text-xs p-2 rounded bg-background border border-border">
+                      <Badge variant="outline" className="text-[10px] shrink-0">{p.cmd}</Badge>
+                      <span className="text-muted-foreground">{p.name}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5 mt-3">
+                  <Activity className="h-3 w-3 text-primary" /> Enums
+                </p>
+                <div className="text-xs p-2 rounded bg-background border border-border text-muted-foreground">
+                  <span className="font-medium text-foreground">app_role:</span> super_admin, sector_hr_admin, responsible_person, viewer
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Relationships Diagram */}
+          <div className="p-4 rounded-md border border-border bg-muted/30">
+            <p className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-3">
+              <Link2 className="h-3.5 w-3.5 text-primary" /> Table Relationships
+            </p>
+            <div className="flex items-center justify-center gap-4 py-3">
+              <div className="flex flex-col items-center gap-1 p-3 rounded-md border border-primary/30 bg-primary/5">
+                <Database className="h-5 w-5 text-primary" />
+                <span className="text-xs font-semibold text-foreground">auth.users</span>
+                <span className="text-[10px] text-muted-foreground">System Auth</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-16 h-px bg-primary/50" />
+                <span className="text-[10px] text-primary font-medium">user_id</span>
+                <div className="w-16 h-px bg-primary/50" />
+              </div>
+              <div className="flex flex-col items-center gap-1 p-3 rounded-md border border-primary/30 bg-primary/5">
+                <Database className="h-5 w-5 text-primary" />
+                <span className="text-xs font-semibold text-foreground">profiles</span>
+                <span className="text-[10px] text-muted-foreground">User Data</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-16 h-px bg-primary/50" />
+                <span className="text-[10px] text-primary font-medium">user_id</span>
+                <div className="w-16 h-px bg-primary/50" />
+              </div>
+              <div className="flex flex-col items-center gap-1 p-3 rounded-md border border-primary/30 bg-primary/5">
+                <Database className="h-5 w-5 text-primary" />
+                <span className="text-xs font-semibold text-foreground">user_roles</span>
+                <span className="text-[10px] text-muted-foreground">Access Control</span>
+              </div>
+            </div>
+            <div className="mt-3 p-2 rounded bg-background border border-border">
+              <p className="text-[10px] text-muted-foreground text-center">
+                <span className="font-medium text-foreground">auth.users</span> → triggers <span className="font-medium text-foreground">handle_new_user()</span> → creates <span className="font-medium text-foreground">profiles</span> row → admin assigns <span className="font-medium text-foreground">user_roles</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Database Functions */}
+          <div className="p-4 rounded-md border border-border bg-muted/30">
+            <p className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-3">
+              <Server className="h-3.5 w-3.5 text-primary" /> Database Functions
+            </p>
+            <div className="space-y-2">
+              {[
+                { name: "has_role(_user_id, _role)", desc: "Checks if a user has a specific role (SECURITY DEFINER)" },
+                { name: "handle_new_user()", desc: "Trigger function — creates profile on new sign-up" },
+                { name: "update_updated_at_column()", desc: "Auto-updates the updated_at timestamp on row changes" },
+              ].map((fn) => (
+                <div key={fn.name} className="flex items-start gap-2 text-xs p-2 rounded bg-background border border-border">
+                  <Badge variant="secondary" className="text-[10px] shrink-0 font-mono mt-0.5">fn</Badge>
+                  <div>
+                    <span className="font-medium text-foreground font-mono">{fn.name}</span>
+                    <p className="text-muted-foreground mt-0.5">{fn.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
