@@ -51,8 +51,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
     setter(p => ({
       ...p,
       responsible: name,
-      companyName: emp?.company_name || p.companyName,
-      location: emp?.location || p.location,
+      companyName: emp?.company_name || "",
+      location: emp?.location || "",
     }));
   };
   const [search, setSearch] = useState("");
@@ -376,16 +376,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </div>
                   <div>
                     <label className={labelClass}>Company Name</label>
-                    <input className={inputClass} value={formData.companyName} readOnly />
+                    <input className={inputClass + " opacity-60"} value={formData.companyName} readOnly placeholder="Auto-filled from employee" />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className={labelClass}>Location *</label>
-                    <select className={inputClass} value={formData.location} onChange={e => setFormData(p => ({ ...p, location: e.target.value }))}>
-                      <option value="">Select</option>
-                      {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                    </select>
+                    <input className={inputClass + " opacity-60"} value={formData.location} readOnly placeholder="Auto-filled from employee" />
                   </div>
                   <div>
                     <label className={labelClass}>Task Category</label>
@@ -734,16 +731,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div>
                   <label className={labelClass}>Company Name</label>
-                  <input className={inputClass} value={formData.companyName} readOnly />
+                  <input className={inputClass + " opacity-60"} value={formData.companyName} readOnly placeholder="Auto-filled from employee" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className={labelClass}>Location *</label>
-                  <select className={inputClass} value={formData.location} onChange={e => setFormData(p => ({ ...p, location: e.target.value }))}>
-                    <option value="">Select</option>
-                    {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
+                  <input className={inputClass + " opacity-60"} value={formData.location} readOnly placeholder="Auto-filled from employee" />
                 </div>
                 <div>
                   <label className={labelClass}>Task Category</label>
