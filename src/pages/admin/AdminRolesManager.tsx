@@ -140,6 +140,15 @@ export default function AdminRolesManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
+                        {ROLE_MODULES[role].map((mod) => (
+                          <Badge key={mod} variant="outline" className="text-[10px] font-normal">
+                            {mod}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
                         {ROLE_PERMISSIONS[role].map((perm) => (
                           <Badge key={perm} variant="secondary" className="text-[10px] font-normal">
                             {perm}
