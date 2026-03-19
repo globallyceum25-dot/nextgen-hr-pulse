@@ -435,7 +435,10 @@ function EmployeeMasterTab() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Department</label>
-          <input className={inputClass} placeholder="e.g. Human Resources" value={form.department || ""} onChange={e => setForm(p => ({ ...p, department: e.target.value || null }))} />
+          <select className={inputClass} value={form.department || ""} onChange={e => setForm(p => ({ ...p, department: e.target.value || null }))}>
+            <option value="">Select department</option>
+            {activeDepartments.map(d => <option key={d.id} value={d.department_name}>{d.department_name}</option>)}
+          </select>
         </div>
         <div>
           <label className={labelClass}>Reporting Manager</label>
