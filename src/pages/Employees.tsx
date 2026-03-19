@@ -117,12 +117,13 @@ function CompanyMasterTab() {
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Company Name</TableHead><TableHead>Reg No</TableHead><TableHead>Address</TableHead><TableHead>Contact</TableHead><TableHead>Email</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">ID</TableHead><TableHead>Company Name</TableHead><TableHead>Reg No</TableHead><TableHead>Address</TableHead><TableHead>Contact</TableHead><TableHead>Email</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No companies found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No companies found</TableCell></TableRow> :
                 filtered.map(c => (
                   <TableRow key={c.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{c.company_code}</TableCell>
                     <TableCell className="font-semibold">{c.company_name}</TableCell>
                     <TableCell className="text-sm">{c.registration_no || "—"}</TableCell>
                     <TableCell className="text-sm">{c.address || "—"}</TableCell>
