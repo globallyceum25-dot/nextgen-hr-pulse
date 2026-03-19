@@ -52,7 +52,70 @@ export default function Employees({ selectedSector }: EmployeesProps) {
   const [isBulkAdding, setIsBulkAdding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const resetForm = () => setForm(emptyForm);
+  const resetForm = () => { setForm(emptyForm); setBulkData([]); setBulkFileName(""); setAddMode("single"); };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBulkFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const data = evt.target?.result;
+      const workbook = XLSX.read(data, { type: "binary" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+      const parsed = rows.map(row => ({
+        employee_name: String(row["Employee Name"] || row["employee_name"] || "").trim(),
+        company_name: String(row["Company Name"] || row["company_name"] || COMPANY_NAMES[0]).trim(),
+        location: String(row["Location"] || row["location"] || "").trim() || null,
+        designation: String(row["Designation"] || row["designation"] || "").trim() || null,
+        reporting_manager: String(row["Reporting Manager"] || row["reporting_manager"] || "").trim() || null,
+        employment_status: String(row["Employment Status"] || row["employment_status"] || "Active").trim(),
+        date_joined: row["Date Joined"] || row["date_joined"] ? String(row["Date Joined"] || row["date_joined"]).trim() : null,
+      })).filter(r => r.employee_name);
+      setBulkData(parsed);
+    };
+    reader.readAsBinaryString(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleBulkAdd = async () => {
+    if (bulkData.length === 0) return;
+    setIsBulkAdding(true);
+    let success = 0, failed = 0;
+    for (const emp of bulkData) {
+      try {
+        await addEmployee.mutateAsync({
+          employee_name: emp.employee_name,
+          company_name: emp.company_name,
+          location: emp.location,
+          designation: emp.designation,
+          reporting_manager: emp.reporting_manager,
+          employment_status: emp.employment_status,
+          date_joined: emp.date_joined,
+        });
+        success++;
+      } catch { failed++; }
+    }
+    toast({ title: "Bulk Import Complete", description: `${success} added, ${failed} failed.` });
+    setBulkData([]);
+    setBulkFileName("");
+    setAddMode("single");
+    setDialogOpen(false);
+    setIsBulkAdding(false);
+  };
+
+  const removeBulkRow = (index: number) => setBulkData(prev => prev.filter((_, i) => i !== index));
+
+  const downloadTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ["Employee Name", "Company Name", "Location", "Designation", "Reporting Manager", "Employment Status", "Date Joined"],
+      ["John Doe", "NextGen Human Capital Solutions", "Colombo", "HR Executive", "", "Active", "2026-01-15"],
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Employees");
+    XLSX.writeFile(wb, "employee_template.xlsx");
+  };
 
   const filtered = employees.filter(e => {
     if (statusFilter !== "All" && e.employment_status !== statusFilter) return false;
