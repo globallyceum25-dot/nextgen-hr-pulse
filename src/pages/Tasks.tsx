@@ -4,6 +4,7 @@ import {
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
   type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
 } from "@/data/mockData";
+import { useEmployees } from "@/hooks/useEmployees";
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
 import { StatusBadge, PriorityBadge } from "@/components/dashboard/StatusBadge";
 import ProgressBar from "@/components/dashboard/ProgressBar";
@@ -43,6 +44,17 @@ function getTaskWeightFromPriority(priority: Priority): number {
 export default function Tasks({ selectedSector }: TasksProps) {
   const { addEntry } = useActivityLog();
   const { isAdmin } = useIsAdmin();
+  const { data: employeesList = [] } = useEmployees();
+
+  const handleResponsibleChange = (name: string, setter: React.Dispatch<React.SetStateAction<typeof formData>>) => {
+    const emp = employeesList.find(e => e.employee_name === name);
+    setter(p => ({
+      ...p,
+      responsible: name,
+      companyName: emp?.company_name || p.companyName,
+      location: emp?.location || p.location,
+    }));
+  };
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
@@ -357,16 +369,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelClass}>Responsible Person *</label>
-                    <select className={inputClass} value={formData.responsible} onChange={e => setFormData(p => ({ ...p, responsible: e.target.value }))}>
+                    <select className={inputClass} value={formData.responsible} onChange={e => handleResponsibleChange(e.target.value, setFormData)}>
                       <option value="">Select person</option>
-                      {RESPONSIBLE_PERSONS.map(p => <option key={p} value={p}>{p}</option>)}
+                      {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className={labelClass}>Company Name</label>
-                    <select className={inputClass} value={formData.companyName} onChange={e => setFormData(p => ({ ...p, companyName: e.target.value }))}>
-                      {COMPANY_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <input className={inputClass} value={formData.companyName} readOnly />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
@@ -717,16 +727,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Responsible Person *</label>
-                  <select className={inputClass} value={formData.responsible} onChange={e => setFormData(p => ({ ...p, responsible: e.target.value }))}>
+                  <select className={inputClass} value={formData.responsible} onChange={e => handleResponsibleChange(e.target.value, setFormData)}>
                     <option value="">Select person</option>
-                    {RESPONSIBLE_PERSONS.map(p => <option key={p} value={p}>{p}</option>)}
+                    {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className={labelClass}>Company Name</label>
-                  <select className={inputClass} value={formData.companyName} onChange={e => setFormData(p => ({ ...p, companyName: e.target.value }))}>
-                    {COMPANY_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <input className={inputClass} value={formData.companyName} readOnly />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -926,7 +934,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div>
                 <label className={labelClass}>Responsible</label>
                 <select className={inputClass} value={subTaskForm.responsible} onChange={e => setSubTaskForm(p => ({ ...p, responsible: e.target.value }))}>
-                  {RESPONSIBLE_PERSONS.map(p => <option key={p} value={p}>{p}</option>)}
+                  {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
                 </select>
               </div>
               <div>
