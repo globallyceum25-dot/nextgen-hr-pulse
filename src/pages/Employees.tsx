@@ -1,74 +1,315 @@
-import { useMemo } from "react";
-import { mockTasks, SECTORS, RESPONSIBLE_PERSONS } from "@/data/mockData";
-import ProgressBar from "@/components/dashboard/ProgressBar";
-import { User } from "lucide-react";
+import { useState } from "react";
+import { useEmployees, useAddEmployee, useUpdateEmployee, useDeleteEmployee, type Employee } from "@/hooks/useEmployees";
+import { LOCATIONS, COMPANY_NAMES } from "@/data/mockData";
+import { Plus, Pencil, Trash2, Search, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 
 interface EmployeesProps {
   selectedSector: number | null;
 }
 
+const EMPLOYMENT_STATUSES = ["Active", "Inactive", "On Leave", "Terminated"];
+const DESIGNATIONS = [
+  "HR Executive", "HR Manager", "Senior HR Executive", "HR Assistant",
+  "Payroll Officer", "Recruitment Specialist", "Training Coordinator",
+  "Compliance Officer", "HR Intern",
+];
+
+const emptyForm = {
+  employee_name: "",
+  company_name: COMPANY_NAMES[0],
+  location: "" as string | null,
+  designation: "" as string | null,
+  reporting_manager: "" as string | null,
+  employment_status: "Active",
+  date_joined: "" as string | null,
+};
+
 export default function Employees({ selectedSector }: EmployeesProps) {
-  const employees = useMemo(() => {
-    const filtered = selectedSector ? mockTasks.filter(t => t.sectorId === selectedSector) : mockTasks;
-    const map = new Map<string, { total: number; completed: number; overdue: number; kpiSum: number; sectors: Set<number> }>();
+  const { data: employees = [], isLoading } = useEmployees();
+  const addEmployee = useAddEmployee();
+  const updateEmployee = useUpdateEmployee();
+  const deleteEmployee = useDeleteEmployee();
 
-    filtered.forEach(t => {
-      const e = map.get(t.responsible) || { total: 0, completed: 0, overdue: 0, kpiSum: 0, sectors: new Set() };
-      e.total++;
-      if (t.status === "Completed") e.completed++;
-      if (t.status === "Overdue") e.overdue++;
-      e.kpiSum += t.kpiScore;
-      e.sectors.add(t.sectorId);
-      map.set(t.responsible, e);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [form, setForm] = useState(emptyForm);
+
+  const resetForm = () => setForm(emptyForm);
+
+  const filtered = employees.filter(e => {
+    if (statusFilter !== "All" && e.employment_status !== statusFilter) return false;
+    if (search && !e.employee_name.toLowerCase().includes(search.toLowerCase()) &&
+        !e.employee_id.includes(search)) return false;
+    return true;
+  });
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.employee_name) {
+      toast({ title: "Validation Error", description: "Employee name is required.", variant: "destructive" });
+      return;
+    }
+    try {
+      await addEmployee.mutateAsync({
+        employee_name: form.employee_name,
+        company_name: form.company_name,
+        location: form.location || null,
+        designation: form.designation || null,
+        reporting_manager: form.reporting_manager || null,
+        employment_status: form.employment_status,
+        date_joined: form.date_joined || null,
+      });
+      toast({ title: "Employee Added", description: `${form.employee_name} has been added.` });
+      resetForm();
+      setDialogOpen(false);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const openEdit = (emp: Employee) => {
+    setEditingEmployee(emp);
+    setForm({
+      employee_name: emp.employee_name,
+      company_name: emp.company_name,
+      location: emp.location,
+      designation: emp.designation,
+      reporting_manager: emp.reporting_manager,
+      employment_status: emp.employment_status,
+      date_joined: emp.date_joined,
     });
+    setEditDialogOpen(true);
+  };
 
-    return Array.from(map.entries()).map(([name, d]) => ({
-      name,
-      initials: name.split(" ").map(n => n[0]).join(""),
-      tasks: d.total,
-      completed: d.completed,
-      overdue: d.overdue,
-      kpi: Math.round(d.kpiSum / d.total),
-      completion: Math.round((d.completed / d.total) * 100),
-      sectors: d.sectors.size,
-    })).sort((a, b) => b.kpi - a.kpi);
-  }, [selectedSector]);
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEmployee) return;
+    try {
+      await updateEmployee.mutateAsync({
+        id: editingEmployee.id,
+        employee_name: form.employee_name,
+        company_name: form.company_name,
+        location: form.location || null,
+        designation: form.designation || null,
+        reporting_manager: form.reporting_manager || null,
+        employment_status: form.employment_status,
+        date_joined: form.date_joined || null,
+      });
+      toast({ title: "Employee Updated", description: `${form.employee_name} has been updated.` });
+      resetForm();
+      setEditDialogOpen(false);
+      setEditingEmployee(null);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
-  const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
+  const handleDelete = async (emp: Employee) => {
+    try {
+      await deleteEmployee.mutateAsync(emp.id);
+      toast({ title: "Employee Deleted", description: `${emp.employee_name} has been removed.` });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const inputClass = "w-full px-3 py-2 text-sm rounded-md border bg-card text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring";
+  const labelClass = "block text-xs font-medium text-foreground mb-1";
+
+  const renderForm = (onSubmit: (e: React.FormEvent) => void, submitLabel: string) => (
+    <form onSubmit={onSubmit} className="space-y-4 mt-2">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Employee Name *</label>
+          <input className={inputClass} placeholder="Full name" value={form.employee_name}
+            onChange={e => setForm(p => ({ ...p, employee_name: e.target.value }))} />
+        </div>
+        <div>
+          <label className={labelClass}>Company Name</label>
+          <select className={inputClass} value={form.company_name}
+            onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))}>
+            {COMPANY_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Location</label>
+          <select className={inputClass} value={form.location || ""}
+            onChange={e => setForm(p => ({ ...p, location: e.target.value || null }))}>
+            <option value="">Select location</option>
+            {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Designation</label>
+          <select className={inputClass} value={form.designation || ""}
+            onChange={e => setForm(p => ({ ...p, designation: e.target.value || null }))}>
+            <option value="">Select designation</option>
+            {DESIGNATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Reporting Manager</label>
+          <select className={inputClass} value={form.reporting_manager || ""}
+            onChange={e => setForm(p => ({ ...p, reporting_manager: e.target.value || null }))}>
+            <option value="">Select manager</option>
+            {employees.filter(emp => emp.employee_name !== form.employee_name).map(emp => (
+              <option key={emp.id} value={emp.employee_name}>{emp.employee_name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Employment Status</label>
+          <select className={inputClass} value={form.employment_status}
+            onChange={e => setForm(p => ({ ...p, employment_status: e.target.value }))}>
+            {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Date Joined</label>
+          <input type="date" className={inputClass} value={form.date_joined || ""}
+            onChange={e => setForm(p => ({ ...p, date_joined: e.target.value || null }))} />
+        </div>
+      </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button type="submit" disabled={addEmployee.isPending || updateEmployee.isPending}>
+          {submitLabel}
+        </Button>
+      </div>
+    </form>
+  );
 
   return (
     <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Employees</h1>
-        <p className="text-sm text-muted-foreground">{sectorName} — {employees.length} team members</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" /> Employee Master
+          </h1>
+          <p className="text-sm text-muted-foreground">{filtered.length} employee{filtered.length !== 1 ? "s" : ""}</p>
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm(); }}>
+          <DialogTrigger asChild>
+            <Button className="gap-2"><Plus size={16} /> Add Employee</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>Add New Employee</DialogTitle></DialogHeader>
+            {renderForm(handleAdd, "Add Employee")}
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {employees.map(emp => (
-          <div key={emp.name} className="bg-card rounded-lg border p-4 hover:shadow-md transition-snappy">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-                {emp.initials}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-card-foreground">{emp.name}</p>
-                <p className="text-[11px] text-muted-foreground">{emp.sectors} sector{emp.sectors > 1 ? "s" : ""} · {emp.tasks} tasks</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">KPI Score</span>
-                <span className={`font-semibold ${emp.kpi >= 80 ? "text-success" : emp.kpi >= 60 ? "text-warning" : "text-destructive"}`}>{emp.kpi}%</span>
-              </div>
-              <ProgressBar value={emp.kpi} size="sm" />
-              <div className="flex gap-4 mt-2 text-[11px]">
-                <span className="text-success">{emp.completed} completed</span>
-                {emp.overdue > 0 && <span className="text-destructive">{emp.overdue} overdue</span>}
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Filters */}
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input className={inputClass + " pl-9"} placeholder="Search by name or ID..."
+            value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className={inputClass + " w-auto"} value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}>
+          <option value="All">All Statuses</option>
+          {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
       </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="text-center text-muted-foreground py-8">Loading employees...</div>
+      ) : (
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-20">Emp ID</TableHead>
+                <TableHead>Employee Name</TableHead>
+                <TableHead>Company Name</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Designation</TableHead>
+                <TableHead>Reporting Manager</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date Joined</TableHead>
+                <TableHead className="w-20">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    No employees found
+                  </TableCell>
+                </TableRow>
+              ) : filtered.map(emp => (
+                <TableRow key={emp.id}>
+                  <TableCell className="font-mono text-xs font-semibold">{emp.employee_id}</TableCell>
+                  <TableCell className="font-semibold">{emp.employee_name}</TableCell>
+                  <TableCell className="text-sm">{emp.company_name}</TableCell>
+                  <TableCell className="text-sm">{emp.location || "—"}</TableCell>
+                  <TableCell className="text-sm">{emp.designation || "—"}</TableCell>
+                  <TableCell className="text-sm">{emp.reporting_manager || "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant={emp.employment_status === "Active" ? "default" : "secondary"}>
+                      {emp.employment_status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">{emp.date_joined || "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(emp)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete {emp.employee_name}?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(emp)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={open => { setEditDialogOpen(open); if (!open) { resetForm(); setEditingEmployee(null); } }}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Edit Employee — {editingEmployee?.employee_id}</DialogTitle></DialogHeader>
+          {renderForm(handleEdit, "Save Changes")}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
