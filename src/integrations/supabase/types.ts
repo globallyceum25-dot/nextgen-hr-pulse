@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      employees: {
+        Row: {
+          company_name: string
+          created_at: string
+          date_joined: string | null
+          designation: string | null
+          employee_id: string
+          employee_name: string
+          employment_status: string
+          id: string
+          location: string | null
+          reporting_manager: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string
+          created_at?: string
+          date_joined?: string | null
+          designation?: string | null
+          employee_id: string
+          employee_name: string
+          employment_status?: string
+          id?: string
+          location?: string | null
+          reporting_manager?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          date_joined?: string | null
+          designation?: string | null
+          employee_id?: string
+          employee_name?: string
+          employment_status?: string
+          id?: string
+          location?: string | null
+          reporting_manager?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
