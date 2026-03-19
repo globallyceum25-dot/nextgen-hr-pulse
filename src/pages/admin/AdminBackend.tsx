@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Database, Server, Shield, HardDrive, RefreshCw, Clock, Activity } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Database, Server, Shield, HardDrive, RefreshCw, Clock, Activity, ChevronDown, Key, Lock, Link2, Table2 } from "lucide-react";
 import { useActivityLog } from "@/contexts/ActivityLogContext";
 import { format } from "date-fns";
 
