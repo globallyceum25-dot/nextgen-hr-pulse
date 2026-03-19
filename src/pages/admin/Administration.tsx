@@ -1,7 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Server, ShieldCheck } from "lucide-react";
+import { Server, ShieldCheck, Users } from "lucide-react";
 import AdminBackend from "./AdminBackend";
-import AdminUserRoles from "./AdminUserRoles";
+import AdminRolesManager from "./AdminRolesManager";
+import AdminUsersManager from "./AdminUsersManager";
 import { useSearchParams } from "react-router-dom";
 
 export default function Administration() {
@@ -38,6 +39,13 @@ export default function Administration() {
               <ShieldCheck className="mr-2 h-4 w-4" />
               User Roles
             </TabsTrigger>
+            <TabsTrigger
+              value="users"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 pt-3"
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Users
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -45,7 +53,10 @@ export default function Administration() {
           <AdminBackend />
         </TabsContent>
         <TabsContent value="roles" className="mt-0">
-          <AdminUserRoles />
+          <AdminRolesManager />
+        </TabsContent>
+        <TabsContent value="users" className="mt-0">
+          <AdminUsersManager />
         </TabsContent>
       </Tabs>
     </div>
