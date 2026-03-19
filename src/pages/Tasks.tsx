@@ -51,8 +51,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
     setter(p => ({
       ...p,
       responsible: name,
-      companyName: emp?.company_name || p.companyName,
-      location: emp?.location || p.location,
+      companyName: emp?.company_name || "",
+      location: emp?.location || "",
     }));
   };
   const [search, setSearch] = useState("");
