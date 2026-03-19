@@ -527,7 +527,7 @@ function EmployeeMasterTab() {
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Designation</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Department</TableHead><TableHead>Designation</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No employees found</TableCell></TableRow> :
