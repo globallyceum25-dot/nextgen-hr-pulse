@@ -163,7 +163,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       maxWeight: formData.maxWeight,
       startDate: formData.startDate,
       dueDate: formData.dueDate,
-      status: formData.status,
+      status: computedStatus,
       completionFlag: computedCompletionFlag,
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
