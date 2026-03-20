@@ -8,6 +8,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
 import { StatusBadge, PriorityBadge } from "@/components/dashboard/StatusBadge";
 import ProgressBar from "@/components/dashboard/ProgressBar";
+import { DeadlineAlert, DeadlineSummaryCards, getDeadlineInfo } from "@/components/dashboard/DeadlineAlert";
 import { Search, ChevronDown, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import {
@@ -66,6 +67,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
+  const [deadlineFilter, setDeadlineFilter] = useState<"All" | "Overdue" | "Due Soon" | "Completed" | "Pending">("All");
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -339,9 +341,19 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !t.responsible.toLowerCase().includes(search.toLowerCase())) return false;
+
+      // Deadline filter
+      if (deadlineFilter !== "All") {
+        const info = getDeadlineInfo(t);
+        if (deadlineFilter === "Overdue" && !info.isOverdue) return false;
+        if (deadlineFilter === "Due Soon" && !info.isDueWithin7Days) return false;
+        if (deadlineFilter === "Completed" && t.status !== "Completed") return false;
+        if (deadlineFilter === "Pending" && t.status === "Completed") return false;
+      }
+
       return true;
     });
-  }, [tasks, selectedSector, statusFilter, priorityFilter, search]);
+  }, [tasks, selectedSector, statusFilter, priorityFilter, search, deadlineFilter]);
 
   const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
 
@@ -350,6 +362,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
   return (
     <div className="p-6 space-y-4">
+      {/* Deadline Summary Cards */}
+      <DeadlineSummaryCards tasks={tasks.filter(t => !selectedSector || t.sectorId === selectedSector)} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">Task Management</h1>
@@ -567,6 +582,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
           <option value="Medium">Medium</option>
           <option value="Low">Low</option>
         </select>
+        <select value={deadlineFilter} onChange={e => setDeadlineFilter(e.target.value as any)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+          <option value="All">All Deadlines</option>
+          <option value="Overdue">Overdue</option>
+          <option value="Due Soon">Due Within 7 Days</option>
+          <option value="Pending">Pending Tasks</option>
+          <option value="Completed">Completed Tasks</option>
+        </select>
       </div>
 
       {/* Table */}
@@ -591,6 +613,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground w-28">Progress</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">KPI%</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-3 py-3 font-medium text-muted-foreground min-w-[220px]">Deadline Alert</th>
                 <th className="text-center px-3 py-3 font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
@@ -624,6 +647,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       </span>
                     </td>
                     <td className="px-3 py-2.5"><StatusBadge status={task.status} /></td>
+                    <td className="px-3 py-2.5"><DeadlineAlert task={task} /></td>
                     <td className="px-3 py-2.5 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
@@ -655,7 +679,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </tr>
                   {expandedTask === task.id && (
                     <tr key={`${task.id}-detail`}>
-                      <td colSpan={17} className="bg-muted/20 px-6 py-4">
+                      <td colSpan={18} className="bg-muted/20 px-6 py-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mb-3">
                           <div><span className="text-muted-foreground">Description:</span> <span className="text-card-foreground">{task.description}</span></div>
                           <div><span className="text-muted-foreground">KPI Target:</span> <span className="text-card-foreground">{task.kpiTargetPercent}%</span></div>
@@ -692,7 +716,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={17} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={18} className="px-4 py-12 text-center text-muted-foreground">
                     No tasks found matching your filters.
                   </td>
                 </tr>
