@@ -28,7 +28,7 @@ function getStatusFromProgress(progress: number): TaskStatus {
   if (progress === 0) return "Pending";
   if (progress <= 25) return "Started";
   if (progress <= 75) return "In Progress";
-  if (progress < 100) return "In Progress";
+  if (progress < 100) return "Almost Completed";
   return "Completed";
 }
 

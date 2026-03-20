@@ -41,7 +41,7 @@ export const KPI_ACHIEVEMENT_STATUSES = [
 ];
 
 export type Priority = "High" | "Medium" | "Low";
-export type TaskStatus = "Completed" | "In Progress" | "Pending" | "Overdue" | "Started";
+export type TaskStatus = "Completed" | "In Progress" | "Pending" | "Overdue" | "Started" | "Almost Completed";
 export type Stage = "Planning" | "Execution" | "Review" | "Closed";
 export type TaskType = "Process" | "Letter";
 
