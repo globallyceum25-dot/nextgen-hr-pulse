@@ -647,6 +647,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       </span>
                     </td>
                     <td className="px-3 py-2.5"><StatusBadge status={task.status} /></td>
+                    <td className="px-3 py-2.5"><DeadlineAlert task={task} /></td>
                     <td className="px-3 py-2.5 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}>
