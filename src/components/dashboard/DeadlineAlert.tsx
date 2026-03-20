@@ -141,11 +141,12 @@ export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
       bg: "bg-warning/10 border-warning/20",
     },
     {
-      label: "Total Pending Sub-tasks",
-      value: stats.totalPending,
-      icon: Clock,
+      label: "Main Tasks / Sub-tasks",
+      value: `${stats.totalMainTasks} / ${stats.totalSubTasks}`,
+      icon: ListChecks,
       color: "text-primary",
       bg: "bg-primary/10 border-primary/20",
+      subtitle: `Pending: ${stats.totalPending}`,
     },
     {
       label: "Completed Tasks",
