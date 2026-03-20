@@ -24,6 +24,14 @@ interface TasksProps {
   selectedSector: number | null;
 }
 
+function getStatusFromProgress(progress: number): TaskStatus {
+  if (progress === 0) return "Pending";
+  if (progress <= 25) return "Started";
+  if (progress <= 75) return "In Progress";
+  if (progress < 100) return "In Progress";
+  return "Completed";
+}
+
 function getKpiStatusFromAchievement(achievement: number): string {
   if (achievement >= 100) return "5 - Exceeds Expectations";
   if (achievement >= 70) return "4 - Very Good / Above Expectations";
