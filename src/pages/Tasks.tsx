@@ -65,7 +65,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
   const [deadlineFilter, setDeadlineFilter] = useState<"All" | "Overdue" | "Due Soon" | "Completed" | "Pending">("All");
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>(() =>
+    mockTasks.map(task => ({
+      ...task,
+      status: getStatusFromProgress(task.progress),
+      subTasks: task.subTasks.map(st => ({
+        ...st,
+        status: getStatusFromProgress(st.progress),
+      })),
+    }))
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
