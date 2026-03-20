@@ -283,7 +283,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       ? Math.round((progress / task.kpiTargetPercent) * 10000) / 100 : 0;
     const kpiStatus = getKpiStatusFromAchievement(kpiAchievement);
     const weightedScore = Math.round(task.taskWeight * (progress / 100) * 100) / 100;
-    const status: TaskStatus = progress >= 100 ? "Completed" : progress > 0 ? "In Progress" : "Started";
+    const status: TaskStatus = getStatusFromProgress(progress);
     return {
       ...task,
       subTasks: updatedSubTasks,
