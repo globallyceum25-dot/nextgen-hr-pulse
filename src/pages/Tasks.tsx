@@ -582,6 +582,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
           <option value="Medium">Medium</option>
           <option value="Low">Low</option>
         </select>
+        <select value={deadlineFilter} onChange={e => setDeadlineFilter(e.target.value as any)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+          <option value="All">All Deadlines</option>
+          <option value="Overdue">Overdue</option>
+          <option value="Due Soon">Due Within 7 Days</option>
+          <option value="Pending">Pending Tasks</option>
+          <option value="Completed">Completed Tasks</option>
+        </select>
       </div>
 
       {/* Table */}
