@@ -260,7 +260,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     if (editingTask.dueDate !== formData.dueDate) fieldChanges.push({ field: "Due Date", oldValue: editingTask.dueDate, newValue: formData.dueDate });
     if (editingTask.description !== formData.description) fieldChanges.push({ field: "Description", oldValue: editingTask.description || "", newValue: formData.description });
     const desc = fieldChanges.length > 0 ? `${fieldChanges.length} field(s) changed` : "Task details updated";
-    const action = formData.status === "Completed" && editingTask.status !== "Completed" ? "completed" as const : "updated" as const;
+    const action = computedStatus === "Completed" && editingTask.status !== "Completed" ? "completed" as const : "updated" as const;
     addEntry({ action, taskName: formData.name, taskId: editingTask.taskId, description: desc, changes: fieldChanges });
     setEditDialogOpen(false);
     setEditingTask(null);
