@@ -26,13 +26,8 @@ interface TasksProps {
   selectedSector: number | null;
 }
 
-function getStatusFromProgress(progress: number): TaskStatus {
-  if (progress === 0) return "Pending";
-  if (progress <= 25) return "Started";
-  if (progress <= 75) return "In Progress";
-  if (progress < 100) return "Almost Completed";
-  return "Completed";
-}
+// Re-export for local usage (shared function now in mockData)
+// getStatusFromProgress is imported from mockData
 
 function getKpiStatusFromAchievement(achievement: number): string {
   if (achievement >= 100) return "5 - Exceeds Expectations";
