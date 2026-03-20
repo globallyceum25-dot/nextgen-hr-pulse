@@ -111,12 +111,13 @@ function generateSubTasks(count: number, parentResponsible: string): SubTask[] {
     "Finalize documentation", "Coordinate with vendors", "Audit records",
   ];
   for (let i = 0; i < count; i++) {
-    const status = randomFrom<TaskStatus>(["Completed", "In Progress", "Pending", "Overdue"]);
+    const progress = Math.floor(Math.random() * 101);
+    const status = getStatusFromProgress(progress);
     subtasks.push({
       id: `ST-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
       name: randomFrom(names),
       status,
-      progress: status === "Completed" ? 100 : status === "Overdue" ? Math.floor(Math.random() * 40) : Math.floor(Math.random() * 90),
+      progress,
       responsible: Math.random() > 0.5 ? parentResponsible : randomFrom(RESPONSIBLE_PERSONS),
       dueDate: "2026-03-30",
       completedDate: status === "Completed" ? "2026-03-15" : undefined,
