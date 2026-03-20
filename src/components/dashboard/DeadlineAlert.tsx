@@ -101,8 +101,12 @@ export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
     let dueSoon = 0;
     let totalPending = 0;
     let completed = 0;
+    const totalMainTasks = tasks.length;
+    let totalSubTasks = 0;
 
     tasks.forEach(t => {
+      totalSubTasks += t.totalTasks;
+
       if (t.status === "Completed") {
         completed++;
         return;
@@ -118,7 +122,7 @@ export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
       else if (remaining <= 7) dueSoon++;
     });
 
-    return { overdue, dueSoon, totalPending, completed };
+    return { overdue, dueSoon, totalPending, completed, totalMainTasks, totalSubTasks };
   }, [tasks]);
 
   const cards = [
