@@ -179,7 +179,7 @@ export function generateMockTasks(): Task[] {
     const taskWeight = def.priority === "High" ? 1 : 0.6;
     const maxWeight = def.priority === "High" ? 1 : 0.6;
     const weightedScore = Math.round((kpiAchievement / 100) * taskWeight * 100) / 100;
-    const status: TaskStatus = progress >= 100 ? "Completed" : progress > 0 ? "In Progress" : progress === 0 && completedCount === 0 && totalTasks > 0 ? "Started" : "In Progress";
+    const status: TaskStatus = getStatusFromProgress(progress);
     const completionFlag = status === "Completed" ? 1 : 0;
     const month = Math.floor(Math.random() * 3) + 1;
 
