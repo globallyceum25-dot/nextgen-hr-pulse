@@ -230,7 +230,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         taskType: formData.taskType,
         slaFrequency: formData.slaFrequency,
         priority: formData.priority,
-        status: formData.status,
+        status: computedStatus,
         stage: formData.stage,
         totalTasks: formData.totalTasks,
         completedCount: formData.completedCount,
