@@ -341,9 +341,19 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !t.responsible.toLowerCase().includes(search.toLowerCase())) return false;
+
+      // Deadline filter
+      if (deadlineFilter !== "All") {
+        const info = getDeadlineInfo(t);
+        if (deadlineFilter === "Overdue" && !info.isOverdue) return false;
+        if (deadlineFilter === "Due Soon" && !info.isDueWithin7Days) return false;
+        if (deadlineFilter === "Completed" && t.status !== "Completed") return false;
+        if (deadlineFilter === "Pending" && t.status === "Completed") return false;
+      }
+
       return true;
     });
-  }, [tasks, selectedSector, statusFilter, priorityFilter, search]);
+  }, [tasks, selectedSector, statusFilter, priorityFilter, search, deadlineFilter]);
 
   const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
 
