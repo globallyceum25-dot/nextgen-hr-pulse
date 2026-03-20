@@ -3,6 +3,7 @@ import {
   mockTasks, SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
   type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
+  getStatusFromProgress,
 } from "@/data/mockData";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
@@ -25,13 +26,8 @@ interface TasksProps {
   selectedSector: number | null;
 }
 
-function getStatusFromProgress(progress: number): TaskStatus {
-  if (progress === 0) return "Pending";
-  if (progress <= 25) return "Started";
-  if (progress <= 75) return "In Progress";
-  if (progress < 100) return "Almost Completed";
-  return "Completed";
-}
+// Re-export for local usage (shared function now in mockData)
+// getStatusFromProgress is imported from mockData
 
 function getKpiStatusFromAchievement(achievement: number): string {
   if (achievement >= 100) return "5 - Exceeds Expectations";
@@ -69,7 +65,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
   const [deadlineFilter, setDeadlineFilter] = useState<"All" | "Overdue" | "Due Soon" | "Completed" | "Pending">("All");
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>(() =>
+    mockTasks.map(task => ({
+      ...task,
+      status: getStatusFromProgress(task.progress),
+      subTasks: task.subTasks.map(st => ({
+        ...st,
+        status: getStatusFromProgress(st.progress),
+      })),
+    }))
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);

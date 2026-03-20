@@ -94,6 +94,14 @@ function randomFrom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+export function getStatusFromProgress(progress: number): TaskStatus {
+  if (progress === 0) return "Pending";
+  if (progress <= 25) return "Started";
+  if (progress <= 75) return "In Progress";
+  if (progress < 100) return "Almost Completed";
+  return "Completed";
+}
+
 function generateSubTasks(count: number, parentResponsible: string): SubTask[] {
   const subtasks: SubTask[] = [];
   const names = [
@@ -103,12 +111,13 @@ function generateSubTasks(count: number, parentResponsible: string): SubTask[] {
     "Finalize documentation", "Coordinate with vendors", "Audit records",
   ];
   for (let i = 0; i < count; i++) {
-    const status = randomFrom<TaskStatus>(["Completed", "In Progress", "Pending", "Overdue"]);
+    const progress = Math.floor(Math.random() * 101);
+    const status = getStatusFromProgress(progress);
     subtasks.push({
       id: `ST-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
       name: randomFrom(names),
       status,
-      progress: status === "Completed" ? 100 : status === "Overdue" ? Math.floor(Math.random() * 40) : Math.floor(Math.random() * 90),
+      progress,
       responsible: Math.random() > 0.5 ? parentResponsible : randomFrom(RESPONSIBLE_PERSONS),
       dueDate: "2026-03-30",
       completedDate: status === "Completed" ? "2026-03-15" : undefined,
@@ -170,7 +179,7 @@ export function generateMockTasks(): Task[] {
     const taskWeight = def.priority === "High" ? 1 : 0.6;
     const maxWeight = def.priority === "High" ? 1 : 0.6;
     const weightedScore = Math.round((kpiAchievement / 100) * taskWeight * 100) / 100;
-    const status: TaskStatus = progress >= 100 ? "Completed" : progress > 0 ? "In Progress" : progress === 0 && completedCount === 0 && totalTasks > 0 ? "Started" : "In Progress";
+    const status: TaskStatus = getStatusFromProgress(progress);
     const completionFlag = status === "Completed" ? 1 : 0;
     const month = Math.floor(Math.random() * 3) + 1;
 
