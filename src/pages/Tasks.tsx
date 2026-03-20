@@ -362,6 +362,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
   return (
     <div className="p-6 space-y-4">
+      {/* Deadline Summary Cards */}
+      <DeadlineSummaryCards tasks={tasks.filter(t => !selectedSector || t.sectorId === selectedSector)} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">Task Management</h1>
