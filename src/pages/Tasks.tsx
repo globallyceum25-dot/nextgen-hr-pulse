@@ -253,7 +253,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     const fieldChanges: FieldChange[] = [];
     if (editingTask.name !== formData.name) fieldChanges.push({ field: "Name", oldValue: editingTask.name, newValue: formData.name });
     if (editingTask.responsible !== formData.responsible) fieldChanges.push({ field: "Responsible", oldValue: editingTask.responsible, newValue: formData.responsible });
-    if (editingTask.status !== formData.status) fieldChanges.push({ field: "Status", oldValue: editingTask.status, newValue: formData.status });
+    if (editingTask.status !== computedStatus) fieldChanges.push({ field: "Status", oldValue: editingTask.status, newValue: computedStatus });
     if (editingTask.priority !== formData.priority) fieldChanges.push({ field: "Priority", oldValue: editingTask.priority, newValue: formData.priority });
     if (editingTask.location !== formData.location) fieldChanges.push({ field: "Location", oldValue: editingTask.location, newValue: formData.location });
     if (editingTask.stage !== formData.stage) fieldChanges.push({ field: "Stage", oldValue: editingTask.stage, newValue: formData.stage });
