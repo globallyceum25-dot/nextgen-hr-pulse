@@ -503,14 +503,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Status & Dates</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className={labelClass}>Status</label>
-                    <select className={inputClass} value={formData.status} onChange={e => setFormData(p => ({ ...p, status: e.target.value as TaskStatus }))}>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Started">Started</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Overdue">Overdue</option>
-                    </select>
+                    <label className={labelClass}>Status (Auto)</label>
+                    <input type="text" disabled className={inputClass + " opacity-60"} value={computedStatus} />
                   </div>
                   <div>
                     <label className={labelClass}>Start Date</label>
