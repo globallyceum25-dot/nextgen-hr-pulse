@@ -166,6 +166,9 @@ export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
             <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
           </div>
           <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
+          {"subtitle" in c && c.subtitle && (
+            <p className="text-xs font-medium text-muted-foreground mt-0.5">{c.subtitle}</p>
+          )}
         </div>
       ))}
     </div>
