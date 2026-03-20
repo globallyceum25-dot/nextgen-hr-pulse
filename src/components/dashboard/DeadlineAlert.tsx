@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, ListChecks } from "lucide-react";
 import type { Task } from "@/data/mockData";
 
 export interface DeadlineInfo {
