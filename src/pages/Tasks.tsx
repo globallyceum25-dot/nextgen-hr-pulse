@@ -8,6 +8,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
 import { StatusBadge, PriorityBadge } from "@/components/dashboard/StatusBadge";
 import ProgressBar from "@/components/dashboard/ProgressBar";
+import { DeadlineAlert, DeadlineSummaryCards, getDeadlineInfo } from "@/components/dashboard/DeadlineAlert";
 import { Search, ChevronDown, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import {
