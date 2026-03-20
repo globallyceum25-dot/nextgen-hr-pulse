@@ -24,6 +24,14 @@ interface TasksProps {
   selectedSector: number | null;
 }
 
+function getStatusFromProgress(progress: number): TaskStatus {
+  if (progress === 0) return "Pending";
+  if (progress <= 25) return "Started";
+  if (progress <= 75) return "In Progress";
+  if (progress < 100) return "In Progress";
+  return "Completed";
+}
+
 function getKpiStatusFromAchievement(achievement: number): string {
   if (achievement >= 100) return "5 - Exceeds Expectations";
   if (achievement >= 70) return "4 - Very Good / Above Expectations";
@@ -107,6 +115,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const computedTaskWeight = getTaskWeightFromPriority(formData.priority);
   const computedWeightedScore = Math.round((computedTaskWeight * (computedProgress / 100)) * 100) / 100;
   const computedKpiStatus = getKpiStatusFromAchievement(computedKpiAchievement);
+  const computedStatus = getStatusFromProgress(computedProgress);
   const computedCompletionFlag = computedProgress >= 100 ? 1 : 0;
 
   const handleDeleteTask = (task: Task) => {
@@ -154,7 +163,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       maxWeight: formData.maxWeight,
       startDate: formData.startDate,
       dueDate: formData.dueDate,
-      status: formData.status,
+      status: computedStatus,
       completionFlag: computedCompletionFlag,
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
@@ -221,7 +230,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         taskType: formData.taskType,
         slaFrequency: formData.slaFrequency,
         priority: formData.priority,
-        status: formData.status,
+        status: computedStatus,
         stage: formData.stage,
         totalTasks: formData.totalTasks,
         completedCount: formData.completedCount,
@@ -244,14 +253,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
     const fieldChanges: FieldChange[] = [];
     if (editingTask.name !== formData.name) fieldChanges.push({ field: "Name", oldValue: editingTask.name, newValue: formData.name });
     if (editingTask.responsible !== formData.responsible) fieldChanges.push({ field: "Responsible", oldValue: editingTask.responsible, newValue: formData.responsible });
-    if (editingTask.status !== formData.status) fieldChanges.push({ field: "Status", oldValue: editingTask.status, newValue: formData.status });
+    if (editingTask.status !== computedStatus) fieldChanges.push({ field: "Status", oldValue: editingTask.status, newValue: computedStatus });
     if (editingTask.priority !== formData.priority) fieldChanges.push({ field: "Priority", oldValue: editingTask.priority, newValue: formData.priority });
     if (editingTask.location !== formData.location) fieldChanges.push({ field: "Location", oldValue: editingTask.location, newValue: formData.location });
     if (editingTask.stage !== formData.stage) fieldChanges.push({ field: "Stage", oldValue: editingTask.stage, newValue: formData.stage });
     if (editingTask.dueDate !== formData.dueDate) fieldChanges.push({ field: "Due Date", oldValue: editingTask.dueDate, newValue: formData.dueDate });
     if (editingTask.description !== formData.description) fieldChanges.push({ field: "Description", oldValue: editingTask.description || "", newValue: formData.description });
     const desc = fieldChanges.length > 0 ? `${fieldChanges.length} field(s) changed` : "Task details updated";
-    const action = formData.status === "Completed" && editingTask.status !== "Completed" ? "completed" as const : "updated" as const;
+    const action = computedStatus === "Completed" && editingTask.status !== "Completed" ? "completed" as const : "updated" as const;
     addEntry({ action, taskName: formData.name, taskId: editingTask.taskId, description: desc, changes: fieldChanges });
     setEditDialogOpen(false);
     setEditingTask(null);
@@ -274,7 +283,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       ? Math.round((progress / task.kpiTargetPercent) * 10000) / 100 : 0;
     const kpiStatus = getKpiStatusFromAchievement(kpiAchievement);
     const weightedScore = Math.round(task.taskWeight * (progress / 100) * 100) / 100;
-    const status: TaskStatus = progress >= 100 ? "Completed" : progress > 0 ? "In Progress" : "Started";
+    const status: TaskStatus = getStatusFromProgress(progress);
     return {
       ...task,
       subTasks: updatedSubTasks,
@@ -494,14 +503,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Status & Dates</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className={labelClass}>Status</label>
-                    <select className={inputClass} value={formData.status} onChange={e => setFormData(p => ({ ...p, status: e.target.value as TaskStatus }))}>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Started">Started</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Overdue">Overdue</option>
-                    </select>
+                    <label className={labelClass}>Status (Auto)</label>
+                    <input type="text" disabled className={inputClass + " opacity-60"} value={computedStatus} />
                   </div>
                   <div>
                     <label className={labelClass}>Start Date</label>
@@ -849,14 +852,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Status & Dates</h3>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className={labelClass}>Status</label>
-                  <select className={inputClass} value={formData.status} onChange={e => setFormData(p => ({ ...p, status: e.target.value as TaskStatus }))}>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Started">Started</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Overdue">Overdue</option>
-                  </select>
+                  <label className={labelClass}>Status (Auto)</label>
+                  <input type="text" disabled className={inputClass + " opacity-60"} value={computedStatus} />
                 </div>
                 <div>
                   <label className={labelClass}>Start Date</label>
