@@ -3,6 +3,7 @@ import {
   mockTasks, SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
   type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
+  getStatusFromProgress,
 } from "@/data/mockData";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
