@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, ListChecks } from "lucide-react";
 import type { Task } from "@/data/mockData";
 
 export interface DeadlineInfo {
@@ -101,8 +101,12 @@ export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
     let dueSoon = 0;
     let totalPending = 0;
     let completed = 0;
+    const totalMainTasks = tasks.length;
+    let totalSubTasks = 0;
 
     tasks.forEach(t => {
+      totalSubTasks += t.totalTasks;
+
       if (t.status === "Completed") {
         completed++;
         return;
@@ -118,7 +122,7 @@ export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
       else if (remaining <= 7) dueSoon++;
     });
 
-    return { overdue, dueSoon, totalPending, completed };
+    return { overdue, dueSoon, totalPending, completed, totalMainTasks, totalSubTasks };
   }, [tasks]);
 
   const cards = [
@@ -137,11 +141,12 @@ export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
       bg: "bg-warning/10 border-warning/20",
     },
     {
-      label: "Total Pending Sub-tasks",
-      value: stats.totalPending,
-      icon: Clock,
+      label: "Main Tasks / Sub-tasks",
+      value: `${stats.totalMainTasks} / ${stats.totalSubTasks}`,
+      icon: ListChecks,
       color: "text-primary",
       bg: "bg-primary/10 border-primary/20",
+      subtitle: `Pending: ${stats.totalPending}`,
     },
     {
       label: "Completed Tasks",
@@ -161,6 +166,9 @@ export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
             <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
           </div>
           <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
+          {"subtitle" in c && c.subtitle && (
+            <p className="text-xs font-medium text-muted-foreground mt-0.5">{c.subtitle}</p>
+          )}
         </div>
       ))}
     </div>
