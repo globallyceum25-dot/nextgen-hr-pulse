@@ -174,7 +174,7 @@ export function generateMockTasks(): Task[] {
     const pendingCount = totalTasks - completedCount;
     const progress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 10000) / 100 : 0;
     const kpiTarget = 100;
-    const kpiAchievement = progress;
+    const kpiAchievement = Math.min(100, Math.max(0, progress));
     const kpiStatus = getKpiStatus(kpiAchievement);
     const taskWeight = def.priority === "High" ? 1 : 0.6;
     const maxWeight = def.priority === "High" ? 1 : 0.6;
