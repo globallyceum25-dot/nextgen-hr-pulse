@@ -486,7 +486,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </div>
                   <div>
                     <label className={labelClass}>KPI Target %</label>
-                    <input type="number" min={0} max={100} className={inputClass} value={formData.kpiTargetPercent} onChange={e => setFormData(p => ({ ...p, kpiTargetPercent: Number(e.target.value) }))} />
+                    <input type="number" min={0} max={100} className={inputClass} value={formData.kpiTargetPercent} onChange={e => { const v = Math.min(100, Math.max(0, Number(e.target.value) || 0)); setFormData(p => ({ ...p, kpiTargetPercent: v })); }} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
