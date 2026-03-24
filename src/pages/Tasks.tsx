@@ -343,11 +343,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (t.id !== taskId) return t;
       const updatedSubTasks = t.subTasks.map(st => {
         if (st.id !== subTask.id) return st;
+        const newProgress = getProgressFromSubTaskStatus(subTaskForm.status);
         return {
           ...st,
           name: subTaskForm.name,
-          status: subTaskForm.status,
-          progress: subTaskForm.status === "Completed" ? 100 : subTaskForm.progress,
+          status: subTaskForm.status as TaskStatus,
+          progress: newProgress,
           responsible: subTaskForm.responsible,
           dueDate: subTaskForm.dueDate,
           completedDate: subTaskForm.status === "Completed" ? new Date().toISOString().split("T")[0] : undefined,
