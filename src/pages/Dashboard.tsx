@@ -58,12 +58,23 @@ export default function Dashboard({ selectedSector }: DashboardProps) {
   const [liveTasks, setLiveTasks] = useState<Task[]>(() => getLiveTasks());
   const [isFixingData, setIsFixingData] = useState(false);
 
-  const handleFixDataSync = () => {
+  const handleFixDataSync = async () => {
     setIsFixingData(true);
-    const latest = forceSyncLiveTasks();
-    setLiveTasks(prev => (areTasksEqual(prev, latest) ? prev : latest));
-    setIsFixingData(false);
-    toast({ title: "Dashboard synced", description: "Latest task data has been reloaded." });
+
+    // Yield to the event loop so the spinner actually renders
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    try {
+      // Force a fresh read from localStorage (bypasses any stale closures)
+      const latest = forceSyncLiveTasks();
+      setLiveTasks(latest);
+      toast({ title: "✅ Dashboard synced", description: `Loaded ${latest.length} tasks. Completion: ${latest.filter(t => t.status === "Completed").length} completed.` });
+    } catch (err) {
+      console.error("Sync failed:", err);
+      toast({ title: "❌ Sync failed", description: "Could not reload task data. Try refreshing the page.", variant: "destructive" });
+    } finally {
+      setIsFixingData(false);
+    }
   };
 
   useEffect(() => {
