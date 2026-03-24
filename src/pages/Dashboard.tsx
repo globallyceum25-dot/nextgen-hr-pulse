@@ -6,12 +6,15 @@ import {
   getSectorPerformance,
   SECTORS,
   getLiveTasks,
+  forceSyncLiveTasks,
   TASKS_UPDATED_EVENT,
   type Task,
 } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Cell } from "recharts";
 import { useActivityLog, type ActivityEntry } from "@/contexts/ActivityLogContext";
-import { Clock, Plus, Pencil, CheckCircle2, ListChecks } from "lucide-react";
+import { Clock, Plus, Pencil, CheckCircle2, ListChecks, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 interface DashboardProps {
   selectedSector: number | null;
@@ -53,6 +56,15 @@ function areTasksEqual(a: Task[], b: Task[]): boolean {
 
 export default function Dashboard({ selectedSector }: DashboardProps) {
   const [liveTasks, setLiveTasks] = useState<Task[]>(() => getLiveTasks());
+  const [isFixingData, setIsFixingData] = useState(false);
+
+  const handleFixDataSync = () => {
+    setIsFixingData(true);
+    const latest = forceSyncLiveTasks();
+    setLiveTasks(prev => (areTasksEqual(prev, latest) ? prev : latest));
+    setIsFixingData(false);
+    toast({ title: "Dashboard synced", description: "Latest task data has been reloaded." });
+  };
 
   useEffect(() => {
     const syncTasks = () => {
@@ -89,9 +101,15 @@ export default function Dashboard({ selectedSector }: DashboardProps) {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">{sectorName} — March 2026</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">{sectorName} — March 2026</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleFixDataSync} disabled={isFixingData} className="gap-2">
+          <RefreshCw className={`h-3.5 w-3.5 ${isFixingData ? "animate-spin" : ""}`} />
+          Fix Data Sync
+        </Button>
       </div>
 
       {/* KPI Cards */}
