@@ -215,7 +215,7 @@ export function generateMockTasks(): Task[] {
       month,
       year: 2026,
       kpiScore: Math.round(kpiAchievement),
-      subTasks: generateSubTasks(2 + Math.floor(Math.random() * 3), def.responsible),
+      subTasks: generateSubTasks(totalTasks, def.responsible),
     });
   });
 

@@ -176,7 +176,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
       kpiScore: Math.round(computedKpiAchievement),
-      subTasks: [],
+      subTasks: Array.from({ length: formData.totalTasks }, (_, i) => ({
+        id: `ST-${Date.now()}-${i}`,
+        name: `Sub Task ${i + 1}`,
+        status: "Pending" as TaskStatus,
+        progress: 0,
+        responsible: formData.responsible,
+        dueDate: formData.dueDate,
+      })),
     };
     setTasks(prev => [newTask, ...prev]);
     addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created`, changes: [
