@@ -22,6 +22,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
+  // Persist tasks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("tasks_data", JSON.stringify(tasks));
+  }, [tasks]);
 
 interface TasksProps {
   selectedSector: number | null;
