@@ -289,7 +289,9 @@ export function getLiveTasks(): Task[] {
     if (parsed) return parsed;
   } catch {}
 
-  return getDefaultTasks();
+  const fallback = getDefaultTasks();
+  window.localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(fallback));
+  return fallback;
 }
 
 export function writeLiveTasks(tasks: Task[]): void {
@@ -298,6 +300,12 @@ export function writeLiveTasks(tasks: Task[]): void {
   const snapshot = cloneTasks(tasks);
   window.localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(snapshot));
   window.dispatchEvent(new CustomEvent(TASKS_UPDATED_EVENT));
+}
+
+export function forceSyncLiveTasks(): Task[] {
+  const latest = getLiveTasks();
+  writeLiveTasks(latest);
+  return latest;
 }
 
 export function getKPIData(sectorId?: number, tasksOverride?: Task[]): KPIData[] {
