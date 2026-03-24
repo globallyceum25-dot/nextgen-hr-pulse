@@ -728,18 +728,29 @@ export default function Tasks({ selectedSector }: TasksProps) {
                           <>
                             <p className="text-xs font-semibold text-muted-foreground mb-2">Sub-tasks ({task.subTasks.length})</p>
                             <div className="space-y-1.5">
-                              {task.subTasks.map(st => (
+                              {task.subTasks.map(st => {
+                                const stDeadline = getDeadlineInfo({ status: st.status, dueDate: st.dueDate, startDate: task.startDate, pendingCount: 0 });
+                                return (
                                 <div key={st.id} className="flex items-center gap-4 text-xs">
                                   <span className="font-mono text-muted-foreground w-20">{st.id}</span>
                                   <span className="flex-1 text-card-foreground">{st.name}</span>
                                   <span className="text-muted-foreground">{st.responsible}</span>
                                   <StatusBadge status={st.status} />
                                   <div className="w-24"><ProgressBar value={st.progress} size="sm" /></div>
+                                  <span className="text-[10px] w-16 text-right">{st.progress}%</span>
+                                  {stDeadline.showAlert && (
+                                    <span className={`text-[10px] font-semibold whitespace-nowrap ${stDeadline.isOverdue ? "text-destructive" : "text-destructive"}`}>
+                                      {stDeadline.isOverdue
+                                        ? `Overdue ${Math.abs(stDeadline.remainingDays)}d`
+                                        : `${stDeadline.remainingDays}d left`}
+                                    </span>
+                                  )}
                                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
                                     <Pencil size={12} />
                                   </Button>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </>
                         )}
