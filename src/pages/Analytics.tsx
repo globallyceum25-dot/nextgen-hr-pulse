@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { mockTasks, SECTORS, RESPONSIBLE_PERSONS } from "@/data/mockData";
+import { useEffect, useMemo, useState } from "react";
+import { getLiveTasks, SECTORS, TASKS_UPDATED_EVENT, type Task } from "@/data/mockData";
 import ProgressBar from "@/components/dashboard/ProgressBar";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
@@ -12,16 +12,58 @@ const COLORS = [
   "hsl(217, 91%, 60%)",
   "hsl(38, 92%, 50%)",
   "hsl(0, 84%, 60%)",
+  "hsl(262, 83%, 58%)",
+  "hsl(188, 86%, 43%)",
+  "hsl(220, 13%, 56%)",
 ];
 
+function areTasksEqual(a: Task[], b: Task[]): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export default function Analytics({ selectedSector }: AnalyticsProps) {
+  const [liveTasks, setLiveTasks] = useState<Task[]>(() => getLiveTasks());
+
+  useEffect(() => {
+    const syncTasks = () => {
+      const latest = getLiveTasks();
+      setLiveTasks(prev => (areTasksEqual(prev, latest) ? prev : latest));
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") syncTasks();
+    };
+
+    window.addEventListener(TASKS_UPDATED_EVENT, syncTasks as EventListener);
+    window.addEventListener("storage", syncTasks);
+    window.addEventListener("focus", syncTasks);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener(TASKS_UPDATED_EVENT, syncTasks as EventListener);
+      window.removeEventListener("storage", syncTasks);
+      window.removeEventListener("focus", syncTasks);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
   const filtered = useMemo(() => {
-    return selectedSector ? mockTasks.filter(t => t.sectorId === selectedSector) : mockTasks;
-  }, [selectedSector]);
+    return selectedSector ? liveTasks.filter(t => t.sectorId === selectedSector) : liveTasks;
+  }, [selectedSector, liveTasks]);
 
   const statusDist = useMemo(() => {
-    const counts = { Completed: 0, "In Progress": 0, Pending: 0, Overdue: 0 };
-    filtered.forEach(t => counts[t.status]++);
+    const counts: Record<string, number> = {
+      Completed: 0,
+      "Almost Completed": 0,
+      "In Progress": 0,
+      Started: 0,
+      Pending: 0,
+      "Not Started": 0,
+      Overdue: 0,
+    };
+    filtered.forEach(t => {
+      counts[t.status] = (counts[t.status] ?? 0) + 1;
+    });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filtered]);
 
