@@ -1,10 +1,10 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
   type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
   type SubTaskStatus, SUB_TASK_STATUSES, getProgressFromSubTaskStatus,
-  getStatusFromProgress, getLiveTasks, writeLiveTasks,
+  getStatusFromProgress, getLiveTasks, writeLiveTasks, TASKS_UPDATED_EVENT,
 } from "@/data/mockData";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
@@ -47,6 +47,10 @@ function getTaskWeightFromPriority(priority: Priority): number {
   }
 }
 
+function areTasksEqual(a: Task[], b: Task[]): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export default function Tasks({ selectedSector }: TasksProps) {
   const { addEntry } = useActivityLog();
   const { isAdmin } = useIsAdmin();
@@ -74,10 +78,38 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: SubTask } | null>(null);
   const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "Not Started" as SubTaskStatus, progress: 0, responsible: "", dueDate: "" });
 
-  // Persist tasks to localStorage whenever they change
+  const syncTasksFromStorage = useCallback(() => {
+    const latest = getLiveTasks();
+    setTasks(prev => (areTasksEqual(prev, latest) ? prev : latest));
+  }, []);
+
+  const persistTaskChanges = useCallback((updater: (prev: Task[]) => Task[]) => {
+    setTasks(prev => {
+      const next = updater(prev);
+      if (!areTasksEqual(prev, next)) {
+        writeLiveTasks(next);
+      }
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
-    writeLiveTasks(tasks);
-  }, [tasks]);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") syncTasksFromStorage();
+    };
+
+    window.addEventListener(TASKS_UPDATED_EVENT, syncTasksFromStorage as EventListener);
+    window.addEventListener("storage", syncTasksFromStorage);
+    window.addEventListener("focus", syncTasksFromStorage);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener(TASKS_UPDATED_EVENT, syncTasksFromStorage as EventListener);
+      window.removeEventListener("storage", syncTasksFromStorage);
+      window.removeEventListener("focus", syncTasksFromStorage);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [syncTasksFromStorage]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -124,7 +156,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const computedCompletionFlag = computedProgress >= 100 ? 1 : 0;
 
   const handleDeleteTask = (task: Task) => {
-    setTasks(prev => prev.filter(t => t.id !== task.id));
+    persistTaskChanges(prev => prev.filter(t => t.id !== task.id));
     addEntry({
       action: "updated",
       taskName: task.name,
@@ -182,7 +214,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         dueDate: formData.dueDate,
       })),
     };
-    setTasks(prev => [newTask, ...prev]);
+    persistTaskChanges(prev => [newTask, ...prev]);
     addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created`, changes: [
       { field: "Name", oldValue: "", newValue: newTask.name },
       { field: "Responsible", oldValue: "", newValue: newTask.responsible },
@@ -229,7 +261,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       return;
     }
     const pending = formData.totalTasks - formData.completedCount;
-    setTasks(prev => prev.map(t => {
+    persistTaskChanges(prev => prev.map(t => {
       if (t.id !== editingTask.id) return t;
       // Sync sub-tasks count to match totalTasks
       let updatedSubTasks = [...t.subTasks];
@@ -336,7 +368,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     e.preventDefault();
     if (!editingSubTask) return;
     const { taskId, subTask } = editingSubTask;
-    setTasks(prev => prev.map(t => {
+    persistTaskChanges(prev => prev.map(t => {
       if (t.id !== taskId) return t;
       const updatedSubTasks = t.subTasks.map(st => {
         if (st.id !== subTask.id) return st;
