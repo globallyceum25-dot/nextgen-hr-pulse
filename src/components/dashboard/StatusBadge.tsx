@@ -8,6 +8,7 @@ const statusStyles: Record<TaskStatus, string> = {
   "Overdue": "bg-destructive/10 text-destructive",
   "Started": "bg-accent text-accent-foreground",
   "Almost Completed": "bg-primary/20 text-primary",
+  "Not Started": "bg-muted text-muted-foreground",
 };
 
 const priorityStyles: Record<Priority, string> = {
