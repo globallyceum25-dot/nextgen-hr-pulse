@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   mockTasks, SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
@@ -66,21 +66,32 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
   const [deadlineFilter, setDeadlineFilter] = useState<"All" | "Overdue" | "Due Soon" | "Completed" | "Pending">("All");
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<Task[]>(() =>
-    mockTasks.map(task => ({
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const saved = localStorage.getItem("tasks_data");
+    if (saved) {
+      try {
+        return JSON.parse(saved) as Task[];
+      } catch {
+        // fall through to default
+      }
+    }
+    return mockTasks.map(task => ({
       ...task,
       status: getStatusFromProgress(task.progress),
-      subTasks: task.subTasks.map(st => ({
-        ...st,
-      })),
-    }))
-  );
+      subTasks: task.subTasks.map(st => ({ ...st })),
+    }));
+  });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: SubTask } | null>(null);
   const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "Not Started" as SubTaskStatus, progress: 0, responsible: "", dueDate: "" });
+
+  // Persist tasks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("tasks_data", JSON.stringify(tasks));
+  }, [tasks]);
 
   const [formData, setFormData] = useState({
     name: "",
