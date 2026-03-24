@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import KPICard from "@/components/dashboard/KPICard";
-import { getKPIData, getMonthlyTrend, getSectorPerformance, SECTORS } from "@/data/mockData";
+import { getKPIData, getMonthlyTrend, getSectorPerformance, SECTORS, getLiveTasks } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Cell } from "recharts";
 import { useActivityLog, type ActivityEntry } from "@/contexts/ActivityLogContext";
 import { Clock, Plus, Pencil, CheckCircle2, ListChecks } from "lucide-react";
@@ -40,9 +40,10 @@ function timeAgo(date: Date): string {
 }
 
 export default function Dashboard({ selectedSector }: DashboardProps) {
-  const kpis = useMemo(() => getKPIData(selectedSector ?? undefined), [selectedSector]);
-  const monthlyTrend = useMemo(() => getMonthlyTrend(), []);
-  const sectorPerf = useMemo(() => getSectorPerformance(), []);
+  const liveTasks = useMemo(() => getLiveTasks(), []);
+  const kpis = useMemo(() => getKPIData(selectedSector ?? undefined, liveTasks), [selectedSector, liveTasks]);
+  const monthlyTrend = useMemo(() => getMonthlyTrend(liveTasks), [liveTasks]);
+  const sectorPerf = useMemo(() => getSectorPerformance(liveTasks), [liveTasks]);
   const { entries } = useActivityLog();
 
   const sectorName = selectedSector

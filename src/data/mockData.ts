@@ -246,45 +246,61 @@ export interface KPIData {
   trend: "up" | "down" | "neutral";
 }
 
-export function getKPIData(sectorId?: number): KPIData[] {
-  const filtered = sectorId ? mockTasks.filter(t => t.sectorId === sectorId) : mockTasks;
+export function getLiveTasks(): Task[] {
+  try {
+    const saved = localStorage.getItem("tasks_data");
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return mockTasks;
+}
+
+export function getKPIData(sectorId?: number, tasksOverride?: Task[]): KPIData[] {
+  const allTasks = tasksOverride ?? getLiveTasks();
+  const filtered = sectorId ? allTasks.filter(t => t.sectorId === sectorId) : allTasks;
   const total = filtered.length;
   const completed = filtered.filter(t => t.status === "Completed").length;
   const overdue = filtered.filter(t => t.status === "Overdue").length;
-  const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + t.kpiScore, 0) / total) : 0;
+
+  // Completion Rate = average progress across all tasks
+  const avgProgress = total > 0 ? Math.round(filtered.reduce((s, t) => s + t.progress, 0) / total) : 0;
+
+  // Avg KPI Score = average of kpiAchievement across all tasks
+  const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + t.kpiAchievement, 0) / total) : 0;
 
   return [
     { label: "Total Tasks", value: total, change: 12, trend: "up" },
-    { label: "Completion Rate", value: total > 0 ? Math.round((completed / total) * 100) : 0, change: 5, trend: "up" },
+    { label: "Completion Rate", value: avgProgress, change: 5, trend: "up" },
     { label: "Avg KPI Score", value: avgKpi, change: 3, trend: "up" },
     { label: "Overdue Tasks", value: overdue, change: -2, trend: "down" },
   ];
 }
 
-export function getMonthlyTrend() {
+export function getMonthlyTrend(tasksOverride?: Task[]) {
+  const allTasks = tasksOverride ?? getLiveTasks();
   return MONTHS.slice(0, 3).map((month, i) => {
-    const monthTasks = mockTasks.filter(t => t.month === i + 1);
+    const monthTasks = allTasks.filter(t => t.month === i + 1);
     const total = monthTasks.length;
     const completed = monthTasks.filter(t => t.status === "Completed").length;
     return {
       month: month.slice(0, 3),
       completed,
       pending: total - completed,
-      kpiAvg: total > 0 ? Math.round(monthTasks.reduce((s, t) => s + t.kpiScore, 0) / total) : 0,
+      kpiAvg: total > 0 ? Math.round(monthTasks.reduce((s, t) => s + t.kpiAchievement, 0) / total) : 0,
     };
   });
 }
 
-export function getSectorPerformance() {
+export function getSectorPerformance(tasksOverride?: Task[]) {
+  const allTasks = tasksOverride ?? getLiveTasks();
   return SECTORS.map(sector => {
-    const sectorTasks = mockTasks.filter(t => t.sectorId === sector.id);
+    const sectorTasks = allTasks.filter(t => t.sectorId === sector.id);
     const total = sectorTasks.length;
     const completed = sectorTasks.filter(t => t.status === "Completed").length;
     return {
       name: sector.name.length > 15 ? sector.name.slice(0, 15) + "…" : sector.name,
       fullName: sector.name,
       completion: total > 0 ? Math.round((completed / total) * 100) : 0,
-      kpi: total > 0 ? Math.round(sectorTasks.reduce((s, t) => s + t.kpiScore, 0) / total) : 0,
+      kpi: total > 0 ? Math.round(sectorTasks.reduce((s, t) => s + t.kpiAchievement, 0) / total) : 0,
       tasks: total,
     };
   });
