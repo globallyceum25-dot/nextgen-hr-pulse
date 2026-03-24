@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
-  mockTasks, SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
+  SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
   type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
   type SubTaskStatus, SUB_TASK_STATUSES, getProgressFromSubTaskStatus,
-  getStatusFromProgress,
+  getStatusFromProgress, getLiveTasks, writeLiveTasks,
 } from "@/data/mockData";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useActivityLog, type FieldChange } from "@/contexts/ActivityLogContext";
@@ -66,21 +66,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
   const [deadlineFilter, setDeadlineFilter] = useState<"All" | "Overdue" | "Due Soon" | "Completed" | "Pending">("All");
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem("tasks_data");
-    if (saved) {
-      try {
-        return JSON.parse(saved) as Task[];
-      } catch {
-        // fall through to default
-      }
-    }
-    return mockTasks.map(task => ({
-      ...task,
-      status: getStatusFromProgress(task.progress),
-      subTasks: task.subTasks.map(st => ({ ...st })),
-    }));
-  });
+  const [tasks, setTasks] = useState<Task[]>(() => getLiveTasks());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -90,7 +76,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
   // Persist tasks to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("tasks_data", JSON.stringify(tasks));
+    writeLiveTasks(tasks);
   }, [tasks]);
 
   const [formData, setFormData] = useState({
@@ -664,9 +650,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
             </thead>
             <tbody>
               {filtered.map(task => (
-                <>
+                <Fragment key={task.id}>
                   <tr
-                    key={task.id}
                     className="border-b hover:bg-muted/30 transition-snappy cursor-pointer"
                     onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
                   >
@@ -723,7 +708,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     </td>
                   </tr>
                   {expandedTask === task.id && (
-                    <tr key={`${task.id}-detail`}>
+                    <tr>
                       <td colSpan={18} className="bg-muted/20 px-6 py-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mb-3">
                           <div><span className="text-muted-foreground">Description:</span> <span className="text-card-foreground">{task.description}</span></div>
@@ -768,7 +753,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
               {filtered.length === 0 && (
                 <tr>

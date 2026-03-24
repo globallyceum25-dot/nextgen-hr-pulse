@@ -1,6 +1,14 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import KPICard from "@/components/dashboard/KPICard";
-import { getKPIData, getMonthlyTrend, getSectorPerformance, SECTORS, getLiveTasks } from "@/data/mockData";
+import {
+  getKPIData,
+  getMonthlyTrend,
+  getSectorPerformance,
+  SECTORS,
+  getLiveTasks,
+  TASKS_UPDATED_EVENT,
+  type Task,
+} from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Cell } from "recharts";
 import { useActivityLog, type ActivityEntry } from "@/contexts/ActivityLogContext";
 import { Clock, Plus, Pencil, CheckCircle2, ListChecks } from "lucide-react";
@@ -39,8 +47,36 @@ function timeAgo(date: Date): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function areTasksEqual(a: Task[], b: Task[]): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export default function Dashboard({ selectedSector }: DashboardProps) {
-  const liveTasks = useMemo(() => getLiveTasks(), []);
+  const [liveTasks, setLiveTasks] = useState<Task[]>(() => getLiveTasks());
+
+  useEffect(() => {
+    const syncTasks = () => {
+      const latest = getLiveTasks();
+      setLiveTasks(prev => (areTasksEqual(prev, latest) ? prev : latest));
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") syncTasks();
+    };
+
+    window.addEventListener(TASKS_UPDATED_EVENT, syncTasks as EventListener);
+    window.addEventListener("storage", syncTasks);
+    window.addEventListener("focus", syncTasks);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener(TASKS_UPDATED_EVENT, syncTasks as EventListener);
+      window.removeEventListener("storage", syncTasks);
+      window.removeEventListener("focus", syncTasks);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
   const kpis = useMemo(() => getKPIData(selectedSector ?? undefined, liveTasks), [selectedSector, liveTasks]);
   const monthlyTrend = useMemo(() => getMonthlyTrend(liveTasks), [liveTasks]);
   const sectorPerf = useMemo(() => getSectorPerformance(liveTasks), [liveTasks]);
