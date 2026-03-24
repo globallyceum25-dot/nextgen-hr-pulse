@@ -966,19 +966,15 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div>
                 <label className={labelClass}>Status</label>
                 <select className={inputClass} value={subTaskForm.status} onChange={e => {
-                  const newStatus = e.target.value as TaskStatus;
-                  setSubTaskForm(p => ({ ...p, status: newStatus, progress: newStatus === "Completed" ? 100 : p.progress }));
+                  const newStatus = e.target.value as SubTaskStatus;
+                  setSubTaskForm(p => ({ ...p, status: newStatus, progress: getProgressFromSubTaskStatus(newStatus) }));
                 }}>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Started">Started</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Overdue">Overdue</option>
+                  {SUB_TASK_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Progress %</label>
-                <input type="number" min={0} max={100} className={inputClass} disabled={subTaskForm.status === "Completed"} value={subTaskForm.progress} onChange={e => setSubTaskForm(p => ({ ...p, progress: Math.min(100, Math.max(0, Number(e.target.value))) }))} />
+                <label className={labelClass}>Progress % (Auto)</label>
+                <input type="number" className={inputClass + " opacity-60"} disabled value={getProgressFromSubTaskStatus(subTaskForm.status)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
