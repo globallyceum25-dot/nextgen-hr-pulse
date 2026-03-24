@@ -91,86 +91,94 @@ export function DeadlineAlert({ task }: { task: Task }) {
   );
 }
 
-/** Summary card for dashboard */
+/** Summary cards for dashboard — two rows: Tasks + Sub-tasks */
 export function DeadlineSummaryCards({ tasks }: { tasks: Task[] }) {
   const stats = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let overdue = 0;
-    let dueSoon = 0;
-    let totalPending = 0;
-    let completed = 0;
+    let taskOverdue = 0;
+    let taskDueSoon = 0;
+    let taskCompleted = 0;
     const totalMainTasks = tasks.length;
+
+    let subOverdue = 0;
+    let subDueSoon = 0;
+    let subCompleted = 0;
     let totalSubTasks = 0;
 
     tasks.forEach(t => {
-      totalSubTasks += t.totalTasks;
-
+      // Parent task stats
       if (t.status === "Completed") {
-        completed++;
-        return;
+        taskCompleted++;
+      } else if (t.dueDate) {
+        const due = new Date(t.dueDate);
+        due.setHours(0, 0, 0, 0);
+        const remaining = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (remaining < 0) taskOverdue++;
+        else if (remaining <= 7) taskDueSoon++;
       }
-      totalPending += t.pendingCount;
 
-      if (!t.dueDate) return;
-      const due = new Date(t.dueDate);
-      due.setHours(0, 0, 0, 0);
-      const remaining = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      // Sub-task stats
+      t.subTasks.forEach(st => {
+        totalSubTasks++;
+        const stStatus = (st as any).status as string;
+        const stDueDate = (st as any).dueDate as string | undefined;
 
-      if (remaining < 0) overdue++;
-      else if (remaining <= 7) dueSoon++;
+        if (stStatus === "Completed") {
+          subCompleted++;
+        } else if (stDueDate) {
+          const due = new Date(stDueDate);
+          due.setHours(0, 0, 0, 0);
+          const remaining = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (remaining < 0) subOverdue++;
+          else if (remaining <= 7) subDueSoon++;
+        }
+      });
     });
 
-    return { overdue, dueSoon, totalPending, completed, totalMainTasks, totalSubTasks };
+    return {
+      totalMainTasks, taskOverdue, taskDueSoon, taskCompleted,
+      totalSubTasks, subOverdue, subDueSoon, subCompleted,
+    };
   }, [tasks]);
 
-  const cards = [
-    {
-      label: "Overdue Tasks",
-      value: stats.overdue,
-      icon: AlertTriangle,
-      color: "text-destructive",
-      bg: "bg-destructive/10 border-destructive/20",
-    },
-    {
-      label: "Due Within 7 Days",
-      value: stats.dueSoon,
-      icon: Clock,
-      color: "text-warning",
-      bg: "bg-warning/10 border-warning/20",
-    },
-    {
-      label: "Main Tasks / Sub-tasks",
-      value: `${stats.totalMainTasks} / ${stats.totalSubTasks}`,
-      icon: ListChecks,
-      color: "text-primary",
-      bg: "bg-primary/10 border-primary/20",
-      subtitle: `Pending: ${stats.totalPending}`,
-    },
-    {
-      label: "Completed Tasks",
-      value: stats.completed,
-      icon: CheckCircle2,
-      color: "text-success",
-      bg: "bg-success/10 border-success/20",
-    },
+  const taskCards = [
+    { label: "Total Tasks", value: stats.totalMainTasks, icon: ListChecks, color: "text-primary", bg: "bg-primary/10 border-primary/20" },
+    { label: "Completed", value: stats.taskCompleted, icon: CheckCircle2, color: "text-success", bg: "bg-success/10 border-success/20" },
+    { label: "Overdue", value: stats.taskOverdue, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
+    { label: "Due Within 7 Days", value: stats.taskDueSoon, icon: Clock, color: "text-warning", bg: "bg-warning/10 border-warning/20" },
   ];
 
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {cards.map(c => (
-        <div key={c.label} className={`rounded-lg border p-4 ${c.bg}`}>
-          <div className="flex items-center gap-2 mb-1">
-            <c.icon size={16} className={c.color} />
-            <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
+  const subTaskCards = [
+    { label: "Total Sub-tasks", value: stats.totalSubTasks, icon: ListChecks, color: "text-primary", bg: "bg-primary/10 border-primary/20" },
+    { label: "Completed", value: stats.subCompleted, icon: CheckCircle2, color: "text-success", bg: "bg-success/10 border-success/20" },
+    { label: "Overdue", value: stats.subOverdue, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
+    { label: "Due Within 7 Days", value: stats.subDueSoon, icon: Clock, color: "text-warning", bg: "bg-warning/10 border-warning/20" },
+  ];
+
+  const renderRow = (title: string, cards: typeof taskCards) => (
+    <div>
+      <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {cards.map(c => (
+          <div key={c.label + title} className={`rounded-lg border p-4 ${c.bg}`}>
+            <div className="flex items-center gap-2 mb-1">
+              <c.icon size={16} className={c.color} />
+              <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
+            </div>
+            <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
           </div>
-          <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
-          {"subtitle" in c && c.subtitle && (
-            <p className="text-xs font-medium text-muted-foreground mt-0.5">{c.subtitle}</p>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {renderRow("Tasks Summary", taskCards)}
+      <hr className="border-border" />
+      {renderRow("Sub-tasks Summary", subTaskCards)}
     </div>
   );
 }
