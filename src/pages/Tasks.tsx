@@ -242,7 +242,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           updatedSubTasks.push({
             id: `ST-${Date.now()}-${i}`,
             name: `Sub Task ${i + 1}`,
-            status: "Pending" as TaskStatus,
+            status: "Not Started" as TaskStatus,
             progress: 0,
             responsible: formData.responsible,
             dueDate: formData.dueDate,
