@@ -41,7 +41,22 @@ export const KPI_ACHIEVEMENT_STATUSES = [
 ];
 
 export type Priority = "High" | "Medium" | "Low";
-export type TaskStatus = "Completed" | "In Progress" | "Pending" | "Overdue" | "Started" | "Almost Completed";
+export type TaskStatus = "Completed" | "In Progress" | "Pending" | "Overdue" | "Started" | "Almost Completed" | "Not Started";
+
+export type SubTaskStatus = "Not Started" | "Started" | "In Progress" | "Almost Completed" | "Completed";
+
+export const SUB_TASK_STATUSES: SubTaskStatus[] = ["Not Started", "Started", "In Progress", "Almost Completed", "Completed"];
+
+export function getProgressFromSubTaskStatus(status: SubTaskStatus): number {
+  switch (status) {
+    case "Not Started": return 0;
+    case "Started": return 25;
+    case "In Progress": return 50;
+    case "Almost Completed": return 80;
+    case "Completed": return 100;
+    default: return 0;
+  }
+}
 export type Stage = "Planning" | "Execution" | "Review" | "Closed";
 export type TaskType = "Process" | "Letter";
 
@@ -111,12 +126,12 @@ function generateSubTasks(count: number, parentResponsible: string): SubTask[] {
     "Finalize documentation", "Coordinate with vendors", "Audit records",
   ];
   for (let i = 0; i < count; i++) {
-    const progress = Math.floor(Math.random() * 101);
-    const status = getStatusFromProgress(progress);
+    const subStatus = randomFrom(SUB_TASK_STATUSES);
+    const progress = getProgressFromSubTaskStatus(subStatus);
     subtasks.push({
       id: `ST-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
       name: randomFrom(names),
-      status,
+      status: subStatus as TaskStatus,
       progress,
       responsible: Math.random() > 0.5 ? parentResponsible : randomFrom(RESPONSIBLE_PERSONS),
       dueDate: "2026-03-30",

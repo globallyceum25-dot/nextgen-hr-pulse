@@ -3,6 +3,7 @@ import {
   mockTasks, SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
   type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
+  type SubTaskStatus, SUB_TASK_STATUSES, getProgressFromSubTaskStatus,
   getStatusFromProgress,
 } from "@/data/mockData";
 import { useEmployees } from "@/hooks/useEmployees";
@@ -71,7 +72,6 @@ export default function Tasks({ selectedSector }: TasksProps) {
       status: getStatusFromProgress(task.progress),
       subTasks: task.subTasks.map(st => ({
         ...st,
-        status: getStatusFromProgress(st.progress),
       })),
     }))
   );
@@ -80,7 +80,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: SubTask } | null>(null);
-  const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "In Progress" as TaskStatus, progress: 0, responsible: "", dueDate: "" });
+  const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "Not Started" as SubTaskStatus, progress: 0, responsible: "", dueDate: "" });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -179,7 +179,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       subTasks: Array.from({ length: formData.totalTasks }, (_, i) => ({
         id: `ST-${Date.now()}-${i}`,
         name: `Sub Task ${i + 1}`,
-        status: "Pending" as TaskStatus,
+        status: "Not Started" as TaskStatus,
         progress: 0,
         responsible: formData.responsible,
         dueDate: formData.dueDate,
@@ -242,7 +242,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           updatedSubTasks.push({
             id: `ST-${Date.now()}-${i}`,
             name: `Sub Task ${i + 1}`,
-            status: "Pending" as TaskStatus,
+            status: "Not Started" as TaskStatus,
             progress: 0,
             responsible: formData.responsible,
             dueDate: formData.dueDate,
@@ -303,7 +303,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
   const openSubTaskEdit = (taskId: string, st: SubTask) => {
     setEditingSubTask({ taskId, subTask: st });
-    setSubTaskForm({ name: st.name, status: st.status, progress: st.progress, responsible: st.responsible, dueDate: st.dueDate });
+    const stStatus = SUB_TASK_STATUSES.includes(st.status as SubTaskStatus) ? st.status as SubTaskStatus : "Not Started";
+    setSubTaskForm({ name: st.name, status: stStatus, progress: st.progress, responsible: st.responsible, dueDate: st.dueDate });
     setSubTaskEditOpen(true);
   };
 
@@ -311,7 +312,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     const total = updatedSubTasks.length;
     const completedCount = updatedSubTasks.filter(s => s.status === "Completed").length;
     const pendingCount = total - completedCount;
-    const progress = total > 0 ? Math.round((completedCount / total) * 10000) / 100 : 0;
+    const progress = total > 0 ? Math.round(updatedSubTasks.reduce((sum, s) => sum + s.progress, 0) / total * 100) / 100 : 0;
     const kpiAchievementRaw = task.kpiTargetPercent > 0
       ? Math.round((progress / task.kpiTargetPercent) * 10000) / 100 : 0;
     const kpiAchievement = Math.min(100, Math.max(0, kpiAchievementRaw));
@@ -342,11 +343,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (t.id !== taskId) return t;
       const updatedSubTasks = t.subTasks.map(st => {
         if (st.id !== subTask.id) return st;
+        const newProgress = getProgressFromSubTaskStatus(subTaskForm.status);
         return {
           ...st,
           name: subTaskForm.name,
-          status: subTaskForm.status,
-          progress: subTaskForm.status === "Completed" ? 100 : subTaskForm.progress,
+          status: subTaskForm.status as TaskStatus,
+          progress: newProgress,
           responsible: subTaskForm.responsible,
           dueDate: subTaskForm.dueDate,
           completedDate: subTaskForm.status === "Completed" ? new Date().toISOString().split("T")[0] : undefined,
@@ -964,19 +966,15 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div>
                 <label className={labelClass}>Status</label>
                 <select className={inputClass} value={subTaskForm.status} onChange={e => {
-                  const newStatus = e.target.value as TaskStatus;
-                  setSubTaskForm(p => ({ ...p, status: newStatus, progress: newStatus === "Completed" ? 100 : p.progress }));
+                  const newStatus = e.target.value as SubTaskStatus;
+                  setSubTaskForm(p => ({ ...p, status: newStatus, progress: getProgressFromSubTaskStatus(newStatus) }));
                 }}>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Started">Started</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Overdue">Overdue</option>
+                  {SUB_TASK_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Progress %</label>
-                <input type="number" min={0} max={100} className={inputClass} disabled={subTaskForm.status === "Completed"} value={subTaskForm.progress} onChange={e => setSubTaskForm(p => ({ ...p, progress: Math.min(100, Math.max(0, Number(e.target.value))) }))} />
+                <label className={labelClass}>Progress % (Auto)</label>
+                <input type="number" className={inputClass + " opacity-60"} disabled value={getProgressFromSubTaskStatus(subTaskForm.status)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
