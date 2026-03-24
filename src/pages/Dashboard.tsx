@@ -40,9 +40,10 @@ function timeAgo(date: Date): string {
 }
 
 export default function Dashboard({ selectedSector }: DashboardProps) {
-  const kpis = useMemo(() => getKPIData(selectedSector ?? undefined), [selectedSector]);
-  const monthlyTrend = useMemo(() => getMonthlyTrend(), []);
-  const sectorPerf = useMemo(() => getSectorPerformance(), []);
+  const liveTasks = useMemo(() => getLiveTasks(), []);
+  const kpis = useMemo(() => getKPIData(selectedSector ?? undefined, liveTasks), [selectedSector, liveTasks]);
+  const monthlyTrend = useMemo(() => getMonthlyTrend(liveTasks), [liveTasks]);
+  const sectorPerf = useMemo(() => getSectorPerformance(liveTasks), [liveTasks]);
   const { entries } = useActivityLog();
 
   const sectorName = selectedSector
