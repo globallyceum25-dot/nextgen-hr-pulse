@@ -4,10 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Shield, RefreshCw, Info } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Shield, RefreshCw, Info, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -19,11 +28,41 @@ const ROLE_LABELS: Record<AppRole, string> = {
   viewer: "Viewer",
 };
 
-const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
+const ALL_MODULES = ["Dashboard", "Tasks", "Employees", "Analytics", "Administration"];
+const ALL_PERMISSIONS = [
+  "All permissions",
+  "Manage users & roles",
+  "System configuration",
+  "Delete tasks",
+  "Manage sector tasks",
+  "View analytics",
+  "Assign responsible persons",
+  "View assigned tasks",
+  "Update task status",
+  "Add sub-tasks",
+  "View dashboards",
+  "View tasks",
+];
+
+const DEFAULT_DESCRIPTIONS: Record<AppRole, string> = {
   super_admin: "Full system access. Can manage all settings, users, roles, and data across all sectors.",
   sector_hr_admin: "Manages HR operations within assigned sectors. Can create tasks and manage sector users.",
   responsible_person: "Assigned to specific tasks. Can view and update tasks they are responsible for.",
   viewer: "Read-only access. Can view dashboards, tasks, and reports but cannot modify data.",
+};
+
+const DEFAULT_MODULES: Record<AppRole, string[]> = {
+  super_admin: ["Dashboard", "Tasks", "Employees", "Analytics", "Administration"],
+  sector_hr_admin: ["Dashboard", "Tasks", "Employees", "Analytics"],
+  responsible_person: ["Dashboard", "Tasks"],
+  viewer: ["Dashboard", "Tasks", "Analytics"],
+};
+
+const DEFAULT_PERMISSIONS: Record<AppRole, string[]> = {
+  super_admin: ["All permissions", "Manage users & roles", "System configuration", "Delete tasks"],
+  sector_hr_admin: ["Manage sector tasks", "View analytics", "Assign responsible persons", "Delete tasks"],
+  responsible_person: ["View assigned tasks", "Update task status", "Add sub-tasks"],
+  viewer: ["View dashboards", "View tasks", "View analytics"],
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -33,23 +72,32 @@ const ROLE_COLORS: Record<AppRole, string> = {
   viewer: "bg-muted text-muted-foreground border-border",
 };
 
-const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
-  super_admin: ["All permissions", "Manage users & roles", "System configuration", "Delete tasks"],
-  sector_hr_admin: ["Manage sector tasks", "View analytics", "Assign responsible persons", "Delete tasks"],
-  responsible_person: ["View assigned tasks", "Update task status", "Add sub-tasks"],
-  viewer: ["View dashboards", "View tasks", "View analytics"],
-};
-
-const ROLE_MODULES: Record<AppRole, string[]> = {
-  super_admin: ["Dashboard", "Tasks", "Employees", "Analytics", "Administration"],
-  sector_hr_admin: ["Dashboard", "Tasks", "Employees", "Analytics"],
-  responsible_person: ["Dashboard", "Tasks"],
-  viewer: ["Dashboard", "Tasks", "Analytics"],
-};
+interface RoleConfig {
+  description: string;
+  modules: string[];
+  permissions: string[];
+}
 
 export default function AdminRolesManager() {
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [roleConfigs, setRoleConfigs] = useState<Record<AppRole, RoleConfig>>(() => {
+    const saved = localStorage.getItem("roleConfigs");
+    if (saved) return JSON.parse(saved);
+    const initial: Record<string, RoleConfig> = {};
+    (Object.keys(ROLE_LABELS) as AppRole[]).forEach((role) => {
+      initial[role] = {
+        description: DEFAULT_DESCRIPTIONS[role],
+        modules: [...DEFAULT_MODULES[role]],
+        permissions: [...DEFAULT_PERMISSIONS[role]],
+      };
+    });
+    return initial as Record<AppRole, RoleConfig>;
+  });
+
+  const [editingRole, setEditingRole] = useState<AppRole | null>(null);
+  const [editForm, setEditForm] = useState<RoleConfig>({ description: "", modules: [], permissions: [] });
+
   const { toast } = useToast();
 
   const fetchCounts = async () => {
@@ -76,13 +124,54 @@ export default function AdminRolesManager() {
     fetchCounts();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("roleConfigs", JSON.stringify(roleConfigs));
+  }, [roleConfigs]);
+
+  const openEdit = (role: AppRole) => {
+    setEditForm({
+      description: roleConfigs[role].description,
+      modules: [...roleConfigs[role].modules],
+      permissions: [...roleConfigs[role].permissions],
+    });
+    setEditingRole(role);
+  };
+
+  const toggleModule = (mod: string) => {
+    setEditForm((prev) => ({
+      ...prev,
+      modules: prev.modules.includes(mod)
+        ? prev.modules.filter((m) => m !== mod)
+        : [...prev.modules, mod],
+    }));
+  };
+
+  const togglePermission = (perm: string) => {
+    setEditForm((prev) => ({
+      ...prev,
+      permissions: prev.permissions.includes(perm)
+        ? prev.permissions.filter((p) => p !== perm)
+        : [...prev.permissions, perm],
+    }));
+  };
+
+  const saveEdit = () => {
+    if (!editingRole) return;
+    setRoleConfigs((prev) => ({
+      ...prev,
+      [editingRole]: { ...editForm },
+    }));
+    toast({ title: "Role Updated", description: `${ROLE_LABELS[editingRole]} has been updated.` });
+    setEditingRole(null);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Role Definitions</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            View and understand the roles available in the system
+            View and manage the roles available in the system
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchCounts}>
@@ -125,6 +214,7 @@ export default function AdminRolesManager() {
                   <TableHead>Modules</TableHead>
                   <TableHead>Permissions</TableHead>
                   <TableHead className="text-right">Users</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -136,11 +226,11 @@ export default function AdminRolesManager() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-[300px]">
-                      {ROLE_DESCRIPTIONS[role]}
+                      {roleConfigs[role].description}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {ROLE_MODULES[role].map((mod) => (
+                        {roleConfigs[role].modules.map((mod) => (
                           <Badge key={mod} variant="outline" className="text-[10px] font-normal">
                             {mod}
                           </Badge>
@@ -149,7 +239,7 @@ export default function AdminRolesManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {ROLE_PERMISSIONS[role].map((perm) => (
+                        {roleConfigs[role].permissions.map((perm) => (
                           <Badge key={perm} variant="secondary" className="text-[10px] font-normal">
                             {perm}
                           </Badge>
@@ -158,6 +248,11 @@ export default function AdminRolesManager() {
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       {userCounts[role] || 0}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(role)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -179,6 +274,74 @@ export default function AdminRolesManager() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Role Dialog */}
+      <Dialog open={!!editingRole} onOpenChange={(open) => !open && setEditingRole(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Edit Role –{" "}
+              {editingRole && (
+                <Badge variant="outline" className={ROLE_COLORS[editingRole]}>
+                  {ROLE_LABELS[editingRole!]}
+                </Badge>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              Update description, module access, and permissions for this role.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            {/* Description */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Description</Label>
+              <Textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+
+            {/* Modules */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Module Access</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {ALL_MODULES.map((mod) => (
+                  <label key={mod} className="flex items-center gap-2 text-sm cursor-pointer rounded-md border border-border px-3 py-2 hover:bg-accent/50 transition-colors">
+                    <Checkbox
+                      checked={editForm.modules.includes(mod)}
+                      onCheckedChange={() => toggleModule(mod)}
+                    />
+                    {mod}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Permissions */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Permissions</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {ALL_PERMISSIONS.map((perm) => (
+                  <label key={perm} className="flex items-center gap-2 text-sm cursor-pointer rounded-md border border-border px-3 py-2 hover:bg-accent/50 transition-colors">
+                    <Checkbox
+                      checked={editForm.permissions.includes(perm)}
+                      onCheckedChange={() => togglePermission(perm)}
+                    />
+                    {perm}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingRole(null)}>Cancel</Button>
+            <Button onClick={saveEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
