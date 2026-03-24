@@ -179,7 +179,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       subTasks: Array.from({ length: formData.totalTasks }, (_, i) => ({
         id: `ST-${Date.now()}-${i}`,
         name: `Sub Task ${i + 1}`,
-        status: "Pending" as TaskStatus,
+        status: "Not Started" as TaskStatus,
         progress: 0,
         responsible: formData.responsible,
         dueDate: formData.dueDate,
