@@ -246,16 +246,30 @@ export interface KPIData {
   trend: "up" | "down" | "neutral";
 }
 
-export function getKPIData(sectorId?: number): KPIData[] {
-  const filtered = sectorId ? mockTasks.filter(t => t.sectorId === sectorId) : mockTasks;
+export function getLiveTasks(): Task[] {
+  try {
+    const saved = localStorage.getItem("tasks_data");
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return mockTasks;
+}
+
+export function getKPIData(sectorId?: number, tasksOverride?: Task[]): KPIData[] {
+  const allTasks = tasksOverride ?? getLiveTasks();
+  const filtered = sectorId ? allTasks.filter(t => t.sectorId === sectorId) : allTasks;
   const total = filtered.length;
   const completed = filtered.filter(t => t.status === "Completed").length;
   const overdue = filtered.filter(t => t.status === "Overdue").length;
-  const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + t.kpiScore, 0) / total) : 0;
+
+  // Completion Rate = average progress across all tasks
+  const avgProgress = total > 0 ? Math.round(filtered.reduce((s, t) => s + t.progress, 0) / total) : 0;
+
+  // Avg KPI Score = average of kpiAchievement across all tasks
+  const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + t.kpiAchievement, 0) / total) : 0;
 
   return [
     { label: "Total Tasks", value: total, change: 12, trend: "up" },
-    { label: "Completion Rate", value: total > 0 ? Math.round((completed / total) * 100) : 0, change: 5, trend: "up" },
+    { label: "Completion Rate", value: avgProgress, change: 5, trend: "up" },
     { label: "Avg KPI Score", value: avgKpi, change: 3, trend: "up" },
     { label: "Overdue Tasks", value: overdue, change: -2, trend: "down" },
   ];
