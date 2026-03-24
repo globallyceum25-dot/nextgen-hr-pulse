@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import KPICard from "@/components/dashboard/KPICard";
-import { getKPIData, getMonthlyTrend, getSectorPerformance, SECTORS } from "@/data/mockData";
+import { getKPIData, getMonthlyTrend, getSectorPerformance, SECTORS, getLiveTasks } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Cell } from "recharts";
 import { useActivityLog, type ActivityEntry } from "@/contexts/ActivityLogContext";
 import { Clock, Plus, Pencil, CheckCircle2, ListChecks } from "lucide-react";
