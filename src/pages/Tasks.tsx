@@ -72,7 +72,6 @@ export default function Tasks({ selectedSector }: TasksProps) {
       status: getStatusFromProgress(task.progress),
       subTasks: task.subTasks.map(st => ({
         ...st,
-        status: getStatusFromProgress(st.progress),
       })),
     }))
   );
