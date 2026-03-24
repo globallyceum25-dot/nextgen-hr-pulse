@@ -324,7 +324,7 @@ export function getKPIData(sectorId?: number, tasksOverride?: Task[]): KPIData[]
 
   return [
     { label: "Total Tasks", value: total, change: 12, trend: "up" },
-    { label: "Completion Rate", value: avgProgress, change: 5, trend: "up" },
+    { label: "Completion Rate", value: completionRate, change: 5, trend: "up" },
     { label: "Avg KPI Score", value: avgKpi, change: 3, trend: "up" },
     { label: "Overdue Tasks", value: overdue, change: overdue > 0 ? overdue : -2, trend: overdue > 0 ? "up" : "down" },
   ];
