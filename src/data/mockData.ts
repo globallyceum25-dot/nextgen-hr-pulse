@@ -315,15 +315,16 @@ export function getKPIData(sectorId?: number, tasksOverride?: Task[]): KPIData[]
     return due < today;
   }).length;
 
-  // Completion Rate = average progress across all tasks
-  const avgProgress = total > 0 ? Math.round(filtered.reduce((s, t) => s + t.progress, 0) / total) : 0;
+  // Completion Rate = completed tasks out of total tasks (percentage)
+  const completedCount = filtered.filter(t => t.status === "Completed").length;
+  const completionRate = total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
   // Avg KPI Score = average of kpiAchievement across all tasks
   const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + t.kpiAchievement, 0) / total) : 0;
 
   return [
     { label: "Total Tasks", value: total, change: 12, trend: "up" },
-    { label: "Completion Rate", value: avgProgress, change: 5, trend: "up" },
+    { label: "Completion Rate", value: completionRate, change: 5, trend: "up" },
     { label: "Avg KPI Score", value: avgKpi, change: 3, trend: "up" },
     { label: "Overdue Tasks", value: overdue, change: overdue > 0 ? overdue : -2, trend: overdue > 0 ? "up" : "down" },
   ];
