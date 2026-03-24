@@ -234,6 +234,23 @@ export default function Tasks({ selectedSector }: TasksProps) {
     const pending = formData.totalTasks - formData.completedCount;
     setTasks(prev => prev.map(t => {
       if (t.id !== editingTask.id) return t;
+      // Sync sub-tasks count to match totalTasks
+      let updatedSubTasks = [...t.subTasks];
+      const targetCount = formData.totalTasks;
+      if (updatedSubTasks.length < targetCount) {
+        for (let i = updatedSubTasks.length; i < targetCount; i++) {
+          updatedSubTasks.push({
+            id: `ST-${Date.now()}-${i}`,
+            name: `Sub Task ${i + 1}`,
+            status: "Pending" as TaskStatus,
+            progress: 0,
+            responsible: formData.responsible,
+            dueDate: formData.dueDate,
+          });
+        }
+      } else if (updatedSubTasks.length > targetCount) {
+        updatedSubTasks = updatedSubTasks.slice(0, targetCount);
+      }
       return {
         ...t,
         name: formData.name,
@@ -262,6 +279,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         dueDate: formData.dueDate,
         completionFlag: computedCompletionFlag,
         kpiScore: Math.round(computedKpiAchievement),
+        subTasks: updatedSubTasks,
       };
     }));
     // Build change description with field-level detail
