@@ -246,12 +246,58 @@ export interface KPIData {
   trend: "up" | "down" | "neutral";
 }
 
+export const TASKS_STORAGE_KEY = "tasks_data";
+export const TASKS_UPDATED_EVENT = "tasks_data_updated";
+
+function cloneTasks(tasks: Task[]): Task[] {
+  return tasks.map(task => ({
+    ...task,
+    subTasks: Array.isArray(task.subTasks) ? task.subTasks.map(st => ({ ...st })) : [],
+  }));
+}
+
+function getDefaultTasks(): Task[] {
+  return cloneTasks(mockTasks.map(task => ({
+    ...task,
+    status: getStatusFromProgress(task.progress),
+  })));
+}
+
+function parseStoredTasks(value: unknown): Task[] | null {
+  if (Array.isArray(value)) return cloneTasks(value as Task[]);
+
+  if (value && typeof value === "object" && Array.isArray((value as { tasks?: unknown }).tasks)) {
+    return cloneTasks((value as { tasks: Task[] }).tasks);
+  }
+
+  return null;
+}
+
 export function getLiveTasks(): Task[] {
+  if (typeof window === "undefined") return getDefaultTasks();
+
   try {
-    const saved = localStorage.getItem("tasks_data");
-    if (saved) return JSON.parse(saved);
+    const saved = window.localStorage.getItem(TASKS_STORAGE_KEY);
+
+    if (!saved) {
+      const seeded = getDefaultTasks();
+      window.localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(seeded));
+      return seeded;
+    }
+
+    const parsed = parseStoredTasks(JSON.parse(saved));
+    if (parsed) return parsed;
   } catch {}
-  return mockTasks;
+
+  return getDefaultTasks();
+}
+
+export function writeLiveTasks(tasks: Task[]): void {
+  if (typeof window === "undefined") return;
+
+  const snapshot = cloneTasks(tasks);
+  window.localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(snapshot));
+  window.dispatchEvent(new CustomEvent(TASKS_UPDATED_EVENT));
 }
 
 export function getKPIData(sectorId?: number, tasksOverride?: Task[]): KPIData[] {
