@@ -76,7 +76,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: SubTask } | null>(null);
-  const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "Not Started" as SubTaskStatus, progress: 0, responsible: "", dueDate: "" });
+  const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "Not Started" as SubTaskStatus, progress: 0, priority: "Medium" as Priority, responsible: "", dueDate: "" });
 
   const syncTasksFromStorage = useCallback(() => {
     const latest = getLiveTasks();
