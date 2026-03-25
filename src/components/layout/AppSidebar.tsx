@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { SECTORS } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
-  ChevronLeft, ChevronRight, ChevronDown, Settings,
+  ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AppSidebarProps {
   selectedSector: number | null;
