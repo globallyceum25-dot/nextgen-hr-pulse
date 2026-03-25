@@ -257,6 +257,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
       sectorId: task.sectorId,
       startDate: task.startDate,
       dueDate: task.dueDate,
+      repeatMonthly: false,
+      repeatMonths: 1,
     });
     setEditDialogOpen(true);
   };
