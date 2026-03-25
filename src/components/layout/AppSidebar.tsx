@@ -132,12 +132,18 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-sidebar-primary flex items-center justify-center text-[11px] font-semibold text-sidebar-primary-foreground">
-              SA
+              {userEmail ? userEmail.charAt(0).toUpperCase() : "U"}
             </div>
-            <div>
-              <p className="text-xs font-medium text-sidebar-foreground">Super Admin</p>
-              <p className="text-[10px] text-sidebar-foreground/50">All sectors</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-sidebar-foreground truncate">{userEmail || "User"}</p>
             </div>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="p-1 rounded hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
       )}
