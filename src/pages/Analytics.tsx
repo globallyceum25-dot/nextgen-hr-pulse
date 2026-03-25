@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getLiveTasks, SECTORS, TASKS_UPDATED_EVENT, type Task, getKPIData } from "@/data/mockData";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import KPICard from "@/components/dashboard/KPICard";
 
@@ -102,12 +102,14 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   }, [filtered]);
 
   const employeePerf = useMemo(() => {
-    const map = new Map<string, { total: number; kpiAchievementSum: number; completed: number; progressSum: number }>();
+    const map = new Map<string, { total: number; kpiAchievementSum: number; completed: number; progressSum: number; weightedScoreSum: number; taskWeightSum: number }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || { total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0 };
+      const e = map.get(t.responsible) || { total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0 };
       e.total++;
       e.kpiAchievementSum += t.kpiAchievement;
       e.progressSum += t.progress;
+      e.weightedScoreSum += (t.weightedScore ?? 0);
+      e.taskWeightSum += (t.taskWeight ?? 0);
       if (t.status === "Completed") e.completed++;
       map.set(t.responsible, e);
     });
@@ -120,8 +122,9 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
         avgProgress: Math.round(d.progressSum / d.total),
         tasks: d.total,
         completed: d.completed,
+        overallWeightedPerformance: d.taskWeightSum > 0 ? Math.round((d.weightedScoreSum / d.taskWeightSum) * 100 * 100) / 100 : 0,
       }))
-      .sort((a, b) => b.kpi - a.kpi)
+      .sort((a, b) => b.overallWeightedPerformance - a.overallWeightedPerformance)
       .slice(0, 10);
   }, [filtered]);
 
@@ -274,21 +277,22 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
         {/* ===== TAB 3: Employee Performance ===== */}
         <TabsContent value="employee-performance" className="space-y-6 mt-4">
-          {/* Employee KPI Rankings */}
+          {/* Employee Performance Chart - Overall Weighted Performance */}
           <div className="bg-card rounded-lg border p-5">
-            <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee KPI Rankings</h2>
-            <div className="space-y-4">
-              {employeePerf.map((emp, i) => (
-                <div key={emp.fullName} className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-muted-foreground w-5">{i + 1}</span>
-                  <span className="text-sm text-card-foreground w-24 truncate">{emp.fullName}</span>
-                  <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-300" style={{ width: `${emp.kpi}%`, backgroundColor: emp.kpi >= 50 ? "hsl(217, 91%, 60%)" : "hsl(38, 92%, 50%)" }} />
-                  </div>
-                  <span className="text-sm font-semibold text-card-foreground w-10 text-right">{emp.kpi}%</span>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee Performance Chart</h2>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={employeePerf} barGap={2} margin={{ bottom: 25 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} tickFormatter={(v: number) => `${v}%`} label={{ value: "Overall Weighted Performance", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} formatter={(value: number) => [`${value}%`, "Overall Weighted Performance"]} />
+                <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
+                <ReferenceLine y={70} stroke="hsl(0, 84%, 60%)" strokeWidth={2} label={{ value: "Target Performance (0.7)", position: "insideTopLeft", fill: "hsl(0, 84%, 60%)", fontSize: 11, fontWeight: 600 }} />
+                <Bar dataKey="overallWeightedPerformance" name="Overall Weighted Performance" fill="hsl(217, 91%, 60%)" radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="overallWeightedPerformance" position="top" fontSize={10} fontWeight={600} formatter={(v: number) => `${v}%`} fill="hsl(215, 16%, 47%)" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
           {/* Employee Summary Table */}
@@ -305,6 +309,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Completion Rate</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg Progress</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg KPI Achievement</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Overall Weighted Perf.</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -321,27 +326,14 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                       <td className="px-3 py-2 text-center">
                         <span className={`font-semibold ${emp.kpi >= 80 ? "text-success" : emp.kpi >= 50 ? "text-primary" : emp.kpi >= 30 ? "text-warning" : "text-destructive"}`}>{emp.kpi}%</span>
                       </td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`font-bold ${emp.overallWeightedPerformance >= 70 ? "text-success" : emp.overallWeightedPerformance >= 50 ? "text-primary" : emp.overallWeightedPerformance >= 30 ? "text-warning" : "text-destructive"}`}>{emp.overallWeightedPerformance}%</span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* Employee Performance Chart */}
-          <div className="bg-card rounded-lg border p-5">
-            <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee Performance — KPI vs Completion Rate</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={employeePerf} barGap={2}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} />
-                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="kpi" name="Avg KPI Achievement" fill="hsl(217, 91%, 60%)" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="completion" name="Completion Rate" fill="hsl(160, 84%, 39%)" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
           </div>
         </TabsContent>
       </Tabs>
