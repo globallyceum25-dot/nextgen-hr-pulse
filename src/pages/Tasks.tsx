@@ -68,6 +68,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
+  const [monthFilter, setMonthFilter] = useState<string>("All");
   const [deadlineFilter, setDeadlineFilter] = useState<"All" | "Overdue" | "Due Soon" | "Completed" | "Pending">("All");
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>(() => getLiveTasks());
