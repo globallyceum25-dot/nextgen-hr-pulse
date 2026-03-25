@@ -170,19 +170,36 @@ export default function AdminUsersManager() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Assign User to Role</DialogTitle>
+                <DialogTitle>Create User & Assign Role</DialogTitle>
                 <DialogDescription>
-                  The user must already have an account. Enter their email and select a role to assign.
+                  Create a new user account with email and password, then assign a role.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>User Email <span className="text-destructive">*</span></Label>
+                  <Label>Full Name</Label>
+                  <Input
+                    placeholder="John Doe"
+                    value={newFullName}
+                    onChange={(e) => setNewFullName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email <span className="text-destructive">*</span></Label>
                   <Input
                     placeholder="user@example.com"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     type="email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password <span className="text-destructive">*</span></Label>
+                  <Input
+                    placeholder="Min 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    type="password"
                   />
                 </div>
                 <div className="space-y-2">
@@ -203,8 +220,8 @@ export default function AdminUsersManager() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleAssignRole} disabled={!newEmail.trim()}>
-                  Assign Role
+                <Button onClick={handleAssignRole} disabled={!newEmail.trim() || !newPassword.trim() || assigning}>
+                  {assigning ? "Creating..." : "Create & Assign"}
                 </Button>
               </DialogFooter>
             </DialogContent>
