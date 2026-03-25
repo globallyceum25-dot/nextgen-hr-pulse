@@ -717,6 +717,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       {expandedTask === task.id ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">{task.taskId}</td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{MONTHS[(task.createdDate ? new Date(task.createdDate).getMonth() : task.month - 1)] || MONTHS[task.month - 1]}</td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{task.createdDate || task.startDate}</td>
                     <td className="px-3 py-2.5 font-medium text-card-foreground max-w-[200px] truncate">{task.name}</td>
                     <td className="px-3 py-2.5 text-card-foreground">{task.responsible}</td>
                     <td className="px-3 py-2.5 text-muted-foreground text-xs max-w-[150px] truncate">{task.companyName}</td>
