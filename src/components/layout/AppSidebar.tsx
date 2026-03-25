@@ -20,7 +20,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/" },
     { label: "Tasks", icon: ListTodo, path: "/tasks" },
-    { label: "KPI Analytics", icon: BarChart3, path: "/analytics" },
+    { label: "Task Analysis", icon: BarChart3, path: "/analytics" },
     { label: "Employees", icon: Users, path: "/employees" },
     { label: "Administration", icon: Settings, path: "/admin" },
   ];
