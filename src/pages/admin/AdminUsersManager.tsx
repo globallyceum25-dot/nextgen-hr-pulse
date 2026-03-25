@@ -42,8 +42,10 @@ export default function AdminUsersManager() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [newFullName, setNewFullName] = useState("");
   const [newRole, setNewRole] = useState<AppRole>("viewer");
+  const [assigning, setAssigning] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
