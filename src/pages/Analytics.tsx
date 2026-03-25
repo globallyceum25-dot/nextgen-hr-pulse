@@ -88,11 +88,11 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   const totalSubTasks = useMemo(() => subTaskStatusDist.reduce((s, d) => s + d.value, 0), [subTaskStatusDist]);
 
   const employeePerf = useMemo(() => {
-    const map = new Map<string, { total: number; kpiSum: number; completed: number }>();
+    const map = new Map<string, { total: number; kpiAchievementSum: number; completed: number }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || { total: 0, kpiSum: 0, completed: 0 };
+      const e = map.get(t.responsible) || { total: 0, kpiAchievementSum: 0, completed: 0 };
       e.total++;
-      e.kpiSum += t.kpiScore;
+      e.kpiAchievementSum += t.kpiAchievement;
       if (t.status === "Completed") e.completed++;
       map.set(t.responsible, e);
     });
@@ -100,7 +100,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       .map(([name, d]) => ({
         name: name.split(" ")[0],
         fullName: name,
-        kpi: Math.round(d.kpiSum / d.total),
+        kpi: Math.round(d.kpiAchievementSum / d.total),
         completion: Math.round((d.completed / d.total) * 100),
         tasks: d.total,
       }))
