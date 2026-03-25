@@ -16,7 +16,14 @@ interface AppSidebarProps {
 export default function AppSidebar({ selectedSector, onSectorChange }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [sectorsOpen, setSectorsOpen] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserEmail(user?.email ?? null);
+    });
+  }, []);
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/" },
