@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getLiveTasks, SECTORS, TASKS_UPDATED_EVENT, type Task, getKPIData } from "@/data/mockData";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import KPICard from "@/components/dashboard/KPICard";
 
