@@ -321,14 +321,14 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee Performance Chart</h2>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={employeePerf} barGap={2} margin={{ bottom: 25 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} tickFormatter={(v: number) => `${v}%`} label={{ value: "Overall Weighted Performance", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
-                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} formatter={(value: number) => [`${value}%`, "Overall Weighted Performance"]} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} tickFormatter={(v: number) => `${v}%`} label={{ value: "Overall Weighted Performance", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} formatter={(value: number) => [`${value}%`, "Overall Weighted Performance"]} />
                 <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
-                <ReferenceLine y={70} stroke="hsl(0, 84%, 60%)" strokeWidth={2} label={{ value: "Target Performance (0.7)", position: "insideTopLeft", fill: "hsl(0, 84%, 60%)", fontSize: 11, fontWeight: 600 }} />
-                <Bar dataKey="overallWeightedPerformance" name="Overall Weighted Performance" fill="hsl(217, 91%, 60%)" radius={[3, 3, 0, 0]}>
-                  <LabelList dataKey="overallWeightedPerformance" position="top" fontSize={10} fontWeight={600} formatter={(v: number) => `${v}%`} fill="hsl(215, 16%, 47%)" />
+                <ReferenceLine y={70} stroke={CHART_COLORS.referenceLine} strokeWidth={2} label={{ value: "Target Performance (0.7)", position: "insideTopLeft", fill: CHART_COLORS.referenceLine, fontSize: 11, fontWeight: 600 }} />
+                <Bar dataKey="overallWeightedPerformance" name="Overall Weighted Performance" fill={CHART_COLORS.primary} radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="overallWeightedPerformance" position="top" fontSize={10} fontWeight={600} formatter={(v: number) => `${v}%`} fill={CHART_COLORS.axisText} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
