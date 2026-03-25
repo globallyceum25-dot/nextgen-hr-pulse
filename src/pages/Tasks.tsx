@@ -671,6 +671,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
           <option value="Pending">Pending Tasks</option>
           <option value="Completed">Completed Tasks</option>
         </select>
+        <select value={monthFilter} onChange={e => setMonthFilter(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+          <option value="All">All Months</option>
+          {MONTHS.map((m, i) => <option key={m} value={String(i + 1)}>{m}</option>)}
+        </select>
       </div>
 
       {/* Table */}
