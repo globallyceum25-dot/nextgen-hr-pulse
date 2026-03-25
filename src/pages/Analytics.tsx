@@ -169,20 +169,18 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             </div>
           </div>
         </div>
-      </div>
 
-        {/* Employee KPI Ranking */}
-        <div className="bg-card rounded-lg border p-5">
-          <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee KPI Rankings</h2>
-          <div className="space-y-3">
-            {employeePerf.slice(0, 6).map((emp, i) => (
-              <div key={emp.fullName} className="flex items-center gap-3">
-                <span className="text-xs font-mono text-muted-foreground w-4">{i + 1}</span>
-                <span className="text-xs text-card-foreground w-20 truncate">{emp.fullName}</span>
-                <div className="flex-1"><ProgressBar value={emp.kpi} size="sm" /></div>
-              </div>
-            ))}
-          </div>
+      {/* Employee KPI Ranking */}
+      <div className="bg-card rounded-lg border p-5">
+        <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee KPI Rankings</h2>
+        <div className="space-y-3">
+          {employeePerf.slice(0, 6).map((emp, i) => (
+            <div key={emp.fullName} className="flex items-center gap-3">
+              <span className="text-xs font-mono text-muted-foreground w-4">{i + 1}</span>
+              <span className="text-xs text-card-foreground w-20 truncate">{emp.fullName}</span>
+              <div className="flex-1"><ProgressBar value={emp.kpi} size="sm" /></div>
+            </div>
+          ))}
         </div>
       </div>
 
