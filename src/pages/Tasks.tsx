@@ -791,7 +791,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={18} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={19} className="px-4 py-12 text-center text-muted-foreground">
                     No tasks found matching your filters.
                   </td>
                 </tr>
