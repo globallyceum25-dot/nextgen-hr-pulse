@@ -254,13 +254,13 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <h2 className="text-sm font-semibold text-card-foreground mb-4">KPI Achievement vs Target by Task</h2>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={taskKpiData.slice(0, 15)} barGap={2} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} />
-                <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: "hsl(215, 16%, 47%)" }} />
-                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} />
+                <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: CHART_COLORS.axisText }} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="target" name="KPI Target %" fill="hsl(214, 32%, 91%)" radius={[0, 3, 3, 0]} />
-                <Bar dataKey="achievement" name="KPI Achievement %" fill="hsl(217, 91%, 60%)" radius={[0, 3, 3, 0]} />
+                <Bar dataKey="target" name="KPI Target %" fill={CHART_COLORS.secondary} radius={[0, 3, 3, 0]} />
+                <Bar dataKey="achievement" name="KPI Achievement %" fill={CHART_COLORS.primary} radius={[0, 3, 3, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
