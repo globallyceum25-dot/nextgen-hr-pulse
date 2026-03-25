@@ -8,15 +8,15 @@ interface AnalyticsProps {
   selectedSector: number | null;
 }
 
-// Formal corporate color palette
+// Formal corporate color palette for donut/pie charts - high contrast & distinguishable
 const COLORS = [
-  "hsl(215, 50%, 35%)",   // Deep navy
-  "hsl(210, 40%, 52%)",   // Steel blue
-  "hsl(200, 30%, 65%)",   // Muted slate blue
-  "hsl(220, 25%, 45%)",   // Dark slate
-  "hsl(195, 35%, 55%)",   // Teal-grey
-  "hsl(210, 15%, 72%)",   // Silver
-  "hsl(225, 20%, 58%)",   // Dusty indigo
+  "hsl(152, 45%, 40%)",   // Forest green (Completed)
+  "hsl(215, 50%, 42%)",   // Deep navy blue (Almost Completed)
+  "hsl(35, 65%, 50%)",    // Warm amber (In Progress)
+  "hsl(0, 50%, 48%)",     // Muted crimson (Started / Overdue)
+  "hsl(270, 35%, 50%)",   // Plum purple (Pending)
+  "hsl(195, 40%, 48%)",   // Teal (Not Started)
+  "hsl(220, 15%, 55%)",   // Cool grey
 ];
 
 // Chart-specific formal colors
