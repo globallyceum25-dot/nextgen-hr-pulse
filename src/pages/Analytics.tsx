@@ -88,11 +88,11 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   const totalSubTasks = useMemo(() => subTaskStatusDist.reduce((s, d) => s + d.value, 0), [subTaskStatusDist]);
 
   const employeePerf = useMemo(() => {
-    const map = new Map<string, { total: number; kpiSum: number; completed: number }>();
+    const map = new Map<string, { total: number; kpiAchievementSum: number; completed: number }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || { total: 0, kpiSum: 0, completed: 0 };
+      const e = map.get(t.responsible) || { total: 0, kpiAchievementSum: 0, completed: 0 };
       e.total++;
-      e.kpiSum += t.kpiScore;
+      e.kpiAchievementSum += t.kpiAchievement;
       if (t.status === "Completed") e.completed++;
       map.set(t.responsible, e);
     });
@@ -100,7 +100,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       .map(([name, d]) => ({
         name: name.split(" ")[0],
         fullName: name,
-        kpi: Math.round(d.kpiSum / d.total),
+        kpi: Math.round(d.kpiAchievementSum / d.total),
         completion: Math.round((d.completed / d.total) * 100),
         tasks: d.total,
       }))
@@ -210,12 +210,21 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       {/* Employee KPI Ranking */}
       <div className="bg-card rounded-lg border p-5">
         <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee KPI Rankings</h2>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {employeePerf.slice(0, 6).map((emp, i) => (
             <div key={emp.fullName} className="flex items-center gap-3">
-              <span className="text-xs font-mono text-muted-foreground w-4">{i + 1}</span>
-              <span className="text-xs text-card-foreground w-20 truncate">{emp.fullName}</span>
-              <div className="flex-1"><ProgressBar value={emp.kpi} size="sm" /></div>
+              <span className="text-sm font-medium text-muted-foreground w-5">{i + 1}</span>
+              <span className="text-sm text-card-foreground w-24 truncate">{emp.fullName}</span>
+              <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${emp.kpi}%`,
+                    backgroundColor: emp.kpi >= 50 ? "hsl(217, 91%, 60%)" : "hsl(38, 92%, 50%)",
+                  }}
+                />
+              </div>
+              <span className="text-sm font-semibold text-card-foreground w-10 text-right">{emp.kpi}%</span>
             </div>
           ))}
         </div>
