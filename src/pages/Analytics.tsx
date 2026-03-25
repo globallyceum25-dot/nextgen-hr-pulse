@@ -131,6 +131,27 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       .slice(0, 10);
   }, [filtered]);
 
+  // Work Load vs Output - sub-tasks per responsible person
+  const workloadVsOutput = useMemo(() => {
+    const map = new Map<string, { totalSubTasks: number; completedSubTasks: number }>();
+    filtered.forEach(t => {
+      const e = map.get(t.responsible) || { totalSubTasks: 0, completedSubTasks: 0 };
+      (t.subTasks || []).forEach(st => {
+        e.totalSubTasks++;
+        if (st.status === "Completed") e.completedSubTasks++;
+      });
+      map.set(t.responsible, e);
+    });
+    return Array.from(map.entries())
+      .map(([name, d]) => ({
+        name: name.split(" ")[0],
+        fullName: name,
+        totalSubTasks: d.totalSubTasks,
+        completedSubTasks: d.completedSubTasks,
+      }))
+      .sort((a, b) => b.totalSubTasks - a.totalSubTasks);
+  }, [filtered]);
+
   const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
 
   return (
