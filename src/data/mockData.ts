@@ -258,10 +258,18 @@ export interface KPIData {
 export const TASKS_STORAGE_KEY = "tasks_data";
 export const TASKS_UPDATED_EVENT = "tasks_data_updated";
 
+function ensureSubTaskWeights(st: SubTask): SubTask {
+  const priority = st.priority || "Medium";
+  const weight = st.taskWeight != null ? st.taskWeight : (priority === "High" ? 1 : priority === "Medium" ? 0.6 : 0.2);
+  const progress = st.progress ?? 0;
+  const weightedScore = st.weightedScore != null ? st.weightedScore : Math.round(weight * (progress / 100) * 100) / 100;
+  return { ...st, priority, taskWeight: weight, weightedScore };
+}
+
 function cloneTasks(tasks: Task[]): Task[] {
   return tasks.map(task => ({
     ...task,
-    subTasks: Array.isArray(task.subTasks) ? task.subTasks.map(st => ({ ...st })) : [],
+    subTasks: Array.isArray(task.subTasks) ? task.subTasks.map(st => ensureSubTaskWeights({ ...st })) : [],
   }));
 }
 
