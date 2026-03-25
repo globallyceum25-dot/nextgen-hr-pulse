@@ -772,13 +772,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
                               {task.subTasks.map(st => {
                                 const stDeadline = getDeadlineInfo({ status: st.status, dueDate: st.dueDate, startDate: task.startDate, pendingCount: 0 });
                                 return (
-                                <div key={st.id} className="flex items-center gap-4 text-xs">
+                                <div key={st.id} className="flex items-center gap-3 text-xs">
                                   <span className="font-mono text-muted-foreground w-20">{st.id}</span>
                                   <span className="flex-1 text-card-foreground">{st.name}</span>
                                   <span className="text-muted-foreground">{st.responsible}</span>
+                                  <PriorityBadge priority={st.priority || "Medium"} />
                                   <StatusBadge status={st.status} />
-                                  <div className="w-24"><ProgressBar value={st.progress} size="sm" /></div>
-                                  <span className="text-[10px] w-16 text-right">{st.progress}%</span>
+                                  <div className="w-20"><ProgressBar value={st.progress} size="sm" /></div>
+                                  <span className="text-[10px] w-14 text-right">{st.progress}%</span>
+                                  <span className="text-[10px] w-12 text-right text-muted-foreground" title="Task Weight">{st.taskWeight ?? '-'}</span>
+                                  <span className="text-[10px] w-12 text-right text-muted-foreground" title="Weighted Score">{st.weightedScore ?? '-'}</span>
                                   {stDeadline.showAlert && (
                                     <span className={`text-[10px] font-semibold whitespace-nowrap ${stDeadline.isOverdue ? "text-destructive" : "text-destructive"}`}>
                                       {stDeadline.isOverdue
