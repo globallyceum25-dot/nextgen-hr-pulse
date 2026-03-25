@@ -232,6 +232,7 @@ export function generateMockTasks(): Task[] {
       taskWeight,
       weightedScore,
       maxWeight,
+      createdDate: `2026-0${month}-01`,
       startDate: `2026-0${month}-01`,
       dueDate: `2026-0${month}-28`,
       completedDate: status === "Completed" ? `2026-0${month}-20` : undefined,
