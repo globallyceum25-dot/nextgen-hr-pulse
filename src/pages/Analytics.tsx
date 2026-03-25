@@ -169,16 +169,21 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
           <div className="flex items-center gap-6">
             <ResponsiveContainer width={160} height={160}>
               <PieChart>
-                <Pie data={subTaskStatusDist} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} label={({ value, cx, cy, midAngle, outerRadius }) => {
+                <Pie data={subTaskStatusDist} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
                   if (!value || totalSubTasks === 0) return null;
-                  const pct = Math.round((value / totalSubTasks) * 100);
-                  if (pct < 3) return null;
+                  const pct = ((value / totalSubTasks) * 100).toFixed(1);
+                  if (parseFloat(pct) < 3) return null;
                   const RADIAN = Math.PI / 180;
-                  const radius = outerRadius + 14;
+                  const radius = (innerRadius + outerRadius) / 2;
                   const x = cx + radius * Math.cos(-midAngle * RADIAN);
                   const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                  return <text x={x} y={y} fill="hsl(215, 16%, 47%)" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight={600}>{pct}%</text>;
-                }}>
+                  return (
+                    <g>
+                      <rect x={x - 16} y={y - 8} width={32} height={16} rx={3} fill="white" fillOpacity={0.85} />
+                      <text x={x} y={y} fill="#000000" textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={700}>{pct}%</text>
+                    </g>
+                  );
+                }} labelLine={false}>
                   {subTaskStatusDist.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
