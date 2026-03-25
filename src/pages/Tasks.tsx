@@ -674,7 +674,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <th className="text-center px-3 py-3 font-medium text-muted-foreground">Done</th>
                 <th className="text-center px-3 py-3 font-medium text-muted-foreground">Pending</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground w-28">Progress</th>
-                <th className="text-left px-3 py-3 font-medium text-muted-foreground">KPI%</th>
+                <th className="text-center px-3 py-3 font-medium text-muted-foreground">KPI Target %</th>
+                <th className="text-left px-3 py-3 font-medium text-muted-foreground">KPI Achievement %</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Status</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground min-w-[220px]">Deadline Alert</th>
                 <th className="text-center px-3 py-3 font-medium text-muted-foreground">Actions</th>
@@ -703,6 +704,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     <td className="px-3 py-2.5 text-center text-card-foreground">{task.completedCount}</td>
                     <td className="px-3 py-2.5 text-center text-card-foreground">{task.pendingCount}</td>
                     <td className="px-3 py-2.5"><ProgressBar value={Math.round(task.progress)} size="sm" /></td>
+                    <td className="px-3 py-2.5 text-center text-card-foreground text-xs font-semibold">{task.kpiTargetPercent}%</td>
                     <td className="px-3 py-2.5">
                       <span className={`text-xs font-semibold ${task.kpiAchievement >= 80 ? "text-success" : task.kpiAchievement >= 60 ? "text-warning" : "text-destructive"}`}>
                         {task.kpiAchievement.toFixed(2)}%
@@ -741,7 +743,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </tr>
                   {expandedTask === task.id && (
                     <tr>
-                      <td colSpan={18} className="bg-muted/20 px-6 py-4">
+                      <td colSpan={19} className="bg-muted/20 px-6 py-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mb-3">
                           <div><span className="text-muted-foreground">Description:</span> <span className="text-card-foreground">{task.description}</span></div>
                           <div><span className="text-muted-foreground">KPI Target:</span> <span className="text-card-foreground">{task.kpiTargetPercent}%</span></div>
@@ -789,7 +791,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={18} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={19} className="px-4 py-12 text-center text-muted-foreground">
                     No tasks found matching your filters.
                   </td>
                 </tr>
