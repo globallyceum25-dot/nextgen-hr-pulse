@@ -169,6 +169,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             </div>
           </div>
         </div>
+      </div>
 
       {/* Employee KPI Ranking */}
       <div className="bg-card rounded-lg border p-5">
