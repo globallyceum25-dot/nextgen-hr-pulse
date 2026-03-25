@@ -8,15 +8,30 @@ interface AnalyticsProps {
   selectedSector: number | null;
 }
 
+// Formal corporate color palette
 const COLORS = [
-  "hsl(160, 84%, 39%)",
-  "hsl(217, 91%, 60%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(0, 84%, 60%)",
-  "hsl(262, 83%, 58%)",
-  "hsl(188, 86%, 43%)",
-  "hsl(220, 13%, 56%)",
+  "hsl(215, 50%, 35%)",   // Deep navy
+  "hsl(210, 40%, 52%)",   // Steel blue
+  "hsl(200, 30%, 65%)",   // Muted slate blue
+  "hsl(220, 25%, 45%)",   // Dark slate
+  "hsl(195, 35%, 55%)",   // Teal-grey
+  "hsl(210, 15%, 72%)",   // Silver
+  "hsl(225, 20%, 58%)",   // Dusty indigo
 ];
+
+// Chart-specific formal colors
+const CHART_COLORS = {
+  primary: "hsl(215, 50%, 35%)",       // Deep navy - main bars
+  secondary: "hsl(200, 30%, 65%)",     // Muted slate blue - secondary bars
+  accent: "hsl(210, 40%, 52%)",        // Steel blue
+  target: "hsl(215, 50%, 35%)",        // Navy for KPI target
+  achievement: "hsl(200, 30%, 65%)",   // Slate blue for KPI achievement
+  workload: "hsl(215, 50%, 35%)",      // Navy for total tasks
+  output: "hsl(195, 35%, 55%)",        // Teal-grey for completed
+  referenceLine: "hsl(0, 45%, 45%)",   // Muted burgundy for reference lines
+  grid: "hsl(214, 20%, 88%)",          // Light grey grid
+  axisText: "hsl(215, 16%, 47%)",      // Axis labels
+};
 
 function areTasksEqual(a: Task[], b: Task[]): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
@@ -239,13 +254,13 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <h2 className="text-sm font-semibold text-card-foreground mb-4">KPI Achievement vs Target by Task</h2>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={taskKpiData.slice(0, 15)} barGap={2} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} />
-                <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: "hsl(215, 16%, 47%)" }} />
-                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} />
+                <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: CHART_COLORS.axisText }} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="target" name="KPI Target %" fill="hsl(214, 32%, 91%)" radius={[0, 3, 3, 0]} />
-                <Bar dataKey="achievement" name="KPI Achievement %" fill="hsl(217, 91%, 60%)" radius={[0, 3, 3, 0]} />
+                <Bar dataKey="target" name="KPI Target %" fill={CHART_COLORS.secondary} radius={[0, 3, 3, 0]} />
+                <Bar dataKey="achievement" name="KPI Achievement %" fill={CHART_COLORS.primary} radius={[0, 3, 3, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -306,14 +321,14 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee Performance Chart</h2>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={employeePerf} barGap={2} margin={{ bottom: 25 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} tickFormatter={(v: number) => `${v}%`} label={{ value: "Overall Weighted Performance", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
-                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} formatter={(value: number) => [`${value}%`, "Overall Weighted Performance"]} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} tickFormatter={(v: number) => `${v}%`} label={{ value: "Overall Weighted Performance", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} formatter={(value: number) => [`${value}%`, "Overall Weighted Performance"]} />
                 <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
-                <ReferenceLine y={70} stroke="hsl(0, 84%, 60%)" strokeWidth={2} label={{ value: "Target Performance (0.7)", position: "insideTopLeft", fill: "hsl(0, 84%, 60%)", fontSize: 11, fontWeight: 600 }} />
-                <Bar dataKey="overallWeightedPerformance" name="Overall Weighted Performance" fill="hsl(217, 91%, 60%)" radius={[3, 3, 0, 0]}>
-                  <LabelList dataKey="overallWeightedPerformance" position="top" fontSize={10} fontWeight={600} formatter={(v: number) => `${v}%`} fill="hsl(215, 16%, 47%)" />
+                <ReferenceLine y={70} stroke={CHART_COLORS.referenceLine} strokeWidth={2} label={{ value: "Target Performance (0.7)", position: "insideTopLeft", fill: CHART_COLORS.referenceLine, fontSize: 11, fontWeight: 600 }} />
+                <Bar dataKey="overallWeightedPerformance" name="Overall Weighted Performance" fill={CHART_COLORS.primary} radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="overallWeightedPerformance" position="top" fontSize={10} fontWeight={600} formatter={(v: number) => `${v}%`} fill={CHART_COLORS.axisText} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -324,16 +339,16 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <h2 className="text-sm font-semibold text-card-foreground mb-4">Work Load Vs Output of Employee (Sub Tasks)</h2>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={workloadVsOutput} barGap={4} margin={{ bottom: 25 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Total Tasks", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
-                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Total Tasks", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
                 <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
-                <Bar dataKey="totalSubTasks" name="Total Tasks" fill="hsl(217, 91%, 60%)" radius={[3, 3, 0, 0]}>
-                  <LabelList dataKey="totalSubTasks" position="top" fontSize={10} fontWeight={700} fill="hsl(217, 91%, 60%)" />
+                <Bar dataKey="totalSubTasks" name="Total Tasks" fill={CHART_COLORS.workload} radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="totalSubTasks" position="top" fontSize={10} fontWeight={700} fill={CHART_COLORS.workload} />
                 </Bar>
-                <Bar dataKey="completedSubTasks" name="Completed" fill="hsl(38, 92%, 50%)" radius={[3, 3, 0, 0]}>
-                  <LabelList dataKey="completedSubTasks" position="top" fontSize={10} fontWeight={700} fill="hsl(38, 92%, 50%)" />
+                <Bar dataKey="completedSubTasks" name="Completed" fill={CHART_COLORS.output} radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="completedSubTasks" position="top" fontSize={10} fontWeight={700} fill={CHART_COLORS.output} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
