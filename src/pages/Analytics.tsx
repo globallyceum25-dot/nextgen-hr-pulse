@@ -131,6 +131,27 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       .slice(0, 10);
   }, [filtered]);
 
+  // Work Load vs Output - sub-tasks per responsible person
+  const workloadVsOutput = useMemo(() => {
+    const map = new Map<string, { totalSubTasks: number; completedSubTasks: number }>();
+    filtered.forEach(t => {
+      const e = map.get(t.responsible) || { totalSubTasks: 0, completedSubTasks: 0 };
+      (t.subTasks || []).forEach(st => {
+        e.totalSubTasks++;
+        if (st.status === "Completed") e.completedSubTasks++;
+      });
+      map.set(t.responsible, e);
+    });
+    return Array.from(map.entries())
+      .map(([name, d]) => ({
+        name: name.split(" ")[0],
+        fullName: name,
+        totalSubTasks: d.totalSubTasks,
+        completedSubTasks: d.completedSubTasks,
+      }))
+      .sort((a, b) => b.totalSubTasks - a.totalSubTasks);
+  }, [filtered]);
+
   const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
 
   return (
@@ -293,6 +314,26 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 <ReferenceLine y={70} stroke="hsl(0, 84%, 60%)" strokeWidth={2} label={{ value: "Target Performance (0.7)", position: "insideTopLeft", fill: "hsl(0, 84%, 60%)", fontSize: 11, fontWeight: 600 }} />
                 <Bar dataKey="overallWeightedPerformance" name="Overall Weighted Performance" fill="hsl(217, 91%, 60%)" radius={[3, 3, 0, 0]}>
                   <LabelList dataKey="overallWeightedPerformance" position="top" fontSize={10} fontWeight={600} formatter={(v: number) => `${v}%`} fill="hsl(215, 16%, 47%)" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Work Load Vs Output of Employee (Sub Tasks) */}
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Work Load Vs Output of Employee (Sub Tasks)</h2>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={workloadVsOutput} barGap={4} margin={{ bottom: 25 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
+                <YAxis tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Total Tasks", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} />
+                <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
+                <Bar dataKey="totalSubTasks" name="Total Tasks" fill="hsl(217, 91%, 60%)" radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="totalSubTasks" position="top" fontSize={10} fontWeight={700} fill="hsl(217, 91%, 60%)" />
+                </Bar>
+                <Bar dataKey="completedSubTasks" name="Completed" fill="hsl(38, 92%, 50%)" radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="completedSubTasks" position="top" fontSize={10} fontWeight={700} fill="hsl(38, 92%, 50%)" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
