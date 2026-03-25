@@ -704,6 +704,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     <td className="px-3 py-2.5 text-center text-card-foreground">{task.completedCount}</td>
                     <td className="px-3 py-2.5 text-center text-card-foreground">{task.pendingCount}</td>
                     <td className="px-3 py-2.5"><ProgressBar value={Math.round(task.progress)} size="sm" /></td>
+                    <td className="px-3 py-2.5 text-center text-card-foreground text-xs font-semibold">{task.kpiTargetPercent}%</td>
                     <td className="px-3 py-2.5">
                       <span className={`text-xs font-semibold ${task.kpiAchievement >= 80 ? "text-success" : task.kpiAchievement >= 60 ? "text-warning" : "text-destructive"}`}>
                         {task.kpiAchievement.toFixed(2)}%
