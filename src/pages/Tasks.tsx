@@ -685,6 +685,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <tr className="border-b bg-muted/50">
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground w-8"></th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Task ID</th>
+                <th className="text-left px-3 py-3 font-medium text-muted-foreground">Month</th>
+                <th className="text-left px-3 py-3 font-medium text-muted-foreground">Created Date</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Task Name</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Responsible</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Company</th>
