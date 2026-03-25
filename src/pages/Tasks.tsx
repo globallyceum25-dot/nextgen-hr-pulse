@@ -132,6 +132,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
     sectorId: 1,
     startDate: new Date().toISOString().split("T")[0],
     dueDate: "",
+    repeatMonthly: false,
+    repeatMonths: 1,
   });
 
   const resetForm = () => {
@@ -142,6 +144,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       stage: "Planning", totalTasks: 0, completedCount: 0, pendingCount: 0,
       kpiTargetPercent: 100, maxWeight: 0.6, sectorId: selectedSector || 1,
       startDate: new Date().toISOString().split("T")[0], dueDate: "",
+      repeatMonthly: false, repeatMonths: 1,
     });
   };
 
