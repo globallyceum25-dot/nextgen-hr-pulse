@@ -67,6 +67,26 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filtered]);
 
+  const subTaskStatusDist = useMemo(() => {
+    const counts: Record<string, number> = {
+      Completed: 0,
+      "Almost Completed": 0,
+      "In Progress": 0,
+      Started: 0,
+      "Not Started": 0,
+    };
+    filtered.forEach(t => {
+      (t.subTasks || []).forEach(st => {
+        if (counts[st.status] !== undefined) {
+          counts[st.status]++;
+        }
+      });
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filtered]);
+
+  const totalSubTasks = useMemo(() => subTaskStatusDist.reduce((s, d) => s + d.value, 0), [subTaskStatusDist]);
+
   const employeePerf = useMemo(() => {
     const map = new Map<string, { total: number; kpiSum: number; completed: number }>();
     filtered.forEach(t => {
