@@ -117,30 +117,54 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   }, [filtered]);
 
   const employeePerf = useMemo(() => {
-    const map = new Map<string, { total: number; kpiAchievementSum: number; completed: number; progressSum: number; weightedScoreSum: number; taskWeightSum: number }>();
+    const map = new Map<string, {
+      total: number; kpiAchievementSum: number; completed: number; progressSum: number;
+      weightedScoreSum: number; taskWeightSum: number;
+      // Sub-task level
+      stTotal: number; stCompleted: number; stProgressSum: number; stKpiAchievementSum: number;
+      stWeightedScoreSum: number; stTaskWeightSum: number;
+    }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || { total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0 };
+      const e = map.get(t.responsible) || {
+        total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0,
+        stTotal: 0, stCompleted: 0, stProgressSum: 0, stKpiAchievementSum: 0, stWeightedScoreSum: 0, stTaskWeightSum: 0,
+      };
       e.total++;
       e.kpiAchievementSum += t.kpiAchievement;
       e.progressSum += t.progress;
-      // Aggregate from sub-tasks for weighted performance
+      if (t.status === "Completed") e.completed++;
       (t.subTasks || []).forEach(st => {
         e.weightedScoreSum += (st.weightedScore ?? 0);
         e.taskWeightSum += (st.taskWeight ?? 0);
+        e.stTotal++;
+        if (st.status === "Completed") e.stCompleted++;
+        // Sub-task progress from status mapping
+        const stProgress = st.status === "Completed" ? 100 : st.status === "Almost Completed" ? 80 : st.status === "In Progress" ? 50 : st.status === "Started" ? 25 : 0;
+        e.stProgressSum += stProgress;
+        // Sub-task KPI achievement: (progress / kpiTarget) * 100
+        const stKpiTarget = (st as any).kpiTargetPercent ?? t.kpiTargetPercent ?? 100;
+        e.stKpiAchievementSum += stKpiTarget > 0 ? Math.min((stProgress / stKpiTarget) * 100, 100) : 0;
+        e.stWeightedScoreSum += (st.weightedScore ?? 0);
+        e.stTaskWeightSum += (st.taskWeight ?? 0);
       });
-      if (t.status === "Completed") e.completed++;
       map.set(t.responsible, e);
     });
     return Array.from(map.entries())
       .map(([name, d]) => ({
         name: name.split(" ")[0],
         fullName: name,
+        // Task-level
         kpi: Math.round(d.kpiAchievementSum / d.total),
-        completion: Math.round((d.completed / d.total) * 100),
         avgProgress: Math.round(d.progressSum / d.total),
         tasks: d.total,
         completed: d.completed,
         overallWeightedPerformance: d.taskWeightSum > 0 ? Math.round((d.weightedScoreSum / d.taskWeightSum) * 100 * 100) / 100 : 0,
+        // Sub-task level
+        stTotal: d.stTotal,
+        stCompleted: d.stCompleted,
+        stAvgProgress: d.stTotal > 0 ? Math.round(d.stProgressSum / d.stTotal) : 0,
+        stAvgKpi: d.stTotal > 0 ? Math.round(d.stKpiAchievementSum / d.stTotal) : 0,
+        stOverallWeightedPerf: d.stTaskWeightSum > 0 ? Math.round((d.stWeightedScoreSum / d.stTaskWeightSum) * 100 * 100) / 100 : 0,
       }))
       .sort((a, b) => b.overallWeightedPerformance - a.overallWeightedPerformance)
       .slice(0, 10);
