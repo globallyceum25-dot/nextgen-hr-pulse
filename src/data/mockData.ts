@@ -195,18 +195,21 @@ export function generateMockTasks(): Task[] {
 
   SPREADSHEET_TASKS.forEach((def, index) => {
     const totalTasks = [10, 4, 7, 5, 4, 5, 10, 12, 5, 4, 4, 10, 7, 5, 4, 5, 10, 12, 5, 4, 7, 5, 4, 5, 10, 5, 10][index] || (4 + Math.floor(Math.random() * 9));
-    const completedCount = Math.floor(Math.random() * (totalTasks + 1));
-    const pendingCount = totalTasks - completedCount;
-    const progress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 10000) / 100 : 0;
-    const kpiTarget = 100;
-    const kpiAchievement = Math.min(100, Math.max(0, progress));
-    const kpiStatus = getKpiStatus(kpiAchievement);
+    const month = Math.floor(Math.random() * 3) + 1;
     const taskWeight = def.priority === "High" ? 1 : 0.6;
     const maxWeight = def.priority === "High" ? 1 : 0.6;
+    const kpiTarget = 100;
+
+    // Generate sub-tasks first, then derive parent stats from them
+    const subTasks = generateSubTasks(totalTasks, def.responsible);
+    const completedCount = subTasks.filter(s => s.status === "Completed").length;
+    const pendingCount = totalTasks - completedCount;
+    const progress = totalTasks > 0 ? Math.round(subTasks.reduce((sum, s) => sum + s.progress, 0) / totalTasks * 100) / 100 : 0;
+    const kpiAchievement = Math.min(100, Math.max(0, progress));
+    const kpiStatus = getKpiStatus(kpiAchievement);
     const weightedScore = Math.round((kpiAchievement / 100) * taskWeight * 100) / 100;
     const status: TaskStatus = getStatusFromProgress(progress);
     const completionFlag = status === "Completed" ? 1 : 0;
-    const month = Math.floor(Math.random() * 3) + 1;
 
     tasks.push({
       id: `T-${index + 1}`,
@@ -241,7 +244,7 @@ export function generateMockTasks(): Task[] {
       month,
       year: 2026,
       kpiScore: Math.round(kpiAchievement),
-      subTasks: generateSubTasks(totalTasks, def.responsible),
+      subTasks,
     });
   });
 
@@ -268,12 +271,43 @@ function ensureSubTaskWeights(st: SubTask): SubTask {
   return { ...st, priority, taskWeight: weight, weightedScore };
 }
 
-function cloneTasks(tasks: Task[]): Task[] {
-  return tasks.map(task => ({
+function recalcParentFromSubTasks(task: Task): Task {
+  const subs = task.subTasks;
+  if (!subs || subs.length === 0) return task;
+  const total = subs.length;
+  const completedCount = subs.filter(s => s.status === "Completed").length;
+  const pendingCount = total - completedCount;
+  const progress = Math.round(subs.reduce((sum, s) => sum + s.progress, 0) / total * 100) / 100;
+  const kpiAchievement = task.kpiTargetPercent > 0
+    ? Math.min(100, Math.max(0, Math.round((progress / task.kpiTargetPercent) * 10000) / 100))
+    : 0;
+  const kpiStatus = getKpiStatus(kpiAchievement);
+  const weightedScore = Math.round(task.taskWeight * (progress / 100) * 100) / 100;
+  const status: TaskStatus = getStatusFromProgress(progress);
+  return {
     ...task,
-    createdDate: task.createdDate || task.startDate || `2026-0${task.month}-01`,
-    subTasks: Array.isArray(task.subTasks) ? task.subTasks.map(st => ensureSubTaskWeights({ ...st })) : [],
-  }));
+    totalTasks: total,
+    completedCount,
+    pendingCount,
+    progress,
+    kpiAchievement,
+    kpiAchievementStatus: kpiStatus,
+    weightedScore,
+    status,
+    completionFlag: progress >= 100 ? 1 : 0,
+    kpiScore: Math.round(kpiAchievement),
+  };
+}
+
+function cloneTasks(tasks: Task[]): Task[] {
+  return tasks.map(task => {
+    const patched = {
+      ...task,
+      createdDate: task.createdDate || task.startDate || `2026-0${task.month}-01`,
+      subTasks: Array.isArray(task.subTasks) ? task.subTasks.map(st => ensureSubTaskWeights({ ...st })) : [],
+    };
+    return recalcParentFromSubTasks(patched);
+  });
 }
 
 function getDefaultTasks(): Task[] {
