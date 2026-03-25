@@ -108,8 +108,11 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       e.total++;
       e.kpiAchievementSum += t.kpiAchievement;
       e.progressSum += t.progress;
-      e.weightedScoreSum += (t.weightedScore ?? 0);
-      e.taskWeightSum += (t.taskWeight ?? 0);
+      // Aggregate from sub-tasks for weighted performance
+      (t.subTasks || []).forEach(st => {
+        e.weightedScoreSum += (st.weightedScore ?? 0);
+        e.taskWeightSum += (st.taskWeight ?? 0);
+      });
       if (t.status === "Completed") e.completed++;
       map.set(t.responsible, e);
     });
