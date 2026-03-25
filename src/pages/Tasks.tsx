@@ -768,6 +768,19 @@ export default function Tasks({ selectedSector }: TasksProps) {
                         {task.subTasks.length > 0 && (
                           <>
                             <p className="text-xs font-semibold text-muted-foreground mb-2">Sub-tasks ({task.subTasks.length})</p>
+                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-medium mb-1 px-0">
+                              <span className="w-20">ID</span>
+                              <span className="flex-1">Name</span>
+                              <span>Responsible</span>
+                              <span className="w-16">Priority</span>
+                              <span className="w-20">Status</span>
+                              <span className="w-20">Progress</span>
+                              <span className="w-14 text-right">%</span>
+                              <span className="w-12 text-right">Weight</span>
+                              <span className="w-12 text-right">W.Score</span>
+                              <span className="w-6"></span>
+                              <span className="w-6"></span>
+                            </div>
                             <div className="space-y-1.5">
                               {task.subTasks.map(st => {
                                 const stDeadline = getDeadlineInfo({ status: st.status, dueDate: st.dueDate, startDate: task.startDate, pendingCount: 0 });
