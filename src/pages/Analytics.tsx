@@ -339,16 +339,16 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <h2 className="text-sm font-semibold text-card-foreground mb-4">Work Load Vs Output of Employee (Sub Tasks)</h2>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={workloadVsOutput} barGap={4} margin={{ bottom: 25 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 32%, 91%)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(215, 16%, 47%)" }} label={{ value: "Total Tasks", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: "hsl(215, 16%, 47%)" }} />
-                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: "1px solid hsl(214, 32%, 91%)" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Responsible Person", position: "insideBottom", offset: -15, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Total Tasks", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
                 <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
-                <Bar dataKey="totalSubTasks" name="Total Tasks" fill="hsl(217, 91%, 60%)" radius={[3, 3, 0, 0]}>
-                  <LabelList dataKey="totalSubTasks" position="top" fontSize={10} fontWeight={700} fill="hsl(217, 91%, 60%)" />
+                <Bar dataKey="totalSubTasks" name="Total Tasks" fill={CHART_COLORS.workload} radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="totalSubTasks" position="top" fontSize={10} fontWeight={700} fill={CHART_COLORS.workload} />
                 </Bar>
-                <Bar dataKey="completedSubTasks" name="Completed" fill="hsl(38, 92%, 50%)" radius={[3, 3, 0, 0]}>
-                  <LabelList dataKey="completedSubTasks" position="top" fontSize={10} fontWeight={700} fill="hsl(38, 92%, 50%)" />
+                <Bar dataKey="completedSubTasks" name="Completed" fill={CHART_COLORS.output} radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="completedSubTasks" position="top" fontSize={10} fontWeight={700} fill={CHART_COLORS.output} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
