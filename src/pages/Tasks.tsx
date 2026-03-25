@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
-  SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES,
+  SECTORS, LOCATIONS, RESPONSIBLE_PERSONS, COMPANY_NAMES, MONTHS,
   TASK_CATEGORIES, TASK_TYPES, SLA_OPTIONS, KPI_ACHIEVEMENT_STATUSES,
   type TaskStatus, type Priority, type Stage, type Task, type TaskType, type SubTask,
   type SubTaskStatus, SUB_TASK_STATUSES, getProgressFromSubTaskStatus,
@@ -68,6 +68,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "All">("All");
+  const [monthFilter, setMonthFilter] = useState<string>("All");
   const [deadlineFilter, setDeadlineFilter] = useState<"All" | "Overdue" | "Due Soon" | "Completed" | "Pending">("All");
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>(() => getLiveTasks());
@@ -198,6 +199,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       taskWeight: computedTaskWeight,
       weightedScore: computedWeightedScore,
       maxWeight: formData.maxWeight,
+      createdDate: new Date().toISOString().split("T")[0],
       startDate: formData.startDate,
       dueDate: formData.dueDate,
       status: computedStatus,
@@ -416,6 +418,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !t.responsible.toLowerCase().includes(search.toLowerCase())) return false;
 
+      // Month filter
+      if (monthFilter !== "All") {
+        const taskMonth = t.createdDate ? new Date(t.createdDate).getMonth() + 1 : t.month;
+        if (String(taskMonth) !== monthFilter) return false;
+      }
+
       // Deadline filter
       if (deadlineFilter !== "All") {
         const info = getDeadlineInfo(t);
@@ -427,7 +435,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, selectedSector, statusFilter, priorityFilter, search, deadlineFilter]);
+  }, [tasks, selectedSector, statusFilter, priorityFilter, search, deadlineFilter, monthFilter]);
 
   const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
 
@@ -663,6 +671,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
           <option value="Pending">Pending Tasks</option>
           <option value="Completed">Completed Tasks</option>
         </select>
+        <select value={monthFilter} onChange={e => setMonthFilter(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+          <option value="All">All Months</option>
+          {MONTHS.map((m, i) => <option key={m} value={String(i + 1)}>{m}</option>)}
+        </select>
       </div>
 
       {/* Table */}
@@ -673,6 +685,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <tr className="border-b bg-muted/50">
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground w-8"></th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Task ID</th>
+                <th className="text-left px-3 py-3 font-medium text-muted-foreground">Month</th>
+                <th className="text-left px-3 py-3 font-medium text-muted-foreground">Created Date</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Task Name</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Responsible</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Company</th>
@@ -703,6 +717,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       {expandedTask === task.id ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">{task.taskId}</td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{MONTHS[(task.createdDate ? new Date(task.createdDate).getMonth() : task.month - 1)] || MONTHS[task.month - 1]}</td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{task.createdDate || task.startDate}</td>
                     <td className="px-3 py-2.5 font-medium text-card-foreground max-w-[200px] truncate">{task.name}</td>
                     <td className="px-3 py-2.5 text-card-foreground">{task.responsible}</td>
                     <td className="px-3 py-2.5 text-muted-foreground text-xs max-w-[150px] truncate">{task.companyName}</td>
@@ -754,7 +770,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </tr>
                   {expandedTask === task.id && (
                     <tr>
-                      <td colSpan={19} className="bg-muted/20 px-6 py-4">
+                      <td colSpan={21} className="bg-muted/20 px-6 py-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mb-3">
                           <div><span className="text-muted-foreground">Description:</span> <span className="text-card-foreground">{task.description}</span></div>
                           <div><span className="text-muted-foreground">KPI Target:</span> <span className="text-card-foreground">{task.kpiTargetPercent}%</span></div>
@@ -818,7 +834,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={19} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={21} className="px-4 py-12 text-center text-muted-foreground">
                     No tasks found matching your filters.
                   </td>
                 </tr>

@@ -97,6 +97,7 @@ export interface Task {
   taskWeight: number;
   weightedScore: number;
   maxWeight: number;
+  createdDate: string;
   startDate: string;
   dueDate: string;
   completedDate?: string;
@@ -231,6 +232,7 @@ export function generateMockTasks(): Task[] {
       taskWeight,
       weightedScore,
       maxWeight,
+      createdDate: `2026-0${month}-01`,
       startDate: `2026-0${month}-01`,
       dueDate: `2026-0${month}-28`,
       completedDate: status === "Completed" ? `2026-0${month}-20` : undefined,
@@ -269,6 +271,7 @@ function ensureSubTaskWeights(st: SubTask): SubTask {
 function cloneTasks(tasks: Task[]): Task[] {
   return tasks.map(task => ({
     ...task,
+    createdDate: task.createdDate || task.startDate || `2026-0${task.month}-01`,
     subTasks: Array.isArray(task.subTasks) ? task.subTasks.map(st => ensureSubTaskWeights({ ...st })) : [],
   }));
 }
