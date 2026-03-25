@@ -65,6 +65,9 @@ export interface SubTask {
   name: string;
   status: TaskStatus;
   progress: number;
+  priority: Priority;
+  taskWeight: number;
+  weightedScore: number;
   responsible: string;
   dueDate: string;
   completedDate?: string;
@@ -128,11 +131,17 @@ function generateSubTasks(count: number, parentResponsible: string): SubTask[] {
   for (let i = 0; i < count; i++) {
     const subStatus = randomFrom(SUB_TASK_STATUSES);
     const progress = getProgressFromSubTaskStatus(subStatus);
+    const subPriority = randomFrom<Priority>(["High", "Medium", "Low"]);
+    const subWeight = subPriority === "High" ? 1 : subPriority === "Medium" ? 0.6 : 0.2;
+    const subWeightedScore = Math.round(subWeight * (progress / 100) * 100) / 100;
     subtasks.push({
       id: `ST-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
       name: randomFrom(names),
       status: subStatus as TaskStatus,
       progress,
+      priority: subPriority,
+      taskWeight: subWeight,
+      weightedScore: subWeightedScore,
       responsible: Math.random() > 0.5 ? parentResponsible : randomFrom(RESPONSIBLE_PERSONS),
       dueDate: "2026-03-30",
       completedDate: status === "Completed" ? "2026-03-15" : undefined,

@@ -76,7 +76,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: SubTask } | null>(null);
-  const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "Not Started" as SubTaskStatus, progress: 0, responsible: "", dueDate: "" });
+  const [subTaskForm, setSubTaskForm] = useState({ name: "", status: "Not Started" as SubTaskStatus, progress: 0, priority: "Medium" as Priority, responsible: "", dueDate: "" });
 
   const syncTasksFromStorage = useCallback(() => {
     const latest = getLiveTasks();
@@ -210,6 +210,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
         name: `Sub Task ${i + 1}`,
         status: "Not Started" as TaskStatus,
         progress: 0,
+        priority: formData.priority,
+        taskWeight: getTaskWeightFromPriority(formData.priority),
+        weightedScore: 0,
         responsible: formData.responsible,
         dueDate: formData.dueDate,
       })),
@@ -273,6 +276,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
             name: `Sub Task ${i + 1}`,
             status: "Not Started" as TaskStatus,
             progress: 0,
+            priority: formData.priority,
+            taskWeight: getTaskWeightFromPriority(formData.priority),
+            weightedScore: 0,
             responsible: formData.responsible,
             dueDate: formData.dueDate,
           });
@@ -333,7 +339,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const openSubTaskEdit = (taskId: string, st: SubTask) => {
     setEditingSubTask({ taskId, subTask: st });
     const stStatus = SUB_TASK_STATUSES.includes(st.status as SubTaskStatus) ? st.status as SubTaskStatus : "Not Started";
-    setSubTaskForm({ name: st.name, status: stStatus, progress: st.progress, responsible: st.responsible, dueDate: st.dueDate });
+    setSubTaskForm({ name: st.name, status: stStatus, progress: st.progress, priority: (st.priority || "Medium") as Priority, responsible: st.responsible, dueDate: st.dueDate });
     setSubTaskEditOpen(true);
   };
 
@@ -373,11 +379,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
       const updatedSubTasks = t.subTasks.map(st => {
         if (st.id !== subTask.id) return st;
         const newProgress = getProgressFromSubTaskStatus(subTaskForm.status);
+        const newWeight = getTaskWeightFromPriority(subTaskForm.priority);
+        const newWeightedScore = Math.round(newWeight * (newProgress / 100) * 100) / 100;
         return {
           ...st,
           name: subTaskForm.name,
           status: subTaskForm.status as TaskStatus,
           progress: newProgress,
+          priority: subTaskForm.priority,
+          taskWeight: newWeight,
+          weightedScore: newWeightedScore,
           responsible: subTaskForm.responsible,
           dueDate: subTaskForm.dueDate,
           completedDate: subTaskForm.status === "Completed" ? new Date().toISOString().split("T")[0] : undefined,
@@ -757,17 +768,33 @@ export default function Tasks({ selectedSector }: TasksProps) {
                         {task.subTasks.length > 0 && (
                           <>
                             <p className="text-xs font-semibold text-muted-foreground mb-2">Sub-tasks ({task.subTasks.length})</p>
+                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-medium mb-1 px-0">
+                              <span className="w-20">ID</span>
+                              <span className="flex-1">Name</span>
+                              <span>Responsible</span>
+                              <span className="w-16">Priority</span>
+                              <span className="w-20">Status</span>
+                              <span className="w-20">Progress</span>
+                              <span className="w-14 text-right">%</span>
+                              <span className="w-12 text-right">Weight</span>
+                              <span className="w-12 text-right">W.Score</span>
+                              <span className="w-6"></span>
+                              <span className="w-6"></span>
+                            </div>
                             <div className="space-y-1.5">
                               {task.subTasks.map(st => {
                                 const stDeadline = getDeadlineInfo({ status: st.status, dueDate: st.dueDate, startDate: task.startDate, pendingCount: 0 });
                                 return (
-                                <div key={st.id} className="flex items-center gap-4 text-xs">
+                                <div key={st.id} className="flex items-center gap-3 text-xs">
                                   <span className="font-mono text-muted-foreground w-20">{st.id}</span>
                                   <span className="flex-1 text-card-foreground">{st.name}</span>
                                   <span className="text-muted-foreground">{st.responsible}</span>
+                                  <PriorityBadge priority={st.priority || "Medium"} />
                                   <StatusBadge status={st.status} />
-                                  <div className="w-24"><ProgressBar value={st.progress} size="sm" /></div>
-                                  <span className="text-[10px] w-16 text-right">{st.progress}%</span>
+                                  <div className="w-20"><ProgressBar value={st.progress} size="sm" /></div>
+                                  <span className="text-[10px] w-14 text-right">{st.progress}%</span>
+                                  <span className="text-[10px] w-12 text-right text-muted-foreground" title="Task Weight">{st.taskWeight ?? '-'}</span>
+                                  <span className="text-[10px] w-12 text-right text-muted-foreground" title="Weighted Score">{st.weightedScore ?? '-'}</span>
                                   {stDeadline.showAlert && (
                                     <span className={`text-[10px] font-semibold whitespace-nowrap ${stDeadline.isOverdue ? "text-destructive" : "text-destructive"}`}>
                                       {stDeadline.isOverdue
@@ -1003,7 +1030,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <label className={labelClass}>Name</label>
               <input className={inputClass} value={subTaskForm.name} onChange={e => setSubTaskForm(p => ({ ...p, name: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className={labelClass}>Status</label>
                 <select className={inputClass} value={subTaskForm.status} onChange={e => {
@@ -1016,6 +1043,24 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div>
                 <label className={labelClass}>Progress % (Auto)</label>
                 <input type="number" className={inputClass + " opacity-60"} disabled value={getProgressFromSubTaskStatus(subTaskForm.status)} />
+              </div>
+              <div>
+                <label className={labelClass}>Priority</label>
+                <select className={inputClass} value={subTaskForm.priority} onChange={e => setSubTaskForm(p => ({ ...p, priority: e.target.value as Priority }))}>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Task Weight (Auto)</label>
+                <input type="text" className={inputClass + " opacity-60"} disabled value={getTaskWeightFromPriority(subTaskForm.priority)} />
+              </div>
+              <div>
+                <label className={labelClass}>Weighted Score (Auto)</label>
+                <input type="text" className={inputClass + " opacity-60"} disabled value={Math.round(getTaskWeightFromPriority(subTaskForm.priority) * (getProgressFromSubTaskStatus(subTaskForm.status) / 100) * 100) / 100} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
