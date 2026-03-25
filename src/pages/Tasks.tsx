@@ -339,7 +339,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const openSubTaskEdit = (taskId: string, st: SubTask) => {
     setEditingSubTask({ taskId, subTask: st });
     const stStatus = SUB_TASK_STATUSES.includes(st.status as SubTaskStatus) ? st.status as SubTaskStatus : "Not Started";
-    setSubTaskForm({ name: st.name, status: stStatus, progress: st.progress, responsible: st.responsible, dueDate: st.dueDate });
+    setSubTaskForm({ name: st.name, status: stStatus, progress: st.progress, priority: (st.priority || "Medium") as Priority, responsible: st.responsible, dueDate: st.dueDate });
     setSubTaskEditOpen(true);
   };
 
