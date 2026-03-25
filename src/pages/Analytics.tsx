@@ -67,6 +67,26 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filtered]);
 
+  const subTaskStatusDist = useMemo(() => {
+    const counts: Record<string, number> = {
+      Completed: 0,
+      "Almost Completed": 0,
+      "In Progress": 0,
+      Started: 0,
+      "Not Started": 0,
+    };
+    filtered.forEach(t => {
+      (t.subTasks || []).forEach(st => {
+        if (counts[st.status] !== undefined) {
+          counts[st.status]++;
+        }
+      });
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filtered]);
+
+  const totalSubTasks = useMemo(() => subTaskStatusDist.reduce((s, d) => s + d.value, 0), [subTaskStatusDist]);
+
   const employeePerf = useMemo(() => {
     const map = new Map<string, { total: number; kpiSum: number; completed: number }>();
     filtered.forEach(t => {
@@ -98,7 +118,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Status Distribution */}
+        {/* Task Status Distribution */}
         <div className="bg-card rounded-lg border p-5">
           <h2 className="text-sm font-semibold text-card-foreground mb-4">Task Status Distribution</h2>
           <div className="flex items-center gap-6">
@@ -106,7 +126,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
               <PieChart>
                 <Pie data={statusDist} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2}>
                   {statusDist.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i]} />
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px" }} />
@@ -115,7 +135,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <div className="space-y-2">
               {statusDist.map((item, i) => (
                 <div key={item.name} className="flex items-center gap-2 text-xs">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                   <span className="text-muted-foreground">{item.name}</span>
                   <span className="font-semibold text-card-foreground ml-auto">{item.value}</span>
                 </div>
@@ -124,18 +144,44 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
           </div>
         </div>
 
-        {/* Employee KPI Ranking */}
+        {/* Sub-Task Status Distribution */}
         <div className="bg-card rounded-lg border p-5">
-          <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee KPI Rankings</h2>
-          <div className="space-y-3">
-            {employeePerf.slice(0, 6).map((emp, i) => (
-              <div key={emp.fullName} className="flex items-center gap-3">
-                <span className="text-xs font-mono text-muted-foreground w-4">{i + 1}</span>
-                <span className="text-xs text-card-foreground w-20 truncate">{emp.fullName}</span>
-                <div className="flex-1"><ProgressBar value={emp.kpi} size="sm" /></div>
-              </div>
-            ))}
+          <h2 className="text-sm font-semibold text-card-foreground mb-4">Sub-Task Status Distribution <span className="text-muted-foreground font-normal">({totalSubTasks} sub-tasks)</span></h2>
+          <div className="flex items-center gap-6">
+            <ResponsiveContainer width={160} height={160}>
+              <PieChart>
+                <Pie data={subTaskStatusDist} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2}>
+                  {subTaskStatusDist.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px" }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-2">
+              {subTaskStatusDist.map((item, i) => (
+                <div key={item.name} className="flex items-center gap-2 text-xs">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                  <span className="text-muted-foreground">{item.name}</span>
+                  <span className="font-semibold text-card-foreground ml-auto">{item.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Employee KPI Ranking */}
+      <div className="bg-card rounded-lg border p-5">
+        <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee KPI Rankings</h2>
+        <div className="space-y-3">
+          {employeePerf.slice(0, 6).map((emp, i) => (
+            <div key={emp.fullName} className="flex items-center gap-3">
+              <span className="text-xs font-mono text-muted-foreground w-4">{i + 1}</span>
+              <span className="text-xs text-card-foreground w-20 truncate">{emp.fullName}</span>
+              <div className="flex-1"><ProgressBar value={emp.kpi} size="sm" /></div>
+            </div>
+          ))}
         </div>
       </div>
 
