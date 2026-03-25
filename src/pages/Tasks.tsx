@@ -276,6 +276,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
             name: `Sub Task ${i + 1}`,
             status: "Not Started" as TaskStatus,
             progress: 0,
+            priority: formData.priority,
+            taskWeight: getTaskWeightFromPriority(formData.priority),
+            weightedScore: 0,
             responsible: formData.responsible,
             dueDate: formData.dueDate,
           });
