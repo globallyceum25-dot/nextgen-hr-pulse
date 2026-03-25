@@ -8,15 +8,30 @@ interface AnalyticsProps {
   selectedSector: number | null;
 }
 
+// Formal corporate color palette
 const COLORS = [
-  "hsl(160, 84%, 39%)",
-  "hsl(217, 91%, 60%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(0, 84%, 60%)",
-  "hsl(262, 83%, 58%)",
-  "hsl(188, 86%, 43%)",
-  "hsl(220, 13%, 56%)",
+  "hsl(215, 50%, 35%)",   // Deep navy
+  "hsl(210, 40%, 52%)",   // Steel blue
+  "hsl(200, 30%, 65%)",   // Muted slate blue
+  "hsl(220, 25%, 45%)",   // Dark slate
+  "hsl(195, 35%, 55%)",   // Teal-grey
+  "hsl(210, 15%, 72%)",   // Silver
+  "hsl(225, 20%, 58%)",   // Dusty indigo
 ];
+
+// Chart-specific formal colors
+const CHART_COLORS = {
+  primary: "hsl(215, 50%, 35%)",       // Deep navy - main bars
+  secondary: "hsl(200, 30%, 65%)",     // Muted slate blue - secondary bars
+  accent: "hsl(210, 40%, 52%)",        // Steel blue
+  target: "hsl(215, 50%, 35%)",        // Navy for KPI target
+  achievement: "hsl(200, 30%, 65%)",   // Slate blue for KPI achievement
+  workload: "hsl(215, 50%, 35%)",      // Navy for total tasks
+  output: "hsl(195, 35%, 55%)",        // Teal-grey for completed
+  referenceLine: "hsl(0, 45%, 45%)",   // Muted burgundy for reference lines
+  grid: "hsl(214, 20%, 88%)",          // Light grey grid
+  axisText: "hsl(215, 16%, 47%)",      // Axis labels
+};
 
 function areTasksEqual(a: Task[], b: Task[]): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
