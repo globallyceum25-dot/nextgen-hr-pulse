@@ -770,7 +770,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </tr>
                   {expandedTask === task.id && (
                     <tr>
-                      <td colSpan={19} className="bg-muted/20 px-6 py-4">
+                      <td colSpan={21} className="bg-muted/20 px-6 py-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mb-3">
                           <div><span className="text-muted-foreground">Description:</span> <span className="text-card-foreground">{task.description}</span></div>
                           <div><span className="text-muted-foreground">KPI Target:</span> <span className="text-card-foreground">{task.kpiTargetPercent}%</span></div>
