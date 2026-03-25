@@ -117,30 +117,54 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   }, [filtered]);
 
   const employeePerf = useMemo(() => {
-    const map = new Map<string, { total: number; kpiAchievementSum: number; completed: number; progressSum: number; weightedScoreSum: number; taskWeightSum: number }>();
+    const map = new Map<string, {
+      total: number; kpiAchievementSum: number; completed: number; progressSum: number;
+      weightedScoreSum: number; taskWeightSum: number;
+      // Sub-task level
+      stTotal: number; stCompleted: number; stProgressSum: number; stKpiAchievementSum: number;
+      stWeightedScoreSum: number; stTaskWeightSum: number;
+    }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || { total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0 };
+      const e = map.get(t.responsible) || {
+        total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0,
+        stTotal: 0, stCompleted: 0, stProgressSum: 0, stKpiAchievementSum: 0, stWeightedScoreSum: 0, stTaskWeightSum: 0,
+      };
       e.total++;
       e.kpiAchievementSum += t.kpiAchievement;
       e.progressSum += t.progress;
-      // Aggregate from sub-tasks for weighted performance
+      if (t.status === "Completed") e.completed++;
       (t.subTasks || []).forEach(st => {
         e.weightedScoreSum += (st.weightedScore ?? 0);
         e.taskWeightSum += (st.taskWeight ?? 0);
+        e.stTotal++;
+        if (st.status === "Completed") e.stCompleted++;
+        // Sub-task progress from status mapping
+        const stProgress = st.status === "Completed" ? 100 : st.status === "Almost Completed" ? 80 : st.status === "In Progress" ? 50 : st.status === "Started" ? 25 : 0;
+        e.stProgressSum += stProgress;
+        // Sub-task KPI achievement: (progress / kpiTarget) * 100
+        const stKpiTarget = (st as any).kpiTargetPercent ?? t.kpiTargetPercent ?? 100;
+        e.stKpiAchievementSum += stKpiTarget > 0 ? Math.min((stProgress / stKpiTarget) * 100, 100) : 0;
+        e.stWeightedScoreSum += (st.weightedScore ?? 0);
+        e.stTaskWeightSum += (st.taskWeight ?? 0);
       });
-      if (t.status === "Completed") e.completed++;
       map.set(t.responsible, e);
     });
     return Array.from(map.entries())
       .map(([name, d]) => ({
         name: name.split(" ")[0],
         fullName: name,
+        // Task-level
         kpi: Math.round(d.kpiAchievementSum / d.total),
-        completion: Math.round((d.completed / d.total) * 100),
         avgProgress: Math.round(d.progressSum / d.total),
         tasks: d.total,
         completed: d.completed,
         overallWeightedPerformance: d.taskWeightSum > 0 ? Math.round((d.weightedScoreSum / d.taskWeightSum) * 100 * 100) / 100 : 0,
+        // Sub-task level
+        stTotal: d.stTotal,
+        stCompleted: d.stCompleted,
+        stAvgProgress: d.stTotal > 0 ? Math.round(d.stProgressSum / d.stTotal) : 0,
+        stAvgKpi: d.stTotal > 0 ? Math.round(d.stKpiAchievementSum / d.stTotal) : 0,
+        stOverallWeightedPerf: d.stTaskWeightSum > 0 ? Math.round((d.stWeightedScoreSum / d.stTaskWeightSum) * 100 * 100) / 100 : 0,
       }))
       .sort((a, b) => b.overallWeightedPerformance - a.overallWeightedPerformance)
       .slice(0, 10);
@@ -354,9 +378,9 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             </ResponsiveContainer>
           </div>
 
-          {/* Employee Summary Table */}
+          {/* Task Summary Table */}
           <div className="bg-card rounded-lg border p-5">
-            <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee Performance Summary</h2>
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Task Summary</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
@@ -365,7 +389,6 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Employee</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Total Tasks</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Completed</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Completion Rate</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg Progress</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg KPI Achievement</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Overall Weighted Perf.</th>
@@ -378,15 +401,49 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                       <td className="px-3 py-2 text-card-foreground font-medium">{emp.fullName}</td>
                       <td className="px-3 py-2 text-center text-card-foreground">{emp.tasks}</td>
                       <td className="px-3 py-2 text-center text-card-foreground">{emp.completed}</td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={`font-semibold ${emp.completion >= 80 ? "text-success" : emp.completion >= 50 ? "text-primary" : "text-warning"}`}>{emp.completion}%</span>
-                      </td>
                       <td className="px-3 py-2 text-center text-card-foreground">{emp.avgProgress}%</td>
                       <td className="px-3 py-2 text-center">
                         <span className={`font-semibold ${emp.kpi >= 80 ? "text-success" : emp.kpi >= 50 ? "text-primary" : emp.kpi >= 30 ? "text-warning" : "text-destructive"}`}>{emp.kpi}%</span>
                       </td>
                       <td className="px-3 py-2 text-center">
                         <span className={`font-bold ${emp.overallWeightedPerformance >= 70 ? "text-success" : emp.overallWeightedPerformance >= 50 ? "text-primary" : emp.overallWeightedPerformance >= 30 ? "text-warning" : "text-destructive"}`}>{emp.overallWeightedPerformance}%</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Sub-Task Summary Table */}
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Sub-Task Summary</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Employee</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Total Sub-Tasks</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Completed</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg Progress</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg KPI Achievement</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Overall Weighted Perf.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employeePerf.map((emp, i) => (
+                    <tr key={emp.fullName} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="px-3 py-2 text-card-foreground font-medium">{emp.fullName}</td>
+                      <td className="px-3 py-2 text-center text-card-foreground">{emp.stTotal}</td>
+                      <td className="px-3 py-2 text-center text-card-foreground">{emp.stCompleted}</td>
+                      <td className="px-3 py-2 text-center text-card-foreground">{emp.stAvgProgress}%</td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`font-semibold ${emp.stAvgKpi >= 80 ? "text-success" : emp.stAvgKpi >= 50 ? "text-primary" : emp.stAvgKpi >= 30 ? "text-warning" : "text-destructive"}`}>{emp.stAvgKpi}%</span>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`font-bold ${emp.stOverallWeightedPerf >= 70 ? "text-success" : emp.stOverallWeightedPerf >= 50 ? "text-primary" : emp.stOverallWeightedPerf >= 30 ? "text-warning" : "text-destructive"}`}>{emp.stOverallWeightedPerf}%</span>
                       </td>
                     </tr>
                   ))}
