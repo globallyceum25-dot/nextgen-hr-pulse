@@ -105,35 +105,43 @@ export default function AdminUsersManager() {
   };
 
   const handleAssignRole = async () => {
-    // Look up user by email in profiles
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_id")
-      .eq("email", newEmail)
-      .maybeSingle();
-
-    if (!profile) {
-      toast({ title: "User not found", description: "No account with that email exists. The user must sign up first.", variant: "destructive" });
+    if (!newEmail.trim() || !newPassword.trim()) {
+      toast({ title: "Validation Error", description: "Email and password are required.", variant: "destructive" });
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast({ title: "Validation Error", description: "Password must be at least 6 characters.", variant: "destructive" });
       return;
     }
 
-    const { error } = await supabase
-      .from("user_roles")
-      .insert({ user_id: profile.user_id, role: newRole });
+    setAssigning(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("create-user", {
+        body: {
+          email: newEmail.trim(),
+          password: newPassword,
+          full_name: newFullName.trim() || newEmail.trim(),
+          role: newRole,
+        },
+      });
 
-    if (error) {
-      if (error.code === "23505") {
-        toast({ title: "Already assigned", description: "This user already has this role.", variant: "destructive" });
+      if (res.error || res.data?.error) {
+        const msg = res.data?.error || res.error?.message || "Failed to create user";
+        toast({ title: "Error", description: msg, variant: "destructive" });
       } else {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        toast({ title: "User created & role assigned successfully" });
+        setDialogOpen(false);
+        setNewEmail("");
+        setNewPassword("");
+        setNewFullName("");
+        setNewRole("viewer");
+        fetchUsers();
       }
-    } else {
-      toast({ title: "Role assigned successfully" });
-      setDialogOpen(false);
-      setNewEmail("");
-      setNewFullName("");
-      setNewRole("viewer");
-      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setAssigning(false);
     }
   };
 
