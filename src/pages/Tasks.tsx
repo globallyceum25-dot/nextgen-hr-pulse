@@ -379,11 +379,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
       const updatedSubTasks = t.subTasks.map(st => {
         if (st.id !== subTask.id) return st;
         const newProgress = getProgressFromSubTaskStatus(subTaskForm.status);
+        const newWeight = getTaskWeightFromPriority(subTaskForm.priority);
+        const newWeightedScore = Math.round(newWeight * (newProgress / 100) * 100) / 100;
         return {
           ...st,
           name: subTaskForm.name,
           status: subTaskForm.status as TaskStatus,
           progress: newProgress,
+          priority: subTaskForm.priority,
+          taskWeight: newWeight,
+          weightedScore: newWeightedScore,
           responsible: subTaskForm.responsible,
           dueDate: subTaskForm.dueDate,
           completedDate: subTaskForm.status === "Completed" ? new Date().toISOString().split("T")[0] : undefined,
