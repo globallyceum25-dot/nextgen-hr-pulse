@@ -132,6 +132,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
     sectorId: 1,
     startDate: new Date().toISOString().split("T")[0],
     dueDate: "",
+    repeatMonthly: false,
+    repeatMonths: 1,
   });
 
   const resetForm = () => {
@@ -142,6 +144,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       stage: "Planning", totalTasks: 0, completedCount: 0, pendingCount: 0,
       kpiTargetPercent: 100, maxWeight: 0.6, sectorId: selectedSector || 1,
       startDate: new Date().toISOString().split("T")[0], dueDate: "",
+      repeatMonthly: false, repeatMonths: 1,
     });
   };
 
@@ -219,8 +222,45 @@ export default function Tasks({ selectedSector }: TasksProps) {
         dueDate: formData.dueDate,
       })),
     };
-    persistTaskChanges(prev => [newTask, ...prev]);
-    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created`, changes: [
+    const allNewTasks: Task[] = [newTask];
+
+    // Create repeated tasks for future months if enabled
+    if (formData.repeatMonthly && formData.repeatMonths > 0) {
+      for (let m = 1; m <= formData.repeatMonths; m++) {
+        const futureStart = new Date(formData.startDate || new Date());
+        futureStart.setMonth(futureStart.getMonth() + m);
+        const futureDue = new Date(formData.dueDate);
+        futureDue.setMonth(futureDue.getMonth() + m);
+        const futureCreated = new Date();
+        futureCreated.setMonth(futureCreated.getMonth() + m);
+
+        const repeatedTask: Task = {
+          ...newTask,
+          id: `task-${Date.now()}-r${m}`,
+          taskId: String(tasks.length + 1 + m).padStart(3, "0"),
+          createdDate: futureCreated.toISOString().split("T")[0],
+          startDate: futureStart.toISOString().split("T")[0],
+          dueDate: futureDue.toISOString().split("T")[0],
+          month: futureCreated.getMonth() + 1,
+          year: futureCreated.getFullYear(),
+          subTasks: Array.from({ length: formData.totalTasks }, (_, i) => ({
+            id: `ST-${Date.now()}-r${m}-${i}`,
+            name: `Sub Task ${i + 1}`,
+            status: "Not Started" as TaskStatus,
+            progress: 0,
+            priority: formData.priority,
+            taskWeight: getTaskWeightFromPriority(formData.priority),
+            weightedScore: 0,
+            responsible: formData.responsible,
+            dueDate: futureDue.toISOString().split("T")[0],
+          })),
+        };
+        allNewTasks.push(repeatedTask);
+      }
+    }
+
+    persistTaskChanges(prev => [...allNewTasks, ...prev]);
+    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created${formData.repeatMonthly ? ` (repeated for ${formData.repeatMonths} months)` : ""}`, changes: [
       { field: "Name", oldValue: "", newValue: newTask.name },
       { field: "Responsible", oldValue: "", newValue: newTask.responsible },
       { field: "Priority", oldValue: "", newValue: newTask.priority },
@@ -229,7 +269,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
     ] });
     resetForm();
     setDialogOpen(false);
-    toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.` });
+    const countMsg = formData.repeatMonthly ? ` + ${formData.repeatMonths} repeated months` : "";
+    toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.${countMsg}` });
   };
 
   const openEditDialog = (task: Task) => {
@@ -254,6 +295,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
       sectorId: task.sectorId,
       startDate: task.startDate,
       dueDate: task.dueDate,
+      repeatMonthly: false,
+      repeatMonths: 1,
     });
     setEditDialogOpen(true);
   };
@@ -627,6 +670,29 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     <input type="text" disabled className={inputClass + " opacity-60"} value={computedCompletionFlag} />
                   </div>
                 </div>
+              </div>
+
+              {/* Section 6: Repeat */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-primary border-b pb-1">Repeat Task</h3>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground">
+                    <input type="checkbox" className="accent-primary w-4 h-4" checked={formData.repeatMonthly} onChange={e => setFormData(p => ({ ...p, repeatMonthly: e.target.checked }))} />
+                    Repeat this task monthly
+                  </label>
+                </div>
+                {formData.repeatMonthly && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelClass}>Repeat for next (months)</label>
+                      <input type="number" min={1} max={12} className={inputClass} value={formData.repeatMonths} onChange={e => setFormData(p => ({ ...p, repeatMonths: Math.min(12, Math.max(1, Number(e.target.value) || 1)) }))} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Total tasks to be created</label>
+                      <input type="text" disabled className={inputClass + " opacity-60"} value={`${formData.repeatMonths + 1} (this + ${formData.repeatMonths} months)`} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
