@@ -222,8 +222,45 @@ export default function Tasks({ selectedSector }: TasksProps) {
         dueDate: formData.dueDate,
       })),
     };
-    persistTaskChanges(prev => [newTask, ...prev]);
-    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created`, changes: [
+    const allNewTasks: Task[] = [newTask];
+
+    // Create repeated tasks for future months if enabled
+    if (formData.repeatMonthly && formData.repeatMonths > 0) {
+      for (let m = 1; m <= formData.repeatMonths; m++) {
+        const futureStart = new Date(formData.startDate || new Date());
+        futureStart.setMonth(futureStart.getMonth() + m);
+        const futureDue = new Date(formData.dueDate);
+        futureDue.setMonth(futureDue.getMonth() + m);
+        const futureCreated = new Date();
+        futureCreated.setMonth(futureCreated.getMonth() + m);
+
+        const repeatedTask: Task = {
+          ...newTask,
+          id: `task-${Date.now()}-r${m}`,
+          taskId: String(tasks.length + 1 + m).padStart(3, "0"),
+          createdDate: futureCreated.toISOString().split("T")[0],
+          startDate: futureStart.toISOString().split("T")[0],
+          dueDate: futureDue.toISOString().split("T")[0],
+          month: futureCreated.getMonth() + 1,
+          year: futureCreated.getFullYear(),
+          subTasks: Array.from({ length: formData.totalTasks }, (_, i) => ({
+            id: `ST-${Date.now()}-r${m}-${i}`,
+            name: `Sub Task ${i + 1}`,
+            status: "Not Started" as TaskStatus,
+            progress: 0,
+            priority: formData.priority,
+            taskWeight: getTaskWeightFromPriority(formData.priority),
+            weightedScore: 0,
+            responsible: formData.responsible,
+            dueDate: futureDue.toISOString().split("T")[0],
+          })),
+        };
+        allNewTasks.push(repeatedTask);
+      }
+    }
+
+    persistTaskChanges(prev => [...allNewTasks, ...prev]);
+    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created${formData.repeatMonthly ? ` (repeated for ${formData.repeatMonths} months)` : ""}`, changes: [
       { field: "Name", oldValue: "", newValue: newTask.name },
       { field: "Responsible", oldValue: "", newValue: newTask.responsible },
       { field: "Priority", oldValue: "", newValue: newTask.priority },
@@ -232,7 +269,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
     ] });
     resetForm();
     setDialogOpen(false);
-    toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.` });
+    const countMsg = formData.repeatMonthly ? ` + ${formData.repeatMonths} repeated months` : "";
+    toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.${countMsg}` });
   };
 
   const openEditDialog = (task: Task) => {
