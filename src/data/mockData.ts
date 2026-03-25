@@ -65,6 +65,9 @@ export interface SubTask {
   name: string;
   status: TaskStatus;
   progress: number;
+  priority: Priority;
+  taskWeight: number;
+  weightedScore: number;
   responsible: string;
   dueDate: string;
   completedDate?: string;
