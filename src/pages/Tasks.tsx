@@ -418,6 +418,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !t.responsible.toLowerCase().includes(search.toLowerCase())) return false;
 
+      // Month filter
+      if (monthFilter !== "All") {
+        const taskMonth = t.createdDate ? new Date(t.createdDate).getMonth() + 1 : t.month;
+        if (String(taskMonth) !== monthFilter) return false;
+      }
+
       // Deadline filter
       if (deadlineFilter !== "All") {
         const info = getDeadlineInfo(t);
@@ -429,7 +435,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, selectedSector, statusFilter, priorityFilter, search, deadlineFilter]);
+  }, [tasks, selectedSector, statusFilter, priorityFilter, search, deadlineFilter, monthFilter]);
 
   const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
 
