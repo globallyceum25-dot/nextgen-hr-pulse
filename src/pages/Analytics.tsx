@@ -337,6 +337,9 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Employee Summary Table */}
           <div className="bg-card rounded-lg border p-5">
             <h2 className="text-sm font-semibold text-card-foreground mb-4">Employee Performance Summary</h2>
             <div className="overflow-x-auto">
