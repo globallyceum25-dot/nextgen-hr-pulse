@@ -199,6 +199,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       taskWeight: computedTaskWeight,
       weightedScore: computedWeightedScore,
       maxWeight: formData.maxWeight,
+      createdDate: new Date().toISOString().split("T")[0],
       startDate: formData.startDate,
       dueDate: formData.dueDate,
       status: computedStatus,
