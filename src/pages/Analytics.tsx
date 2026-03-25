@@ -102,12 +102,14 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   }, [filtered]);
 
   const employeePerf = useMemo(() => {
-    const map = new Map<string, { total: number; kpiAchievementSum: number; completed: number; progressSum: number }>();
+    const map = new Map<string, { total: number; kpiAchievementSum: number; completed: number; progressSum: number; weightedScoreSum: number; taskWeightSum: number }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || { total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0 };
+      const e = map.get(t.responsible) || { total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0 };
       e.total++;
       e.kpiAchievementSum += t.kpiAchievement;
       e.progressSum += t.progress;
+      e.weightedScoreSum += (t.weightedScore ?? 0);
+      e.taskWeightSum += (t.taskWeight ?? 0);
       if (t.status === "Completed") e.completed++;
       map.set(t.responsible, e);
     });
@@ -120,8 +122,9 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
         avgProgress: Math.round(d.progressSum / d.total),
         tasks: d.total,
         completed: d.completed,
+        overallWeightedPerformance: d.taskWeightSum > 0 ? Math.round((d.weightedScoreSum / d.taskWeightSum) * 100 * 100) / 100 : 0,
       }))
-      .sort((a, b) => b.kpi - a.kpi)
+      .sort((a, b) => b.overallWeightedPerformance - a.overallWeightedPerformance)
       .slice(0, 10);
   }, [filtered]);
 
