@@ -1030,7 +1030,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <label className={labelClass}>Name</label>
               <input className={inputClass} value={subTaskForm.name} onChange={e => setSubTaskForm(p => ({ ...p, name: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className={labelClass}>Status</label>
                 <select className={inputClass} value={subTaskForm.status} onChange={e => {
@@ -1043,6 +1043,24 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div>
                 <label className={labelClass}>Progress % (Auto)</label>
                 <input type="number" className={inputClass + " opacity-60"} disabled value={getProgressFromSubTaskStatus(subTaskForm.status)} />
+              </div>
+              <div>
+                <label className={labelClass}>Priority</label>
+                <select className={inputClass} value={subTaskForm.priority} onChange={e => setSubTaskForm(p => ({ ...p, priority: e.target.value as Priority }))}>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Task Weight (Auto)</label>
+                <input type="text" className={inputClass + " opacity-60"} disabled value={getTaskWeightFromPriority(subTaskForm.priority)} />
+              </div>
+              <div>
+                <label className={labelClass}>Weighted Score (Auto)</label>
+                <input type="text" className={inputClass + " opacity-60"} disabled value={Math.round(getTaskWeightFromPriority(subTaskForm.priority) * (getProgressFromSubTaskStatus(subTaskForm.status) / 100) * 100) / 100} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
