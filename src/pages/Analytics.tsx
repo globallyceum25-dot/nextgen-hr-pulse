@@ -124,7 +124,17 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
           <div className="flex items-center gap-6">
             <ResponsiveContainer width={160} height={160}>
               <PieChart>
-                <Pie data={statusDist} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2}>
+                <Pie data={statusDist} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} label={({ value, cx, cy, midAngle, outerRadius }) => {
+                  const total = statusDist.reduce((s, d) => s + d.value, 0);
+                  if (!value || total === 0) return null;
+                  const pct = Math.round((value / total) * 100);
+                  if (pct < 3) return null;
+                  const RADIAN = Math.PI / 180;
+                  const radius = outerRadius + 14;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  return <text x={x} y={y} fill="hsl(215, 16%, 47%)" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight={600}>{pct}%</text>;
+                }}>
                   {statusDist.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
@@ -133,13 +143,17 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
               </PieChart>
             </ResponsiveContainer>
             <div className="space-y-2">
-              {statusDist.map((item, i) => (
-                <div key={item.name} className="flex items-center gap-2 text-xs">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <span className="text-muted-foreground">{item.name}</span>
-                  <span className="font-semibold text-card-foreground ml-auto">{item.value}</span>
-                </div>
-              ))}
+              {statusDist.map((item, i) => {
+                const total = statusDist.reduce((s, d) => s + d.value, 0);
+                const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                return (
+                  <div key={item.name} className="flex items-center gap-2 text-xs">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <span className="text-muted-foreground">{item.name}</span>
+                    <span className="font-semibold text-card-foreground ml-auto">{item.value} <span className="text-muted-foreground font-normal">({pct}%)</span></span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -150,7 +164,16 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
           <div className="flex items-center gap-6">
             <ResponsiveContainer width={160} height={160}>
               <PieChart>
-                <Pie data={subTaskStatusDist} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2}>
+                <Pie data={subTaskStatusDist} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} label={({ value, cx, cy, midAngle, outerRadius }) => {
+                  if (!value || totalSubTasks === 0) return null;
+                  const pct = Math.round((value / totalSubTasks) * 100);
+                  if (pct < 3) return null;
+                  const RADIAN = Math.PI / 180;
+                  const radius = outerRadius + 14;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  return <text x={x} y={y} fill="hsl(215, 16%, 47%)" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight={600}>{pct}%</text>;
+                }}>
                   {subTaskStatusDist.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
@@ -159,13 +182,16 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
               </PieChart>
             </ResponsiveContainer>
             <div className="space-y-2">
-              {subTaskStatusDist.map((item, i) => (
-                <div key={item.name} className="flex items-center gap-2 text-xs">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <span className="text-muted-foreground">{item.name}</span>
-                  <span className="font-semibold text-card-foreground ml-auto">{item.value}</span>
-                </div>
-              ))}
+              {subTaskStatusDist.map((item, i) => {
+                const pct = totalSubTasks > 0 ? Math.round((item.value / totalSubTasks) * 100) : 0;
+                return (
+                  <div key={item.name} className="flex items-center gap-2 text-xs">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <span className="text-muted-foreground">{item.name}</span>
+                    <span className="font-semibold text-card-foreground ml-auto">{item.value} <span className="text-muted-foreground font-normal">({pct}%)</span></span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
