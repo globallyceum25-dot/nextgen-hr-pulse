@@ -634,6 +634,29 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
               </div>
 
+              {/* Section 6: Repeat */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-primary border-b pb-1">Repeat Task</h3>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground">
+                    <input type="checkbox" className="accent-primary w-4 h-4" checked={formData.repeatMonthly} onChange={e => setFormData(p => ({ ...p, repeatMonthly: e.target.checked }))} />
+                    Repeat this task monthly
+                  </label>
+                </div>
+                {formData.repeatMonthly && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelClass}>Repeat for next (months)</label>
+                      <input type="number" min={1} max={12} className={inputClass} value={formData.repeatMonths} onChange={e => setFormData(p => ({ ...p, repeatMonths: Math.min(12, Math.max(1, Number(e.target.value) || 1)) }))} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Total tasks to be created</label>
+                      <input type="text" disabled className={inputClass + " opacity-60"} value={`${formData.repeatMonths + 1} (this + ${formData.repeatMonths} months)`} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
                 <Button type="submit">Create Task</Button>
