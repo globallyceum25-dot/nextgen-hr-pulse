@@ -97,6 +97,7 @@ export interface Task {
   taskWeight: number;
   weightedScore: number;
   maxWeight: number;
+  createdDate: string;
   startDate: string;
   dueDate: string;
   completedDate?: string;
