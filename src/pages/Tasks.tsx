@@ -7,7 +7,7 @@ import { useDepartments } from "@/hooks/useDepartments";
 import { useLocations } from "@/hooks/useLocations";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceType } from "@/types/tasks";
-import { WORKFLOW_STATUSES, PRIORITIES, getWeightFromPriority, getStatusColor, getPriorityColor, getDeadlineInfo, getProgressFromStatus } from "@/types/tasks";
+import { WORKFLOW_STATUSES, MAIN_TASK_STATUSES, PRIORITIES, getWeightFromPriority, getStatusColor, getPriorityColor, getDeadlineInfo, getProgressFromStatus } from "@/types/tasks";
 import { Search, ChevronDown, ChevronRight, Plus, Pencil, Trash2, Filter, Calendar, AlertTriangle, CheckCircle2, Clock, X, MessageSquare, Send, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -856,7 +856,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </div>
                 ) : (
                   <select className={inputClass} value={editingTask?.status || "Created"} onChange={e => editingTask && handleStatusChange(editingTask, e.target.value as TaskWorkflowStatus)}>
-                    {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                    {MAIN_TASK_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 )}
               </div>
@@ -1152,7 +1152,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
             ) : (
               <select className="text-xs border rounded-md px-2 py-1 bg-card" value={task.status}
                 onChange={e => onStatusChange(task, e.target.value as TaskWorkflowStatus)}>
-                {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                {MAIN_TASK_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             )}
           </div>
