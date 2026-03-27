@@ -110,34 +110,52 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     }));
   }, [filtered]);
 
-  // Task-level performance grouped by task assignee
+  // Combined employee performance: tasks (type multiplier 1.0) + sub-tasks (type multiplier 0.5)
   const employeePerf = useMemo(() => {
     const map = new Map<string, {
-      total: number; kpiAchievementSum: number; completed: number; progressSum: number;
-      weightedScoreSum: number; taskWeightSum: number;
+      totalItems: number; completed: number;
+      // Sum of (task_weight * progress * type_multiplier) and sum of (task_weight * type_multiplier)
+      weightedNumerator: number; weightedDenominator: number;
     }>();
+
+    const TYPE_TASK = 1.0;
+    const TYPE_SUBTASK = 0.5;
+
     filtered.forEach(t => {
-      const key = t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned";
-      const e = map.get(key) || {
-        total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0,
-      };
-      e.total++;
-      e.kpiAchievementSum += Number(t.kpi_achievement);
-      e.progressSum += Number(t.progress);
-      if (t.status === "Completed" || t.status === "Closed") e.completed++;
-      e.weightedScoreSum += Number(t.weighted_score ?? 0);
-      e.taskWeightSum += Number(t.task_weight ?? 0);
-      map.set(key, e);
+      // Main task contribution
+      const taskKey = t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned";
+      const te = map.get(taskKey) || { totalItems: 0, completed: 0, weightedNumerator: 0, weightedDenominator: 0 };
+      const taskWeight = Number(t.task_weight ?? 0);
+      const taskProgress = Number(t.progress ?? 0) / 100; // normalize to 0-1
+      te.totalItems++;
+      if (t.status === "Completed" || t.status === "Closed") te.completed++;
+      te.weightedNumerator += taskWeight * taskProgress * TYPE_TASK;
+      te.weightedDenominator += taskWeight * TYPE_TASK;
+      map.set(taskKey, te);
+
+      // Sub-task contributions
+      (t.sub_tasks || []).forEach(st => {
+        const stKey = (st as any).assignee_name || taskKey;
+        const se = map.get(stKey) || { totalItems: 0, completed: 0, weightedNumerator: 0, weightedDenominator: 0 };
+        const stWeight = Number(st.task_weight ?? 0);
+        const stProgress = Number(st.progress ?? 0) / 100;
+        se.totalItems++;
+        if (st.status === "Completed" || st.status === "Closed") se.completed++;
+        se.weightedNumerator += stWeight * stProgress * TYPE_SUBTASK;
+        se.weightedDenominator += stWeight * TYPE_SUBTASK;
+        map.set(stKey, se);
+      });
     });
+
     return Array.from(map.entries())
       .map(([name, d]) => ({
         name: name.length > 15 ? name.slice(0, 15) + "…" : name,
         fullName: name,
-        kpi: d.total > 0 ? Math.round(d.kpiAchievementSum / d.total) : 0,
-        avgProgress: d.total > 0 ? Math.round(d.progressSum / d.total) : 0,
-        tasks: d.total,
+        tasks: d.totalItems,
         completed: d.completed,
-        overallWeightedPerformance: d.taskWeightSum > 0 ? Math.round((d.weightedScoreSum / d.taskWeightSum) * 100 * 100) / 100 : 0,
+        overallWeightedPerformance: d.weightedDenominator > 0
+          ? Math.round((d.weightedNumerator / d.weightedDenominator) * 100 * 100) / 100
+          : 0,
       }))
       .sort((a, b) => b.overallWeightedPerformance - a.overallWeightedPerformance)
       .slice(0, 10);
@@ -411,10 +429,8 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                   <tr className="border-b">
                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Employee</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Total Tasks</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Total Items</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Completed</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg Progress</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg KPI Achievement</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Overall Weighted Perf.</th>
                   </tr>
                 </thead>
@@ -425,10 +441,6 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                       <td className="px-3 py-2 text-card-foreground font-medium">{emp.fullName}</td>
                       <td className="px-3 py-2 text-center text-card-foreground">{emp.tasks}</td>
                       <td className="px-3 py-2 text-center text-card-foreground">{emp.completed}</td>
-                      <td className="px-3 py-2 text-center text-card-foreground">{emp.avgProgress}%</td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={`font-semibold ${emp.kpi >= 80 ? "text-success" : emp.kpi >= 50 ? "text-primary" : emp.kpi >= 30 ? "text-warning" : "text-destructive"}`}>{emp.kpi}%</span>
-                      </td>
                       <td className="px-3 py-2 text-center">
                         <span className={`font-bold ${emp.overallWeightedPerformance >= 70 ? "text-success" : emp.overallWeightedPerformance >= 50 ? "text-primary" : emp.overallWeightedPerformance >= 30 ? "text-warning" : "text-destructive"}`}>{emp.overallWeightedPerformance}%</span>
                       </td>
