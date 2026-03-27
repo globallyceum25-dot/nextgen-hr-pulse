@@ -980,7 +980,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
 
           {/* Details Grid */}
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-muted-foreground text-xs">Assignee</span><p className="font-medium">{task.assignee_profile?.full_name || "—"}</p></div>
+            <div><span className="text-muted-foreground text-xs">Assignee</span><p className="font-medium">{(task as any).assignee_name || task.assignee_profile?.full_name || "—"}</p></div>
             <div><span className="text-muted-foreground text-xs">Assigned By</span><p className="font-medium">{task.assigned_by_profile?.full_name || "—"}</p></div>
             <div><span className="text-muted-foreground text-xs">Category</span><p className="font-medium">{task.category?.name || "—"}</p></div>
             <div><span className="text-muted-foreground text-xs">Type</span><p className="font-medium">{task.type?.name || "—"}</p></div>

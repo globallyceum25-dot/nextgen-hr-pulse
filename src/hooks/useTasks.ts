@@ -119,6 +119,7 @@ export interface CreateTaskInput {
   category_id?: string;
   type_id?: string;
   assignee_id?: string;
+  assignee_name?: string;
   assigned_by?: string;
   department_id?: string;
   sector_id?: string;
