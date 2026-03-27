@@ -13,6 +13,11 @@ export const WORKFLOW_STATUSES: TaskWorkflowStatus[] = [
   "Completed", "Closed", "On Hold", "Cancelled", "Overdue",
 ];
 
+export const MAIN_TASK_STATUSES: TaskWorkflowStatus[] = [
+  "Created", "Assigned", "In Progress", "Under Review",
+  "Completed", "On Hold", "Cancelled",
+];
+
 export const ACTIVE_STATUSES: TaskWorkflowStatus[] = [
   "Created", "Assigned", "In Progress", "Pending", "Under Review",
 ];
