@@ -701,7 +701,7 @@ export type Database = {
         | "responsible_person"
         | "viewer"
       recurrence_type: "none" | "daily" | "weekly" | "monthly" | "custom"
-      task_priority: "Critical" | "High" | "Medium" | "Low"
+      task_priority: "High" | "Medium" | "Low"
       task_workflow_status:
         | "Created"
         | "Assigned"
@@ -847,7 +847,7 @@ export const Constants = {
         "viewer",
       ],
       recurrence_type: ["none", "daily", "weekly", "monthly", "custom"],
-      task_priority: ["Critical", "High", "Medium", "Low"],
+      task_priority: ["High", "Medium", "Low"],
       task_workflow_status: [
         "Created",
         "Assigned",
