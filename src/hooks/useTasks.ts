@@ -31,6 +31,8 @@ export function useTasks(filters?: {
           sector:sectors(id, name),
           company:companies(id, company_name),
           location:locations(id, location_name),
+          assignee_profile:profiles!tasks_assignee_id_fkey(id, full_name, email),
+          assigned_by_profile:profiles!tasks_assigned_by_fkey(id, full_name, email),
           sub_tasks(*)
         `)
         .order("created_at", { ascending: false });
