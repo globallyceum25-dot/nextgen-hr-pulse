@@ -164,6 +164,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         description: formData.description || undefined,
         category_id: formData.category_id || undefined,
         type_id: formData.type_id || undefined,
+        assignee_name: formData.assignee_name || undefined,
         department_id: formData.department_id || undefined,
         sector_id: formData.sector_id || undefined,
         company_id: formData.company_id || undefined,
@@ -199,6 +200,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           description: formData.description || null,
           category_id: formData.category_id || null,
           type_id: formData.type_id || null,
+          assignee_name: formData.assignee_name || null,
           department_id: formData.department_id || null,
           sector_id: formData.sector_id || null,
           company_id: formData.company_id || null,
@@ -229,7 +231,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       description: task.description || "",
       category_id: task.category_id || "",
       type_id: task.type_id || "",
-      assignee_name: "",
+      assignee_name: (task as any).assignee_name || "",
       department_id: task.department_id || "",
       sector_id: task.sector_id || "",
       company_id: task.company_id || "",
@@ -794,6 +796,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <label className={labelClass}>Description</label>
                 <textarea className={inputClass + " min-h-[60px]"} value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} />
               </div>
+              <div>
+                <label className={labelClass}>Task Owner / Assignee</label>
+                <select className={inputClass} value={formData.assignee_name} onChange={e => handleAssigneeChange(e.target.value)}>
+                  <option value="">Select person</option>
+                  {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                </select>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Priority</label>
@@ -978,7 +987,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
 
           {/* Details Grid */}
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-muted-foreground text-xs">Assignee</span><p className="font-medium">{task.assignee_profile?.full_name || "—"}</p></div>
+            <div><span className="text-muted-foreground text-xs">Assignee</span><p className="font-medium">{(task as any).assignee_name || task.assignee_profile?.full_name || "—"}</p></div>
             <div><span className="text-muted-foreground text-xs">Assigned By</span><p className="font-medium">{task.assigned_by_profile?.full_name || "—"}</p></div>
             <div><span className="text-muted-foreground text-xs">Category</span><p className="font-medium">{task.category?.name || "—"}</p></div>
             <div><span className="text-muted-foreground text-xs">Type</span><p className="font-medium">{task.type?.name || "—"}</p></div>
