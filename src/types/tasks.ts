@@ -17,7 +17,7 @@ export const ACTIVE_STATUSES: TaskWorkflowStatus[] = [
   "Created", "Assigned", "In Progress", "Pending", "Under Review",
 ];
 
-export const PRIORITIES: TaskPriority[] = ["Critical", "High", "Medium", "Low"];
+export const PRIORITIES: TaskPriority[] = ["High", "Medium", "Low"];
 
 export const RECURRENCE_OPTIONS: RecurrenceType[] = ["none", "daily", "weekly", "monthly", "custom"];
 
