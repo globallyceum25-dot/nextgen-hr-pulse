@@ -81,15 +81,15 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   }, [filtered]);
 
   const statusDist = useMemo(() => {
-    const counts: Record<string, number> = { Completed: 0, "Almost Completed": 0, "In Progress": 0, Started: 0, Pending: 0, "Not Started": 0, Overdue: 0 };
+    const counts: Record<string, number> = {};
     filtered.forEach(t => { counts[t.status] = (counts[t.status] ?? 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filtered]);
 
   const subTaskStatusDist = useMemo(() => {
-    const counts: Record<string, number> = { Completed: 0, "Almost Completed": 0, "In Progress": 0, Started: 0, "Not Started": 0 };
+    const counts: Record<string, number> = {};
     filtered.forEach(t => {
-      (t.subTasks || []).forEach(st => { if (counts[st.status] !== undefined) counts[st.status]++; });
+      (t.sub_tasks || []).forEach(st => { counts[st.status] = (counts[st.status] ?? 0) + 1; });
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filtered]);
@@ -97,16 +97,15 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   const totalTasks = useMemo(() => statusDist.reduce((s, d) => s + d.value, 0), [statusDist]);
   const totalSubTasks = useMemo(() => subTaskStatusDist.reduce((s, d) => s + d.value, 0), [subTaskStatusDist]);
 
-  // Task KPI monitoring data - per task KPI details
   const taskKpiData = useMemo(() => {
     return filtered.map(t => ({
-      name: t.name.length > 25 ? t.name.slice(0, 25) + "…" : t.name,
-      fullName: t.name,
-      target: t.kpiTargetPercent,
-      achievement: Math.round(t.kpiAchievement * 100) / 100,
-      progress: t.progress,
+      name: t.title.length > 25 ? t.title.slice(0, 25) + "…" : t.title,
+      fullName: t.title,
+      target: Number(t.kpi_target_percent),
+      achievement: Math.round(Number(t.kpi_achievement) * 100) / 100,
+      progress: Number(t.progress),
       status: t.status,
-      responsible: t.responsible,
+      responsible: t.assignee_id || "Unassigned",
       priority: t.priority,
     }));
   }, [filtered]);
@@ -115,46 +114,42 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     const map = new Map<string, {
       total: number; kpiAchievementSum: number; completed: number; progressSum: number;
       weightedScoreSum: number; taskWeightSum: number;
-      // Sub-task level
       stTotal: number; stCompleted: number; stProgressSum: number; stKpiAchievementSum: number;
       stWeightedScoreSum: number; stTaskWeightSum: number;
     }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || {
+      const key = t.title; // Group by task title for now
+      const e = map.get(key) || {
         total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0,
         stTotal: 0, stCompleted: 0, stProgressSum: 0, stKpiAchievementSum: 0, stWeightedScoreSum: 0, stTaskWeightSum: 0,
       };
       e.total++;
-      e.kpiAchievementSum += t.kpiAchievement;
-      e.progressSum += t.progress;
-      if (t.status === "Completed") e.completed++;
-      (t.subTasks || []).forEach(st => {
-        e.weightedScoreSum += (st.weightedScore ?? 0);
-        e.taskWeightSum += (st.taskWeight ?? 0);
+      e.kpiAchievementSum += Number(t.kpi_achievement);
+      e.progressSum += Number(t.progress);
+      if (t.status === "Completed" || t.status === "Closed") e.completed++;
+      (t.sub_tasks || []).forEach(st => {
+        e.weightedScoreSum += Number(st.weighted_score ?? 0);
+        e.taskWeightSum += Number(st.task_weight ?? 0);
         e.stTotal++;
-        if (st.status === "Completed") e.stCompleted++;
-        // Sub-task progress from status mapping
-        const stProgress = st.status === "Completed" ? 100 : st.status === "Almost Completed" ? 80 : st.status === "In Progress" ? 50 : st.status === "Started" ? 25 : 0;
+        if (st.status === "Completed" || st.status === "Closed") e.stCompleted++;
+        const stProgress = Number(st.progress);
         e.stProgressSum += stProgress;
-        // Sub-task KPI achievement: (progress / kpiTarget) * 100
-        const stKpiTarget = (st as any).kpiTargetPercent ?? t.kpiTargetPercent ?? 100;
+        const stKpiTarget = Number(t.kpi_target_percent) || 100;
         e.stKpiAchievementSum += stKpiTarget > 0 ? Math.min((stProgress / stKpiTarget) * 100, 100) : 0;
-        e.stWeightedScoreSum += (st.weightedScore ?? 0);
-        e.stTaskWeightSum += (st.taskWeight ?? 0);
+        e.stWeightedScoreSum += Number(st.weighted_score ?? 0);
+        e.stTaskWeightSum += Number(st.task_weight ?? 0);
       });
-      map.set(t.responsible, e);
+      map.set(key, e);
     });
     return Array.from(map.entries())
       .map(([name, d]) => ({
-        name: name.split(" ")[0],
+        name: name.length > 15 ? name.slice(0, 15) + "…" : name,
         fullName: name,
-        // Task-level
-        kpi: Math.round(d.kpiAchievementSum / d.total),
-        avgProgress: Math.round(d.progressSum / d.total),
+        kpi: d.total > 0 ? Math.round(d.kpiAchievementSum / d.total) : 0,
+        avgProgress: d.total > 0 ? Math.round(d.progressSum / d.total) : 0,
         tasks: d.total,
         completed: d.completed,
         overallWeightedPerformance: d.taskWeightSum > 0 ? Math.round((d.weightedScoreSum / d.taskWeightSum) * 100 * 100) / 100 : 0,
-        // Sub-task level
         stTotal: d.stTotal,
         stCompleted: d.stCompleted,
         stAvgProgress: d.stTotal > 0 ? Math.round(d.stProgressSum / d.stTotal) : 0,
@@ -165,20 +160,20 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       .slice(0, 10);
   }, [filtered]);
 
-  // Work Load vs Output - sub-tasks per responsible person
   const workloadVsOutput = useMemo(() => {
     const map = new Map<string, { totalSubTasks: number; completedSubTasks: number }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || { totalSubTasks: 0, completedSubTasks: 0 };
-      (t.subTasks || []).forEach(st => {
+      const key = t.title;
+      const e = map.get(key) || { totalSubTasks: 0, completedSubTasks: 0 };
+      (t.sub_tasks || []).forEach(st => {
         e.totalSubTasks++;
-        if (st.status === "Completed") e.completedSubTasks++;
+        if (st.status === "Completed" || st.status === "Closed") e.completedSubTasks++;
       });
-      map.set(t.responsible, e);
+      map.set(key, e);
     });
     return Array.from(map.entries())
       .map(([name, d]) => ({
-        name: name.split(" ")[0],
+        name: name.length > 15 ? name.slice(0, 15) + "…" : name,
         fullName: name,
         totalSubTasks: d.totalSubTasks,
         completedSubTasks: d.completedSubTasks,
@@ -186,7 +181,15 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       .sort((a, b) => b.totalSubTasks - a.totalSubTasks);
   }, [filtered]);
 
-  const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-4 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
+        <Skeleton className="h-80" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
