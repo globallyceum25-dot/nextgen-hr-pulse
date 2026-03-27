@@ -661,6 +661,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Company</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Priority</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground w-28">Progress</th>
+                <th className="text-center px-3 py-3 font-medium text-muted-foreground">KPI Target</th>
+                <th className="text-center px-3 py-3 font-medium text-muted-foreground">KPI Achievement</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Status</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground">Due Date</th>
                 <th className="text-left px-3 py-3 font-medium text-muted-foreground min-w-[140px]">Deadline</th>
