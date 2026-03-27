@@ -440,6 +440,66 @@ export default function Reports({ selectedSector }: ReportsProps) {
           </div>
         </TabsContent>
 
+        <TabsContent value="employee-perf" className="mt-4">
+          <div className="bg-card rounded-lg border p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-foreground">Employee Performance Report ({employeePerformanceData.length} employees)</h2>
+              <Button onClick={exportEmployeePerformance} className="gap-2" size="sm">
+                <Download size={14} /> Export to Excel
+              </Button>
+            </div>
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-card">
+                  <tr className="border-b">
+                    <th className="text-left px-2 py-2 font-medium text-muted-foreground">#</th>
+                    <th className="text-left px-2 py-2 font-medium text-muted-foreground">Employee</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Tasks</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Sub-Tasks</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Completed</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Overdue</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Task Perf %</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Sub-Task Perf %</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Overall Perf %</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Avg KPI %</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">KPI Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employeePerformanceData.map((d, i) => (
+                    <tr key={d.name} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="px-2 py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="px-2 py-2 text-card-foreground font-medium">{d.name}</td>
+                      <td className="px-2 py-2 text-center">{d.totalTasks}</td>
+                      <td className="px-2 py-2 text-center">{d.totalSubTasks}</td>
+                      <td className="px-2 py-2 text-center text-emerald-700">{d.completed}</td>
+                      <td className="px-2 py-2 text-center text-red-600">{d.overdue}</td>
+                      <td className="px-2 py-2 text-center">{d.taskPerf}%</td>
+                      <td className="px-2 py-2 text-center">{d.subPerf}%</td>
+                      <td className="px-2 py-2 text-center">
+                        <span className={`font-bold ${d.overall >= 70 ? "text-emerald-700" : d.overall >= 50 ? "text-blue-700" : d.overall >= 30 ? "text-amber-700" : "text-red-700"}`}>{d.overall}%</span>
+                      </td>
+                      <td className="px-2 py-2 text-center">{d.avgKpi}%</td>
+                      <td className="px-2 py-2 text-center">
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
+                          d.kpiStatus.startsWith("5") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                          d.kpiStatus.startsWith("4") ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          d.kpiStatus.startsWith("3") ? "bg-amber-50 text-amber-700 border-amber-200" :
+                          d.kpiStatus.startsWith("2") ? "bg-orange-50 text-orange-700 border-orange-200" :
+                          "bg-red-50 text-red-700 border-red-200"
+                        }`}>{d.kpiStatus}</span>
+                      </td>
+                    </tr>
+                  ))}
+                  {employeePerformanceData.length === 0 && (
+                    <tr><td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">No employee data available</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
+
         <TabsContent value="overdue" className="mt-4">
           <div className="bg-card rounded-lg border p-5">
             <div className="flex items-center justify-between mb-4">
