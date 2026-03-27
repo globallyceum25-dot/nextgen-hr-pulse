@@ -147,6 +147,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       stage: "Planning", totalTasks: 0, completedCount: 0, pendingCount: 0,
       kpiTargetPercent: 100, maxWeight: 0.6, sectorId: selectedSector || 1,
       startDate: new Date().toISOString().split("T")[0], dueDate: "",
+      repeatEnabled: false, repeatFrequency: "monthly", repeatCount: 1,
       repeatMonthly: false, repeatMonths: 1,
     });
   };
