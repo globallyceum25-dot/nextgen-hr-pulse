@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { getLiveTasks, SECTORS, TASKS_UPDATED_EVENT, type Task, getKPIData } from "@/data/mockData";
+import { useMemo } from "react";
+import { useTasks } from "@/hooks/useTasks";
+import type { DbTask } from "@/types/tasks";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import KPICard from "@/components/dashboard/KPICard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AnalyticsProps {
   selectedSector: number | null;
@@ -11,31 +12,30 @@ interface AnalyticsProps {
 // Formal corporate color palette for donut/pie charts - high contrast & distinguishable
 const COLORS = [
   "hsl(152, 45%, 40%)",   // Forest green (Completed)
-  "hsl(215, 50%, 42%)",   // Deep navy blue (Almost Completed)
+  "hsl(215, 50%, 42%)",   // Deep navy blue
   "hsl(35, 65%, 50%)",    // Warm amber (In Progress)
-  "hsl(0, 50%, 48%)",     // Muted crimson (Started / Overdue)
+  "hsl(0, 50%, 48%)",     // Muted crimson
   "hsl(270, 35%, 50%)",   // Plum purple (Pending)
-  "hsl(195, 40%, 48%)",   // Teal (Not Started)
+  "hsl(195, 40%, 48%)",   // Teal
   "hsl(220, 15%, 55%)",   // Cool grey
+  "hsl(45, 70%, 50%)",    // Gold
+  "hsl(330, 40%, 50%)",   // Rose
+  "hsl(160, 40%, 45%)",   // Sage
 ];
 
 // Chart-specific formal colors
 const CHART_COLORS = {
-  primary: "hsl(215, 50%, 35%)",       // Deep navy - main bars
-  secondary: "hsl(200, 30%, 65%)",     // Muted slate blue - secondary bars
-  accent: "hsl(210, 40%, 52%)",        // Steel blue
-  target: "hsl(215, 50%, 35%)",        // Navy for KPI target
-  achievement: "hsl(200, 30%, 65%)",   // Slate blue for KPI achievement
-  workload: "hsl(215, 50%, 35%)",      // Navy for total tasks
-  output: "hsl(195, 35%, 55%)",        // Teal-grey for completed
-  referenceLine: "hsl(0, 45%, 45%)",   // Muted burgundy for reference lines
-  grid: "hsl(214, 20%, 88%)",          // Light grey grid
-  axisText: "hsl(215, 16%, 47%)",      // Axis labels
+  primary: "hsl(215, 50%, 35%)",
+  secondary: "hsl(200, 30%, 65%)",
+  accent: "hsl(210, 40%, 52%)",
+  target: "hsl(215, 50%, 35%)",
+  achievement: "hsl(200, 30%, 65%)",
+  workload: "hsl(215, 50%, 35%)",
+  output: "hsl(195, 35%, 55%)",
+  referenceLine: "hsl(0, 45%, 45%)",
+  grid: "hsl(214, 20%, 88%)",
+  axisText: "hsl(215, 16%, 47%)",
 };
-
-function areTasksEqual(a: Task[], b: Task[]): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
 
 const RADIAN = Math.PI / 180;
 
@@ -57,44 +57,39 @@ function renderPieLabel(total: number) {
 }
 
 export default function Analytics({ selectedSector }: AnalyticsProps) {
-  const [liveTasks, setLiveTasks] = useState<Task[]>(() => getLiveTasks());
+  const { data: tasks = [], isLoading } = useTasks();
 
-  useEffect(() => {
-    const syncTasks = () => {
-      const latest = getLiveTasks();
-      setLiveTasks(prev => (areTasksEqual(prev, latest) ? prev : latest));
-    };
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") syncTasks();
-    };
-    window.addEventListener(TASKS_UPDATED_EVENT, syncTasks as EventListener);
-    window.addEventListener("storage", syncTasks);
-    window.addEventListener("focus", syncTasks);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => {
-      window.removeEventListener(TASKS_UPDATED_EVENT, syncTasks as EventListener);
-      window.removeEventListener("storage", syncTasks);
-      window.removeEventListener("focus", syncTasks);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, []);
+  const filtered = useMemo(() => tasks, [tasks]);
 
-  const filtered = useMemo(() => {
-    return selectedSector ? liveTasks.filter(t => t.sectorId === selectedSector) : liveTasks;
-  }, [selectedSector, liveTasks]);
-
-  const kpiData = useMemo(() => getKPIData(selectedSector ?? undefined, liveTasks), [selectedSector, liveTasks]);
+  // KPI summary
+  const kpiData = useMemo(() => {
+    const total = filtered.length;
+    const completed = filtered.filter(t => t.status === "Completed" || t.status === "Closed").length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + Number(t.kpi_achievement), 0) / total) : 0;
+    const overdue = filtered.filter(t => {
+      if (t.status === "Completed" || t.status === "Closed") return false;
+      if (!t.due_date) return false;
+      return new Date(t.due_date) < new Date();
+    }).length;
+    return [
+      { label: "Total Tasks", value: total, change: 0, trend: "neutral" as const },
+      { label: "Completion Rate", value: completionRate, change: 0, trend: "up" as const },
+      { label: "Avg KPI Score", value: avgKpi, change: 0, trend: "up" as const },
+      { label: "Overdue Tasks", value: overdue, change: 0, trend: overdue > 0 ? "up" as const : "down" as const },
+    ];
+  }, [filtered]);
 
   const statusDist = useMemo(() => {
-    const counts: Record<string, number> = { Completed: 0, "Almost Completed": 0, "In Progress": 0, Started: 0, Pending: 0, "Not Started": 0, Overdue: 0 };
+    const counts: Record<string, number> = {};
     filtered.forEach(t => { counts[t.status] = (counts[t.status] ?? 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filtered]);
 
   const subTaskStatusDist = useMemo(() => {
-    const counts: Record<string, number> = { Completed: 0, "Almost Completed": 0, "In Progress": 0, Started: 0, "Not Started": 0 };
+    const counts: Record<string, number> = {};
     filtered.forEach(t => {
-      (t.subTasks || []).forEach(st => { if (counts[st.status] !== undefined) counts[st.status]++; });
+      (t.sub_tasks || []).forEach(st => { counts[st.status] = (counts[st.status] ?? 0) + 1; });
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filtered]);
@@ -102,16 +97,15 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   const totalTasks = useMemo(() => statusDist.reduce((s, d) => s + d.value, 0), [statusDist]);
   const totalSubTasks = useMemo(() => subTaskStatusDist.reduce((s, d) => s + d.value, 0), [subTaskStatusDist]);
 
-  // Task KPI monitoring data - per task KPI details
   const taskKpiData = useMemo(() => {
     return filtered.map(t => ({
-      name: t.name.length > 25 ? t.name.slice(0, 25) + "…" : t.name,
-      fullName: t.name,
-      target: t.kpiTargetPercent,
-      achievement: Math.round(t.kpiAchievement * 100) / 100,
-      progress: t.progress,
+      name: t.title.length > 25 ? t.title.slice(0, 25) + "…" : t.title,
+      fullName: t.title,
+      target: Number(t.kpi_target_percent),
+      achievement: Math.round(Number(t.kpi_achievement) * 100) / 100,
+      progress: Number(t.progress),
       status: t.status,
-      responsible: t.responsible,
+      responsible: t.assignee_id || "Unassigned",
       priority: t.priority,
     }));
   }, [filtered]);
@@ -120,46 +114,42 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     const map = new Map<string, {
       total: number; kpiAchievementSum: number; completed: number; progressSum: number;
       weightedScoreSum: number; taskWeightSum: number;
-      // Sub-task level
       stTotal: number; stCompleted: number; stProgressSum: number; stKpiAchievementSum: number;
       stWeightedScoreSum: number; stTaskWeightSum: number;
     }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || {
+      const key = t.title; // Group by task title for now
+      const e = map.get(key) || {
         total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0,
         stTotal: 0, stCompleted: 0, stProgressSum: 0, stKpiAchievementSum: 0, stWeightedScoreSum: 0, stTaskWeightSum: 0,
       };
       e.total++;
-      e.kpiAchievementSum += t.kpiAchievement;
-      e.progressSum += t.progress;
-      if (t.status === "Completed") e.completed++;
-      (t.subTasks || []).forEach(st => {
-        e.weightedScoreSum += (st.weightedScore ?? 0);
-        e.taskWeightSum += (st.taskWeight ?? 0);
+      e.kpiAchievementSum += Number(t.kpi_achievement);
+      e.progressSum += Number(t.progress);
+      if (t.status === "Completed" || t.status === "Closed") e.completed++;
+      (t.sub_tasks || []).forEach(st => {
+        e.weightedScoreSum += Number(st.weighted_score ?? 0);
+        e.taskWeightSum += Number(st.task_weight ?? 0);
         e.stTotal++;
-        if (st.status === "Completed") e.stCompleted++;
-        // Sub-task progress from status mapping
-        const stProgress = st.status === "Completed" ? 100 : st.status === "Almost Completed" ? 80 : st.status === "In Progress" ? 50 : st.status === "Started" ? 25 : 0;
+        if (st.status === "Completed" || st.status === "Closed") e.stCompleted++;
+        const stProgress = Number(st.progress);
         e.stProgressSum += stProgress;
-        // Sub-task KPI achievement: (progress / kpiTarget) * 100
-        const stKpiTarget = (st as any).kpiTargetPercent ?? t.kpiTargetPercent ?? 100;
+        const stKpiTarget = Number(t.kpi_target_percent) || 100;
         e.stKpiAchievementSum += stKpiTarget > 0 ? Math.min((stProgress / stKpiTarget) * 100, 100) : 0;
-        e.stWeightedScoreSum += (st.weightedScore ?? 0);
-        e.stTaskWeightSum += (st.taskWeight ?? 0);
+        e.stWeightedScoreSum += Number(st.weighted_score ?? 0);
+        e.stTaskWeightSum += Number(st.task_weight ?? 0);
       });
-      map.set(t.responsible, e);
+      map.set(key, e);
     });
     return Array.from(map.entries())
       .map(([name, d]) => ({
-        name: name.split(" ")[0],
+        name: name.length > 15 ? name.slice(0, 15) + "…" : name,
         fullName: name,
-        // Task-level
-        kpi: Math.round(d.kpiAchievementSum / d.total),
-        avgProgress: Math.round(d.progressSum / d.total),
+        kpi: d.total > 0 ? Math.round(d.kpiAchievementSum / d.total) : 0,
+        avgProgress: d.total > 0 ? Math.round(d.progressSum / d.total) : 0,
         tasks: d.total,
         completed: d.completed,
         overallWeightedPerformance: d.taskWeightSum > 0 ? Math.round((d.weightedScoreSum / d.taskWeightSum) * 100 * 100) / 100 : 0,
-        // Sub-task level
         stTotal: d.stTotal,
         stCompleted: d.stCompleted,
         stAvgProgress: d.stTotal > 0 ? Math.round(d.stProgressSum / d.stTotal) : 0,
@@ -170,20 +160,20 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       .slice(0, 10);
   }, [filtered]);
 
-  // Work Load vs Output - sub-tasks per responsible person
   const workloadVsOutput = useMemo(() => {
     const map = new Map<string, { totalSubTasks: number; completedSubTasks: number }>();
     filtered.forEach(t => {
-      const e = map.get(t.responsible) || { totalSubTasks: 0, completedSubTasks: 0 };
-      (t.subTasks || []).forEach(st => {
+      const key = t.title;
+      const e = map.get(key) || { totalSubTasks: 0, completedSubTasks: 0 };
+      (t.sub_tasks || []).forEach(st => {
         e.totalSubTasks++;
-        if (st.status === "Completed") e.completedSubTasks++;
+        if (st.status === "Completed" || st.status === "Closed") e.completedSubTasks++;
       });
-      map.set(t.responsible, e);
+      map.set(key, e);
     });
     return Array.from(map.entries())
       .map(([name, d]) => ({
-        name: name.split(" ")[0],
+        name: name.length > 15 ? name.slice(0, 15) + "…" : name,
         fullName: name,
         totalSubTasks: d.totalSubTasks,
         completedSubTasks: d.completedSubTasks,
@@ -191,13 +181,21 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       .sort((a, b) => b.totalSubTasks - a.totalSubTasks);
   }, [filtered]);
 
-  const sectorName = selectedSector ? SECTORS.find(s => s.id === selectedSector)?.name : "All Sectors";
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-4 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
+        <Skeleton className="h-80" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-xl font-bold text-foreground">Task Analysis</h1>
-        <p className="text-sm text-muted-foreground">{sectorName} — Performance Overview</p>
+        <p className="text-sm text-muted-foreground">Performance Overview</p>
       </div>
 
       <Tabs defaultValue="executive-summary" className="w-full">
@@ -211,7 +209,12 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
         <TabsContent value="executive-summary" className="space-y-6 mt-4">
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {kpiData.map(d => <KPICard key={d.label} data={d} />)}
+            {kpiData.map(d => (
+              <div key={d.label} className="bg-card rounded-lg border p-4">
+                <span className="text-xs text-muted-foreground">{d.label}</span>
+                <p className="text-2xl font-bold text-foreground mt-1">{typeof d.value === "number" && d.label.includes("%") ? `${d.value}%` : d.value}</p>
+              </div>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -328,7 +331,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                         <span className={`font-semibold ${t.achievement >= 80 ? "text-success" : t.achievement >= 50 ? "text-primary" : t.achievement >= 30 ? "text-warning" : "text-destructive"}`}>{t.achievement.toFixed(2)}%</span>
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${t.status === "Completed" ? "bg-success/10 text-success" : t.status === "In Progress" || t.status === "Almost Completed" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{t.status}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${t.status === "Completed" ? "bg-success/10 text-success" : t.status === "In Progress" || t.status === "Under Review" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{t.status}</span>
                       </td>
                     </tr>
                   ))}

@@ -1,0 +1,417 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceType } from "@/types/tasks";
+import { getWeightFromPriority } from "@/types/tasks";
+
+const TASKS_KEY = ["tasks"];
+const SUB_TASKS_KEY = ["sub_tasks"];
+
+export function useTasks(filters?: {
+  status?: TaskWorkflowStatus | "All";
+  priority?: TaskPriority | "All";
+  sector_id?: string | null;
+  department_id?: string | null;
+  company_id?: string | null;
+  location_id?: string | null;
+  assignee_id?: string | null;
+  search?: string;
+  due_date_from?: string;
+  due_date_to?: string;
+}) {
+  return useQuery({
+    queryKey: [...TASKS_KEY, filters],
+    queryFn: async () => {
+      let query = supabase
+        .from("tasks")
+        .select(`
+          *,
+          category:task_categories(id, name),
+          type:task_types(id, name),
+          department:departments(id, department_name),
+          sector:sectors(id, name),
+          company:companies(id, company_name),
+          location:locations(id, location_name),
+          sub_tasks(*)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (filters?.status && filters.status !== "All") {
+        query = query.eq("status", filters.status);
+      }
+      if (filters?.priority && filters.priority !== "All") {
+        query = query.eq("priority", filters.priority);
+      }
+      if (filters?.sector_id) {
+        query = query.eq("sector_id", filters.sector_id);
+      }
+      if (filters?.department_id) {
+        query = query.eq("department_id", filters.department_id);
+      }
+      if (filters?.company_id) {
+        query = query.eq("company_id", filters.company_id);
+      }
+      if (filters?.location_id) {
+        query = query.eq("location_id", filters.location_id);
+      }
+      if (filters?.assignee_id) {
+        query = query.eq("assignee_id", filters.assignee_id);
+      }
+      if (filters?.search) {
+        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+      }
+      if (filters?.due_date_from) {
+        query = query.gte("due_date", filters.due_date_from);
+      }
+      if (filters?.due_date_to) {
+        query = query.lte("due_date", filters.due_date_to);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Auto-mark overdue tasks
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return (data as unknown as DbTask[])?.map(task => {
+        if (
+          task.due_date &&
+          new Date(task.due_date) < today &&
+          !["Completed", "Closed", "Cancelled", "Overdue"].includes(task.status)
+        ) {
+          return { ...task, status: "Overdue" as TaskWorkflowStatus };
+        }
+        return task;
+      }) || [];
+    },
+  });
+}
+
+export function useTaskById(taskId: string | null) {
+  return useQuery({
+    queryKey: ["task", taskId],
+    enabled: !!taskId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select(`
+          *,
+          category:task_categories(id, name),
+          type:task_types(id, name),
+          department:departments(id, department_name),
+          sector:sectors(id, name),
+          company:companies(id, company_name),
+          location:locations(id, location_name),
+          sub_tasks(*)
+        `)
+        .eq("id", taskId!)
+        .single();
+      if (error) throw error;
+      return data as unknown as DbTask;
+    },
+  });
+}
+
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  category_id?: string;
+  type_id?: string;
+  assignee_id?: string;
+  assigned_by?: string;
+  department_id?: string;
+  sector_id?: string;
+  company_id?: string;
+  location_id?: string;
+  priority: TaskPriority;
+  start_date?: string;
+  due_date?: string;
+  kpi_target_percent?: number;
+  remarks?: string;
+  escalation_person_id?: string;
+  recurrence?: RecurrenceType;
+  recurrence_count?: number;
+  related_module?: string;
+  sla_frequency?: string;
+  sub_task_count?: number;
+}
+
+export function useCreateTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateTaskInput) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      const weight = getWeightFromPriority(input.priority);
+
+      const taskData = {
+        title: input.title,
+        description: input.description || null,
+        category_id: input.category_id || null,
+        type_id: input.type_id || null,
+        assignee_id: input.assignee_id || null,
+        assigned_by: input.assigned_by || userId || null,
+        department_id: input.department_id || null,
+        sector_id: input.sector_id || null,
+        company_id: input.company_id || null,
+        location_id: input.location_id || null,
+        priority: input.priority,
+        status: (input.assignee_id ? "Assigned" : "Created") as TaskWorkflowStatus,
+        start_date: input.start_date || null,
+        due_date: input.due_date || null,
+        kpi_target_percent: input.kpi_target_percent ?? 100,
+        task_weight: weight,
+        remarks: input.remarks || null,
+        escalation_person_id: input.escalation_person_id || null,
+        recurrence: input.recurrence || "none",
+        recurrence_count: input.recurrence_count || 0,
+        related_module: input.related_module || null,
+        sla_frequency: input.sla_frequency || null,
+        created_by: userId || null,
+        updated_by: userId || null,
+      };
+
+      const { data: task, error } = await supabase
+        .from("tasks")
+        .insert(taskData)
+        .select()
+        .single();
+      if (error) throw error;
+
+      // Create sub-tasks if specified
+      if (input.sub_task_count && input.sub_task_count > 0) {
+        const subTasks = Array.from({ length: input.sub_task_count }, (_, i) => ({
+          task_id: task.id,
+          title: `Sub Task ${i + 1}`,
+          status: "Created" as TaskWorkflowStatus,
+          priority: input.priority,
+          task_weight: weight,
+          assignee_id: input.assignee_id || null,
+          due_date: input.due_date || null,
+          sort_order: i,
+          created_by: userId || null,
+          updated_by: userId || null,
+        }));
+
+        const { error: stError } = await supabase.from("sub_tasks").insert(subTasks);
+        if (stError) throw stError;
+      }
+
+      // Create recurring copies
+      if (input.recurrence && input.recurrence !== "none" && input.recurrence_count && input.recurrence_count > 0) {
+        for (let i = 1; i <= input.recurrence_count; i++) {
+          const futureStart = input.start_date ? new Date(input.start_date) : new Date();
+          const futureDue = input.due_date ? new Date(input.due_date) : new Date();
+
+          if (input.recurrence === "daily") {
+            futureStart.setDate(futureStart.getDate() + i);
+            futureDue.setDate(futureDue.getDate() + i);
+          } else if (input.recurrence === "weekly") {
+            futureStart.setDate(futureStart.getDate() + i * 7);
+            futureDue.setDate(futureDue.getDate() + i * 7);
+          } else {
+            futureStart.setMonth(futureStart.getMonth() + i);
+            futureDue.setMonth(futureDue.getMonth() + i);
+          }
+
+          const { data: recurTask, error: recurError } = await supabase
+            .from("tasks")
+            .insert({
+              ...taskData,
+              start_date: futureStart.toISOString().split("T")[0],
+              due_date: futureDue.toISOString().split("T")[0],
+              parent_recurring_id: task.id,
+            })
+            .select()
+            .single();
+          if (recurError) throw recurError;
+
+          if (input.sub_task_count && input.sub_task_count > 0) {
+            const subTasks = Array.from({ length: input.sub_task_count }, (_, j) => ({
+              task_id: recurTask.id,
+              title: `Sub Task ${j + 1}`,
+              status: "Created" as TaskWorkflowStatus,
+              priority: input.priority,
+              task_weight: weight,
+              assignee_id: input.assignee_id || null,
+              due_date: futureDue.toISOString().split("T")[0],
+              sort_order: j,
+              created_by: userId || null,
+              updated_by: userId || null,
+            }));
+            await supabase.from("sub_tasks").insert(subTasks);
+          }
+        }
+      }
+
+      // Log activity
+      await supabase.from("task_activity_log").insert({
+        task_id: task.id,
+        user_id: userId,
+        action: "created",
+        description: `Task "${input.title}" created`,
+      });
+
+      return task;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+    },
+  });
+}
+
+export function useUpdateTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<DbTask> }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data, error } = await supabase
+        .from("tasks")
+        .update({ ...updates, updated_by: user?.id || null })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+
+      await supabase.from("task_activity_log").insert({
+        task_id: id,
+        user_id: user?.id,
+        action: "updated",
+        description: `Task updated`,
+      });
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+    },
+  });
+}
+
+export function useDeleteTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+    },
+  });
+}
+
+export function useUpdateSubTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<DbSubTask> }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data, error } = await supabase
+        .from("sub_tasks")
+        .update({ ...updates, updated_by: user?.id || null })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+
+      // Recalculate parent task progress
+      const taskId = data.task_id;
+      const { data: allSubTasks } = await supabase
+        .from("sub_tasks")
+        .select("*")
+        .eq("task_id", taskId);
+
+      if (allSubTasks && allSubTasks.length > 0) {
+        const total = allSubTasks.length;
+        const completedCount = allSubTasks.filter(s => s.status === "Completed" || s.status === "Closed").length;
+        const avgProgress = allSubTasks.reduce((sum, s) => sum + Number(s.progress), 0) / total;
+        const progress = Math.round(avgProgress * 100) / 100;
+
+        // Get parent task for KPI target
+        const { data: parentTask } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", taskId).single();
+        const kpiTarget = parentTask?.kpi_target_percent || 100;
+        const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
+        const taskWeight = parentTask?.task_weight || 0.6;
+        const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
+
+        let newStatus: TaskWorkflowStatus = "In Progress";
+        if (progress === 0) newStatus = "Created";
+        else if (progress >= 100) newStatus = "Completed";
+        else if (progress >= 80) newStatus = "Under Review";
+
+        await supabase.from("tasks").update({
+          progress,
+          kpi_achievement: kpiAchievement,
+          weighted_score: weightedScore,
+          status: completedCount === total ? "Completed" : newStatus,
+          completed_date: completedCount === total ? new Date().toISOString().split("T")[0] : null,
+        }).eq("id", taskId);
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+      queryClient.invalidateQueries({ queryKey: SUB_TASKS_KEY });
+    },
+  });
+}
+
+// Task comments
+export function useTaskComments(taskId: string | null) {
+  return useQuery({
+    queryKey: ["task_comments", taskId],
+    enabled: !!taskId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("task_comments")
+        .select("*")
+        .eq("task_id", taskId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useAddComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ task_id, content }: { task_id: string; content: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from("task_comments")
+        .insert({ task_id, content, user_id: user!.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["task_comments", vars.task_id] });
+    },
+  });
+}
+
+// Activity log
+export function useTaskActivityLog(taskId: string | null) {
+  return useQuery({
+    queryKey: ["task_activity_log", taskId],
+    enabled: !!taskId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("task_activity_log")
+        .select("*")
+        .eq("task_id", taskId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
