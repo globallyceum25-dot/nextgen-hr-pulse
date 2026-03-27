@@ -118,7 +118,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       stWeightedScoreSum: number; stTaskWeightSum: number;
     }>();
     filtered.forEach(t => {
-      const key = t.assignee_name || "Unassigned";
+      const key = t.assignee_profile?.full_name || "Unassigned";
       const e = map.get(key) || {
         total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0,
         stTotal: 0, stCompleted: 0, stProgressSum: 0, stKpiAchievementSum: 0, stWeightedScoreSum: 0, stTaskWeightSum: 0,
