@@ -514,12 +514,21 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                       </td>
                       <td className="px-3 py-2 text-center font-semibold text-card-foreground">{t.target}%</td>
                       <td className="px-3 py-2 text-center">
-                        <span className={`font-semibold ${t.achievement >= 80 ? "text-success" : t.achievement >= 50 ? "text-primary" : t.achievement >= 30 ? "text-warning" : "text-destructive"}`}>{t.achievement.toFixed(2)}%</span>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${t.status === "Completed" ? "bg-success/10 text-success" : t.status === "In Progress" || t.status === "Under Review" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{t.status}</span>
-                      </td>
-                    </tr>
+                         <span className={`font-semibold ${t.achievement >= 80 ? "text-success" : t.achievement >= 50 ? "text-primary" : t.achievement >= 30 ? "text-warning" : "text-destructive"}`}>{t.achievement.toFixed(2)}%</span>
+                       </td>
+                       <td className="px-3 py-2 text-center">
+                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                           t.kpiStatus.startsWith("5") ? "bg-success/10 text-success" :
+                           t.kpiStatus.startsWith("4") ? "bg-primary/10 text-primary" :
+                           t.kpiStatus.startsWith("3") ? "bg-warning/10 text-warning" :
+                           t.kpiStatus.startsWith("2") ? "bg-orange-100 text-orange-600" :
+                           "bg-destructive/10 text-destructive"
+                         }`}>{t.kpiStatus}</span>
+                       </td>
+                       <td className="px-3 py-2 text-center">
+                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${t.status === "Completed" ? "bg-success/10 text-success" : t.status === "In Progress" || t.status === "Under Review" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{t.status}</span>
+                       </td>
+                     </tr>
                   ))}
                 </tbody>
               </table>
