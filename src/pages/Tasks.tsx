@@ -1037,7 +1037,44 @@ export default function Tasks({ selectedSector }: TasksProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Task Detail Drawer */}
+      {/* Sub-task Detail Sheet */}
+      <Sheet open={subTaskDetailOpen} onOpenChange={setSubTaskDetailOpen}>
+        <SheetContent className="w-[440px] sm:w-[480px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-left">Sub-task Details</SheetTitle>
+          </SheetHeader>
+          {detailSubTask && (
+            <div className="mt-4 space-y-4">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">{detailSubTask.subTask.title}</h2>
+                <p className="text-xs text-muted-foreground mt-1">Parent: {detailSubTask.task.title}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground text-xs">Status</span><p className={`text-xs font-semibold px-2 py-0.5 rounded-full border inline-block mt-1 ${getStatusColor(detailSubTask.subTask.status)}`}>{detailSubTask.subTask.status}</p></div>
+                <div><span className="text-muted-foreground text-xs">Priority</span><p className={`text-xs font-semibold px-2 py-0.5 rounded-full border inline-block mt-1 ${getPriorityColor(detailSubTask.subTask.priority)}`}>{detailSubTask.subTask.priority}</p></div>
+                <div><span className="text-muted-foreground text-xs">Owner / Assignee</span><p className="font-medium">{(detailSubTask.subTask as any).assignee_name || "—"}</p></div>
+                <div><span className="text-muted-foreground text-xs">Due Date</span><p className="font-medium">{detailSubTask.subTask.due_date || "—"}</p></div>
+                <div><span className="text-muted-foreground text-xs">Progress</span><p className="font-medium">{Number(detailSubTask.subTask.progress).toFixed(1)}%</p></div>
+                <div><span className="text-muted-foreground text-xs">Weight</span><p className="font-medium">{Number(detailSubTask.subTask.task_weight).toFixed(1)}</p></div>
+                <div><span className="text-muted-foreground text-xs">Weighted Score</span><p className="font-medium">{Number(detailSubTask.subTask.weighted_score).toFixed(4)}</p></div>
+                <div><span className="text-muted-foreground text-xs">Completed Date</span><p className="font-medium">{detailSubTask.subTask.completed_date || "—"}</p></div>
+              </div>
+              {detailSubTask.subTask.remarks && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-1">Remarks</h3>
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">{detailSubTask.subTask.remarks}</p>
+                </div>
+              )}
+              <div className="flex gap-2 pt-2">
+                <Button size="sm" variant="outline" onClick={() => { setSubTaskDetailOpen(false); openSubTaskEdit(detailSubTask.task.id, detailSubTask.subTask); }}>
+                  <Pencil size={14} className="mr-1" /> Edit
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
       <TaskDetailDrawer
         task={selectedTask}
         open={detailDrawerOpen}
