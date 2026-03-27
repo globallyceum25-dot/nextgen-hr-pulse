@@ -627,6 +627,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
           <option value="All">All Companies</option>
           {companies.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
         </select>
+        <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+          <option value="All">All Locations</option>
+          {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
+        </select>
+        <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+          <option value="All">All Sectors</option>
+          {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" title="Due from" />
+        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" title="Due to" />
       </div>
 
       {/* Task Table */}
