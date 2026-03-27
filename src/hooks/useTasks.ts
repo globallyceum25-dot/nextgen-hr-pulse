@@ -6,6 +6,20 @@ import { getWeightFromPriority } from "@/types/tasks";
 const TASKS_KEY = ["tasks"];
 const SUB_TASKS_KEY = ["sub_tasks"];
 
+// Status-to-progress mapping for tasks without sub-tasks
+const statusToProgress: Record<string, number> = {
+  "Created": 0,
+  "Assigned": 10,
+  "In Progress": 50,
+  "Pending": 40,
+  "Under Review": 80,
+  "Completed": 100,
+  "Closed": 100,
+  "On Hold": 0,
+  "Cancelled": 0,
+  "Overdue": 0,
+};
+
 export function useTasks(filters?: {
   status?: TaskWorkflowStatus | "All";
   priority?: TaskPriority | "All";
@@ -271,9 +285,54 @@ export function useUpdateTask() {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<DbTask> }) => {
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Check if this task has sub-tasks
+      const { data: subTasks } = await supabase
+        .from("sub_tasks")
+        .select("id, progress, status")
+        .eq("task_id", id);
+
+      const hasSubTasks = subTasks && subTasks.length > 0;
+      let finalUpdates = { ...updates, updated_by: user?.id || null };
+
+      if (hasSubTasks) {
+        // Progress comes from sub-tasks — recalculate from sub-task statuses
+        const avgProgress = subTasks.reduce((sum, s) => sum + Number(s.progress), 0) / subTasks.length;
+        const progress = Math.round(avgProgress * 100) / 100;
+
+        const { data: taskMeta } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", id).single();
+        const kpiTarget = taskMeta?.kpi_target_percent || 100;
+        const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
+        const taskWeight = taskMeta?.task_weight || 0.6;
+        const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
+
+        finalUpdates = {
+          ...finalUpdates,
+          progress,
+          kpi_achievement: kpiAchievement,
+          weighted_score: weightedScore,
+        } as any;
+      } else if (updates.status) {
+        // No sub-tasks — calculate progress from task status
+        const progress = statusToProgress[updates.status as string] ?? 0;
+
+        const { data: taskMeta } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", id).single();
+        const kpiTarget = taskMeta?.kpi_target_percent || 100;
+        const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
+        const taskWeight = taskMeta?.task_weight || 0.6;
+        const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
+
+        finalUpdates = {
+          ...finalUpdates,
+          progress,
+          kpi_achievement: kpiAchievement,
+          weighted_score: weightedScore,
+          completed_date: progress === 100 ? new Date().toISOString().split("T")[0] : null,
+        } as any;
+      }
+
       const { data, error } = await supabase
         .from("tasks")
-        .update({ ...updates, updated_by: user?.id || null })
+        .update(finalUpdates)
         .eq("id", id)
         .select()
         .single();
@@ -315,9 +374,31 @@ export function useUpdateSubTask() {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<DbSubTask> }) => {
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Auto-calculate sub-task progress from status if status is being changed
+      let finalUpdates = { ...updates, updated_by: user?.id || null };
+      if (updates.status) {
+        const subTaskStatusToProgress: Record<string, number> = {
+          "Created": 0,
+          "Assigned": 10,
+          "In Progress": 50,
+          "Pending": 40,
+          "Under Review": 80,
+          "Completed": 100,
+          "Closed": 100,
+          "On Hold": 0,
+          "Cancelled": 0,
+          "Overdue": 0,
+        };
+        const autoProgress = subTaskStatusToProgress[updates.status as string] ?? 0;
+        finalUpdates = { ...finalUpdates, progress: autoProgress } as any;
+        if (autoProgress === 100) {
+          (finalUpdates as any).completed_date = new Date().toISOString().split("T")[0];
+        }
+      }
+
       const { data, error } = await supabase
         .from("sub_tasks")
-        .update({ ...updates, updated_by: user?.id || null })
+        .update(finalUpdates)
         .eq("id", id)
         .select()
         .single();
