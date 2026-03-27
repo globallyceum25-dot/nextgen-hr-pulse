@@ -228,15 +228,33 @@ export default function Tasks({ selectedSector }: TasksProps) {
     };
     const allNewTasks: Task[] = [newTask];
 
-    // Create repeated tasks for future months if enabled
-    if (formData.repeatMonthly && formData.repeatMonths > 0) {
-      for (let m = 1; m <= formData.repeatMonths; m++) {
+    // Create repeated tasks if enabled (daily, weekly, or monthly)
+    const useRepeat = formData.repeatEnabled && formData.repeatCount > 0;
+    // Also support legacy repeatMonthly
+    const useLegacyRepeat = !formData.repeatEnabled && formData.repeatMonthly && formData.repeatMonths > 0;
+    
+    if (useRepeat || useLegacyRepeat) {
+      const count = useRepeat ? formData.repeatCount : formData.repeatMonths;
+      const freq = useRepeat ? formData.repeatFrequency : "monthly";
+      
+      for (let m = 1; m <= count; m++) {
         const futureStart = new Date(formData.startDate || new Date());
-        futureStart.setMonth(futureStart.getMonth() + m);
         const futureDue = new Date(formData.dueDate);
-        futureDue.setMonth(futureDue.getMonth() + m);
         const futureCreated = new Date();
-        futureCreated.setMonth(futureCreated.getMonth() + m);
+        
+        if (freq === "daily") {
+          futureStart.setDate(futureStart.getDate() + m);
+          futureDue.setDate(futureDue.getDate() + m);
+          futureCreated.setDate(futureCreated.getDate() + m);
+        } else if (freq === "weekly") {
+          futureStart.setDate(futureStart.getDate() + m * 7);
+          futureDue.setDate(futureDue.getDate() + m * 7);
+          futureCreated.setDate(futureCreated.getDate() + m * 7);
+        } else {
+          futureStart.setMonth(futureStart.getMonth() + m);
+          futureDue.setMonth(futureDue.getMonth() + m);
+          futureCreated.setMonth(futureCreated.getMonth() + m);
+        }
 
         const repeatedTask: Task = {
           ...newTask,
