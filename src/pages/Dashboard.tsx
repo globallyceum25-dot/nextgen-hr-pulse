@@ -258,7 +258,6 @@ export default function Dashboard({ selectedSector }: DashboardProps) {
                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                   {stats.priorityDist.map((entry, i) => (
                     <Cell key={i} fill={
-                      entry.name === "Critical" ? "hsl(0, 70%, 55%)" :
                       entry.name === "High" ? "hsl(25, 75%, 55%)" :
                       entry.name === "Medium" ? "hsl(215, 50%, 50%)" : "hsl(220, 15%, 60%)"
                     } />
