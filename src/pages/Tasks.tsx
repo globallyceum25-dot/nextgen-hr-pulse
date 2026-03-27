@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useMemo, useState } from "react";
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateSubTask, useTaskComments, useAddComment } from "@/hooks/useTasks";
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateSubTask, useDeleteSubTask, useTaskComments, useAddComment } from "@/hooks/useTasks";
 import { useTaskCategories, useTaskTypes, useSectors } from "@/hooks/useTaskMasterData";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanies } from "@/hooks/useCompanies";
