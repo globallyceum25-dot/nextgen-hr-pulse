@@ -763,9 +763,37 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                   <span className="text-[10px] w-16 text-right text-muted-foreground">{Number(st.task_weight).toFixed(1)}</span>
                                   <span className="text-[10px] w-16 text-right text-muted-foreground">{Number(st.weighted_score).toFixed(2)}</span>
                                   <span className="w-20 text-[10px] text-muted-foreground">{st.due_date || "—"}</span>
-                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
-                                    <Pencil size={12} />
-                                  </Button>
+                                  <div className="flex items-center gap-0.5">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" title="View Details" onClick={e => { e.stopPropagation(); setDetailSubTask({ task, subTask: st }); setSubTaskDetailOpen(true); }}>
+                                      <MessageSquare size={12} />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
+                                      <Pencil size={12} />
+                                    </Button>
+                                    {isAdmin && (
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" title="Delete" onClick={e => e.stopPropagation()}>
+                                            <Trash2 size={12} />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Sub-task</AlertDialogTitle>
+                                            <AlertDialogDescription>Delete "<strong>{st.title}</strong>"? This cannot be undone.</AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => {
+                                              deleteSubTask.mutateAsync({ id: st.id, taskId: task.id }).then(() => {
+                                                toast({ title: "Sub-task Deleted", description: `"${st.title}" removed. Parent recalculated.` });
+                                              }).catch((err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }));
+                                            }}>Delete</AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}
