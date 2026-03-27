@@ -133,6 +133,33 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     }));
   }, [filtered]);
 
+  // KPI Achievement Distribution for donut chart
+  const KPI_RATING_COLORS = [
+    "hsl(270, 35%, 50%)",   // 1 - Unsatisfactory (purple)
+    "hsl(215, 50%, 42%)",   // 2 - Needs Improvement (blue)
+    "hsl(35, 65%, 50%)",    // 3 - Meets Expectations (amber)
+    "hsl(160, 40%, 45%)",   // 4 - Very Good (green)
+    "hsl(45, 70%, 50%)",    // 5 - Exceeds Expectations (gold)
+  ];
+
+  const kpiAchievementDist = useMemo(() => {
+    const buckets = [
+      { name: "1 - Unsatisfactory / Below Expectations", value: 0 },
+      { name: "2 - Needs Improvement", value: 0 },
+      { name: "3 - Meets Expectations", value: 0 },
+      { name: "4 - Very Good / Above Expectations", value: 0 },
+      { name: "5 - Exceeds Expectations", value: 0 },
+    ];
+    filtered.forEach(t => {
+      const kpi = Number(t.kpi_achievement) || 0;
+      if (kpi <= 20) buckets[0].value++;
+      else if (kpi <= 40) buckets[1].value++;
+      else if (kpi <= 60) buckets[2].value++;
+      else if (kpi <= 80) buckets[3].value++;
+      else buckets[4].value++;
+    });
+    return buckets.filter(b => b.value > 0);
+  }, [filtered]);
   // Employee Performance: Tasks=1.0, Sub-tasks=0.5
   // Step 1: Calculate task perf & sub-task perf separately per employee
   // Step 2: Combine with weighted average: (taskPerf×1.0 + subTaskPerf×0.5) / (1.0+0.5)
@@ -408,6 +435,37 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 <Bar dataKey="achievement" name="KPI Achievement %" fill={CHART_COLORS.primary} radius={[0, 3, 3, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* KPI Achievement Distribution Donut Chart */}
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">KPI Achievement Distribution</h2>
+            <div className="flex items-center gap-8">
+              <ResponsiveContainer width={220} height={220}>
+                <PieChart>
+                  <Pie data={kpiAchievementDist} dataKey="value" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2} label={renderPieLabel(filtered.length)} labelLine={false}>
+                    {kpiAchievementDist.map((entry, i) => {
+                      const originalIndex = ["1 - Unsatisfactory / Below Expectations", "2 - Needs Improvement", "3 - Meets Expectations", "4 - Very Good / Above Expectations", "5 - Exceeds Expectations"].indexOf(entry.name);
+                      return <Cell key={i} fill={KPI_RATING_COLORS[originalIndex >= 0 ? originalIndex : i]} />;
+                    })}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px" }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2.5">
+                {kpiAchievementDist.map((item, i) => {
+                  const pct = filtered.length > 0 ? ((item.value / filtered.length) * 100).toFixed(1) : "0";
+                  const originalIndex = ["1 - Unsatisfactory / Below Expectations", "2 - Needs Improvement", "3 - Meets Expectations", "4 - Very Good / Above Expectations", "5 - Exceeds Expectations"].indexOf(item.name);
+                  return (
+                    <div key={item.name} className="flex items-center gap-2 text-xs">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: KPI_RATING_COLORS[originalIndex >= 0 ? originalIndex : i] }} />
+                      <span className="text-muted-foreground">{item.name}</span>
+                      <span className="font-semibold text-card-foreground ml-auto">{item.value} <span className="text-muted-foreground font-normal">({pct}%)</span></span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Task KPI Table */}
