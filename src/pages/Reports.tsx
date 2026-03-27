@@ -215,10 +215,11 @@ export default function Reports({ selectedSector }: ReportsProps) {
 
       {/* Export Actions */}
       <Tabs defaultValue="task-list">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="task-list">Task List</TabsTrigger>
           <TabsTrigger value="department">Department Summary</TabsTrigger>
           <TabsTrigger value="performance">Performance Report</TabsTrigger>
+          <TabsTrigger value="employee-perf">Employee Performance</TabsTrigger>
           <TabsTrigger value="overdue">Overdue Report</TabsTrigger>
         </TabsList>
 
