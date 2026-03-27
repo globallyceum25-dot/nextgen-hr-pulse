@@ -749,7 +749,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                               <span className="w-16 text-right">Weight</span>
                               <span className="w-16 text-right">W.Score</span>
                               <span className="w-20">Due Date</span>
-                              <span className="w-6"></span>
+                              <span className="w-20 text-right">Actions</span>
                             </div>
                             {subTasks.map((st, idx) => {
                               const stDl = getDeadlineInfo(st.due_date, st.status);
