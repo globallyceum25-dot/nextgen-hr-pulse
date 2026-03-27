@@ -701,23 +701,37 @@ export default function Tasks({ selectedSector }: TasksProps) {
               {/* Section 6: Repeat */}
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-primary border-b pb-1">Repeat Task</h3>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground">
-                    <input type="checkbox" className="accent-primary w-4 h-4" checked={formData.repeatMonthly} onChange={e => setFormData(p => ({ ...p, repeatMonthly: e.target.checked }))} />
-                    Repeat this task monthly
+                    <input type="checkbox" className="accent-primary w-4 h-4" checked={formData.repeatEnabled} onChange={e => setFormData(p => ({ ...p, repeatEnabled: e.target.checked }))} />
+                    Enable Repeat
                   </label>
                 </div>
-                {formData.repeatMonthly && (
-                  <div className="grid grid-cols-2 gap-3">
+                {formData.repeatEnabled && (
+                  <div className="space-y-3">
                     <div>
-                      <label className={labelClass}>Repeat for next (months)</label>
-                      <input type="number" min={1} max={12} className={inputClass} value={formData.repeatMonths} onChange={e => setFormData(p => ({ ...p, repeatMonths: Math.min(12, Math.max(1, Number(e.target.value) || 1)) }))} />
+                      <label className={labelClass}>Repeat Frequency</label>
+                      <div className="flex items-center gap-4 mt-1">
+                        {(["daily", "weekly", "monthly"] as const).map(freq => (
+                          <label key={freq} className="flex items-center gap-1.5 cursor-pointer text-sm text-foreground">
+                            <input type="radio" name="repeatFreq" className="accent-primary" checked={formData.repeatFrequency === freq} onChange={() => setFormData(p => ({ ...p, repeatFrequency: freq }))} />
+                            {freq.charAt(0).toUpperCase() + freq.slice(1)}
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <label className={labelClass}>Total tasks to be created</label>
-                      <input type="text" disabled className={inputClass + " opacity-60"} value={`${formData.repeatMonths + 1} (this + ${formData.repeatMonths} months)`} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelClass}>Repeat count</label>
+                        <input type="number" min={1} max={formData.repeatFrequency === "daily" ? 30 : formData.repeatFrequency === "weekly" ? 52 : 12} className={inputClass} value={formData.repeatCount} onChange={e => setFormData(p => ({ ...p, repeatCount: Math.max(1, Number(e.target.value) || 1) }))} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Total tasks to be created</label>
+                        <input type="text" disabled className={inputClass + " opacity-60"} value={`${formData.repeatCount + 1} (this + ${formData.repeatCount} ${formData.repeatFrequency === "daily" ? "days" : formData.repeatFrequency === "weekly" ? "weeks" : "months"})`} />
+                      </div>
                     </div>
                   </div>
+                )}
                 )}
               </div>
 
