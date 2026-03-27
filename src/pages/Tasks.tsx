@@ -282,7 +282,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
     }
 
     persistTaskChanges(prev => [...allNewTasks, ...prev]);
-    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created${formData.repeatMonthly ? ` (repeated for ${formData.repeatMonths} months)` : ""}`, changes: [
+    const repeatDesc = formData.repeatEnabled ? ` (repeated ${formData.repeatCount} times ${formData.repeatFrequency})` : (formData.repeatMonthly ? ` (repeated for ${formData.repeatMonths} months)` : "");
+    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created${repeatDesc}`, changes: [
       { field: "Name", oldValue: "", newValue: newTask.name },
       { field: "Responsible", oldValue: "", newValue: newTask.responsible },
       { field: "Priority", oldValue: "", newValue: newTask.priority },
@@ -291,7 +292,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     ] });
     resetForm();
     setDialogOpen(false);
-    const countMsg = formData.repeatMonthly ? ` + ${formData.repeatMonths} repeated months` : "";
+    const countMsg = formData.repeatEnabled ? ` + ${formData.repeatCount} repeated ${formData.repeatFrequency}` : (formData.repeatMonthly ? ` + ${formData.repeatMonths} repeated months` : "");
     toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.${countMsg}` });
   };
 
