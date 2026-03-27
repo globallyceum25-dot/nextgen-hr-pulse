@@ -127,6 +127,70 @@ export default function Reports({ selectedSector }: ReportsProps) {
     exportToExcel(rows, `Performance_Report_${new Date().toISOString().split("T")[0]}`);
   };
 
+  const employeePerformanceData = useMemo(() => {
+    const map = new Map<string, { name: string; taskWeightedSum: number; taskWeightSum: number; subWeightedSum: number; subWeightSum: number; totalTasks: number; totalSubTasks: number; completed: number; overdue: number; kpiSum: number; kpiCount: number }>();
+    filtered.forEach(t => {
+      const assignee = t.assignee_profile?.full_name || "Unassigned";
+      if (assignee === "Unassigned") return;
+      const e = map.get(assignee) || { name: assignee, taskWeightedSum: 0, taskWeightSum: 0, subWeightedSum: 0, subWeightSum: 0, totalTasks: 0, totalSubTasks: 0, completed: 0, overdue: 0, kpiSum: 0, kpiCount: 0 };
+      const weight = Number(t.task_weight) || 0;
+      const progress = Number(t.progress) || 0;
+      e.taskWeightedSum += weight * (progress / 100);
+      e.taskWeightSum += weight;
+      e.totalTasks++;
+      e.kpiSum += Number(t.kpi_achievement) || 0;
+      e.kpiCount++;
+      if (t.status === "Completed" || t.status === "Closed") e.completed++;
+      if (getDeadlineInfo(t.due_date, t.status).isOverdue) e.overdue++;
+      // Sub-tasks
+      if (t.sub_tasks && t.sub_tasks.length > 0) {
+        t.sub_tasks.forEach((st: any) => {
+          const subAssignee = st.assignee_profile?.full_name || assignee;
+          const se = map.get(subAssignee) || { name: subAssignee, taskWeightedSum: 0, taskWeightSum: 0, subWeightedSum: 0, subWeightSum: 0, totalTasks: 0, totalSubTasks: 0, completed: 0, overdue: 0, kpiSum: 0, kpiCount: 0 };
+          const sw = Number(st.task_weight) || 0;
+          const sp = Number(st.progress) || 0;
+          se.subWeightedSum += sw * (sp / 100);
+          se.subWeightSum += sw;
+          se.totalSubTasks++;
+          if (subAssignee !== assignee) map.set(subAssignee, se);
+        });
+      }
+      map.set(assignee, e);
+    });
+    return Array.from(map.values()).map(d => {
+      const taskPerf = d.taskWeightSum > 0 ? (d.taskWeightedSum / d.taskWeightSum) * 100 : 0;
+      const subPerf = d.subWeightSum > 0 ? (d.subWeightedSum / d.subWeightSum) * 100 : 0;
+      let overall: number;
+      if (d.totalTasks > 0 && d.totalSubTasks > 0) {
+        overall = (taskPerf * 1.0 + subPerf * 0.5) / 1.5;
+      } else if (d.totalSubTasks > 0) {
+        overall = subPerf * 0.5;
+      } else {
+        overall = taskPerf;
+      }
+      const avgKpi = d.kpiCount > 0 ? d.kpiSum / d.kpiCount : 0;
+      const kpiStatus = avgKpi <= 20 ? "1 - Unsatisfactory" : avgKpi <= 40 ? "2 - Needs Improvement" : avgKpi <= 60 ? "3 - Meets Expectations" : avgKpi <= 80 ? "4 - Very Good" : "5 - Exceeds Expectations";
+      return { ...d, taskPerf: Math.round(taskPerf * 100) / 100, subPerf: Math.round(subPerf * 100) / 100, overall: Math.round(overall * 100) / 100, avgKpi: Math.round(avgKpi * 100) / 100, kpiStatus };
+    }).sort((a, b) => b.overall - a.overall);
+  }, [filtered]);
+
+  const exportEmployeePerformance = () => {
+    const rows = employeePerformanceData.map((d, i) => ({
+      "#": i + 1,
+      "Employee": d.name,
+      "Tasks": d.totalTasks,
+      "Sub-Tasks": d.totalSubTasks,
+      "Completed": d.completed,
+      "Overdue": d.overdue,
+      "Task Perf %": d.taskPerf,
+      "Sub-Task Perf %": d.subPerf,
+      "Overall Weighted Perf %": d.overall,
+      "Avg KPI %": d.avgKpi,
+      "KPI Status": d.kpiStatus,
+    }));
+    exportToExcel(rows, `Employee_Performance_${new Date().toISOString().split("T")[0]}`);
+  };
+
   const exportOverdueReport = () => {
     const overdue = filtered.filter(t => getDeadlineInfo(t.due_date, t.status).isOverdue);
     const rows = overdue.map((t, i) => {
@@ -215,10 +279,11 @@ export default function Reports({ selectedSector }: ReportsProps) {
 
       {/* Export Actions */}
       <Tabs defaultValue="task-list">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="task-list">Task List</TabsTrigger>
           <TabsTrigger value="department">Department Summary</TabsTrigger>
           <TabsTrigger value="performance">Performance Report</TabsTrigger>
+          <TabsTrigger value="employee-perf">Employee Performance</TabsTrigger>
           <TabsTrigger value="overdue">Overdue Report</TabsTrigger>
         </TabsList>
 
@@ -369,6 +434,66 @@ export default function Reports({ selectedSector }: ReportsProps) {
                       );
                     });
                   })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="employee-perf" className="mt-4">
+          <div className="bg-card rounded-lg border p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-foreground">Employee Performance Report ({employeePerformanceData.length} employees)</h2>
+              <Button onClick={exportEmployeePerformance} className="gap-2" size="sm">
+                <Download size={14} /> Export to Excel
+              </Button>
+            </div>
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-card">
+                  <tr className="border-b">
+                    <th className="text-left px-2 py-2 font-medium text-muted-foreground">#</th>
+                    <th className="text-left px-2 py-2 font-medium text-muted-foreground">Employee</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Tasks</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Sub-Tasks</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Completed</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Overdue</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Task Perf %</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Sub-Task Perf %</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Overall Perf %</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">Avg KPI %</th>
+                    <th className="text-center px-2 py-2 font-medium text-muted-foreground">KPI Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employeePerformanceData.map((d, i) => (
+                    <tr key={d.name} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="px-2 py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="px-2 py-2 text-card-foreground font-medium">{d.name}</td>
+                      <td className="px-2 py-2 text-center">{d.totalTasks}</td>
+                      <td className="px-2 py-2 text-center">{d.totalSubTasks}</td>
+                      <td className="px-2 py-2 text-center text-emerald-700">{d.completed}</td>
+                      <td className="px-2 py-2 text-center text-red-600">{d.overdue}</td>
+                      <td className="px-2 py-2 text-center">{d.taskPerf}%</td>
+                      <td className="px-2 py-2 text-center">{d.subPerf}%</td>
+                      <td className="px-2 py-2 text-center">
+                        <span className={`font-bold ${d.overall >= 70 ? "text-emerald-700" : d.overall >= 50 ? "text-blue-700" : d.overall >= 30 ? "text-amber-700" : "text-red-700"}`}>{d.overall}%</span>
+                      </td>
+                      <td className="px-2 py-2 text-center">{d.avgKpi}%</td>
+                      <td className="px-2 py-2 text-center">
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
+                          d.kpiStatus.startsWith("5") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                          d.kpiStatus.startsWith("4") ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          d.kpiStatus.startsWith("3") ? "bg-amber-50 text-amber-700 border-amber-200" :
+                          d.kpiStatus.startsWith("2") ? "bg-orange-50 text-orange-700 border-orange-200" :
+                          "bg-red-50 text-red-700 border-red-200"
+                        }`}>{d.kpiStatus}</span>
+                      </td>
+                    </tr>
+                  ))}
+                  {employeePerformanceData.length === 0 && (
+                    <tr><td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">No employee data available</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
