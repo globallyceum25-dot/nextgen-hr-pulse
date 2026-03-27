@@ -105,7 +105,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       achievement: Math.round(Number(t.kpi_achievement) * 100) / 100,
       progress: Number(t.progress),
       status: t.status,
-      responsible: t.assignee_id || "Unassigned",
+      responsible: t.assignee_profile?.full_name || "Unassigned",
       priority: t.priority,
     }));
   }, [filtered]);
