@@ -308,6 +308,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           priority: subTaskForm.priority as any,
           task_weight: newWeight,
           weighted_score: newWeightedScore,
+          assignee_name: subTaskForm.assignee_name || null,
           due_date: subTaskForm.due_date || null,
           remarks: subTaskForm.remarks || null,
           completed_date: subTaskForm.status === "Completed" ? new Date().toISOString().split("T")[0] : null,
