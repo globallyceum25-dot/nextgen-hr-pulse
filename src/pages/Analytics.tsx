@@ -209,7 +209,12 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
         <TabsContent value="executive-summary" className="space-y-6 mt-4">
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {kpiData.map(d => <KPICard key={d.label} data={d} />)}
+            {kpiData.map(d => (
+              <div key={d.label} className="bg-card rounded-lg border p-4">
+                <span className="text-xs text-muted-foreground">{d.label}</span>
+                <p className="text-2xl font-bold text-foreground mt-1">{typeof d.value === "number" && d.label.includes("%") ? `${d.value}%` : d.value}</p>
+              </div>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
