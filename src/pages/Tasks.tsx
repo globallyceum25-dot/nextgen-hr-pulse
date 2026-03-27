@@ -62,6 +62,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [quickFilter, setQuickFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("All");
   const [companyFilter, setCompanyFilter] = useState<string>("All");
+  const [locationFilter, setLocationFilter] = useState<string>("All");
+  const [sectorFilter, setSectorFilter] = useState<string>("All");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   // UI state
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
