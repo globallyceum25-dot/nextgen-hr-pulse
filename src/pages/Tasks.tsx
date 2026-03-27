@@ -329,6 +329,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (departmentFilter !== "All" && t.department_id !== departmentFilter) return false;
       if (companyFilter !== "All" && t.company_id !== companyFilter) return false;
+      if (locationFilter !== "All" && t.location_id !== locationFilter) return false;
+      if (sectorFilter !== "All" && t.sector_id !== sectorFilter) return false;
+      if (dateFrom && t.due_date && t.due_date < dateFrom) return false;
+      if (dateTo && t.due_date && t.due_date > dateTo) return false;
 
       if (quickFilter === "overdue") {
         const dl = getDeadlineInfo(t.due_date, t.status);
