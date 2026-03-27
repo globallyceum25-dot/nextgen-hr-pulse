@@ -61,7 +61,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
   const filtered = useMemo(() => tasks, [tasks]);
 
-  // KPI summary
+  // KPI summary - Tasks
   const kpiData = useMemo(() => {
     const total = filtered.length;
     const completed = filtered.filter(t => t.status === "Completed" || t.status === "Closed").length;
@@ -73,10 +73,33 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       return new Date(t.due_date) < new Date();
     }).length;
     return [
-      { label: "Total Tasks", value: total, change: 0, trend: "neutral" as const },
-      { label: "Completion Rate", value: completionRate, change: 0, trend: "up" as const },
-      { label: "Avg KPI Score", value: avgKpi, change: 0, trend: "up" as const },
-      { label: "Overdue Tasks", value: overdue, change: 0, trend: overdue > 0 ? "up" as const : "down" as const },
+      { label: "Total Tasks", value: total },
+      { label: "Completion Rate", value: completionRate, suffix: "%" },
+      { label: "Avg KPI Score", value: avgKpi },
+      { label: "Overdue Tasks", value: overdue },
+    ];
+  }, [filtered]);
+
+  // KPI summary - Sub-tasks
+  const subTaskKpiData = useMemo(() => {
+    const allSubs = filtered.flatMap(t => (t.sub_tasks || []).map(st => ({ ...st, parentKpiTarget: Number(t.kpi_target_percent) || 100 })));
+    const total = allSubs.length;
+    const completed = allSubs.filter(st => st.status === "Completed" || st.status === "Closed").length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const avgKpi = total > 0 ? Math.round(allSubs.reduce((s, st) => {
+      const kpi = st.parentKpiTarget > 0 ? Math.min((Number(st.progress) / st.parentKpiTarget) * 100, 100) : 0;
+      return s + kpi;
+    }, 0) / total) : 0;
+    const overdue = allSubs.filter(st => {
+      if (st.status === "Completed" || st.status === "Closed") return false;
+      if (!st.due_date) return false;
+      return new Date(st.due_date) < new Date();
+    }).length;
+    return [
+      { label: "Total Sub-Tasks", value: total },
+      { label: "Completion Rate", value: completionRate, suffix: "%" },
+      { label: "Avg KPI Score", value: avgKpi },
+      { label: "Overdue Sub-Tasks", value: overdue },
     ];
   }, [filtered]);
 
