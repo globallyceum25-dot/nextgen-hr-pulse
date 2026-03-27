@@ -121,16 +121,25 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   const totalSubTasks = useMemo(() => subTaskStatusDist.reduce((s, d) => s + d.value, 0), [subTaskStatusDist]);
 
   const taskKpiData = useMemo(() => {
-    return filtered.map(t => ({
-      name: t.title.length > 25 ? t.title.slice(0, 25) + "…" : t.title,
-      fullName: t.title,
-      target: Number(t.kpi_target_percent),
-      achievement: Math.round(Number(t.kpi_achievement) * 100) / 100,
-      progress: Number(t.progress),
-      status: t.status,
-      responsible: t.assignee_profile?.full_name || "Unassigned",
-      priority: t.priority,
-    }));
+    return filtered.map(t => {
+      const achievement = Math.round(Number(t.kpi_achievement) * 100) / 100;
+      const kpiStatus = achievement <= 20 ? "1 - Unsatisfactory"
+        : achievement <= 40 ? "2 - Needs Improvement"
+        : achievement <= 60 ? "3 - Meets Expectations"
+        : achievement <= 80 ? "4 - Very Good"
+        : "5 - Exceeds Expectations";
+      return {
+        name: t.title.length > 25 ? t.title.slice(0, 25) + "…" : t.title,
+        fullName: t.title,
+        target: Number(t.kpi_target_percent),
+        achievement,
+        progress: Number(t.progress),
+        status: t.status,
+        responsible: t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned",
+        priority: t.priority,
+        kpiStatus,
+      };
+    });
   }, [filtered]);
 
   // KPI Achievement Distribution for donut chart
@@ -475,14 +484,15 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Task Name</th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Responsible</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Priority</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Progress</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Target %</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Achievement %</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
+                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
+                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Task Name</th>
+                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Owner / Assignee</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Priority</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Progress</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Target %</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Achievement %</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Status</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -504,12 +514,21 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                       </td>
                       <td className="px-3 py-2 text-center font-semibold text-card-foreground">{t.target}%</td>
                       <td className="px-3 py-2 text-center">
-                        <span className={`font-semibold ${t.achievement >= 80 ? "text-success" : t.achievement >= 50 ? "text-primary" : t.achievement >= 30 ? "text-warning" : "text-destructive"}`}>{t.achievement.toFixed(2)}%</span>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${t.status === "Completed" ? "bg-success/10 text-success" : t.status === "In Progress" || t.status === "Under Review" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{t.status}</span>
-                      </td>
-                    </tr>
+                         <span className={`font-semibold ${t.achievement >= 80 ? "text-success" : t.achievement >= 50 ? "text-primary" : t.achievement >= 30 ? "text-warning" : "text-destructive"}`}>{t.achievement.toFixed(2)}%</span>
+                       </td>
+                       <td className="px-3 py-2 text-center">
+                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                           t.kpiStatus.startsWith("5") ? "bg-success/10 text-success" :
+                           t.kpiStatus.startsWith("4") ? "bg-primary/10 text-primary" :
+                           t.kpiStatus.startsWith("3") ? "bg-warning/10 text-warning" :
+                           t.kpiStatus.startsWith("2") ? "bg-orange-100 text-orange-600" :
+                           "bg-destructive/10 text-destructive"
+                         }`}>{t.kpiStatus}</span>
+                       </td>
+                       <td className="px-3 py-2 text-center">
+                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${t.status === "Completed" ? "bg-success/10 text-success" : t.status === "In Progress" || t.status === "Under Review" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{t.status}</span>
+                       </td>
+                     </tr>
                   ))}
                 </tbody>
               </table>
