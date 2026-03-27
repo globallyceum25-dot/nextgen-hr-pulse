@@ -374,9 +374,31 @@ export function useUpdateSubTask() {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<DbSubTask> }) => {
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Auto-calculate sub-task progress from status if status is being changed
+      let finalUpdates = { ...updates, updated_by: user?.id || null };
+      if (updates.status) {
+        const subTaskStatusToProgress: Record<string, number> = {
+          "Created": 0,
+          "Assigned": 10,
+          "In Progress": 50,
+          "Pending": 40,
+          "Under Review": 80,
+          "Completed": 100,
+          "Closed": 100,
+          "On Hold": 0,
+          "Cancelled": 0,
+          "Overdue": 0,
+        };
+        const autoProgress = subTaskStatusToProgress[updates.status as string] ?? 0;
+        finalUpdates = { ...finalUpdates, progress: autoProgress } as any;
+        if (autoProgress === 100) {
+          (finalUpdates as any).completed_date = new Date().toISOString().split("T")[0];
+        }
+      }
+
       const { data, error } = await supabase
         .from("sub_tasks")
-        .update({ ...updates, updated_by: user?.id || null })
+        .update(finalUpdates)
         .eq("id", id)
         .select()
         .single();
