@@ -110,18 +110,16 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     }));
   }, [filtered]);
 
+  // Task-level performance grouped by task assignee
   const employeePerf = useMemo(() => {
     const map = new Map<string, {
       total: number; kpiAchievementSum: number; completed: number; progressSum: number;
       weightedScoreSum: number; taskWeightSum: number;
-      stTotal: number; stCompleted: number; stProgressSum: number; stKpiAchievementSum: number;
-      stWeightedScoreSum: number; stTaskWeightSum: number;
     }>();
     filtered.forEach(t => {
-      const key = t.assignee_profile?.full_name || "Unassigned";
+      const key = t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned";
       const e = map.get(key) || {
         total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0,
-        stTotal: 0, stCompleted: 0, stProgressSum: 0, stKpiAchievementSum: 0, stWeightedScoreSum: 0, stTaskWeightSum: 0,
       };
       e.total++;
       e.kpiAchievementSum += Number(t.kpi_achievement);
@@ -129,16 +127,6 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       if (t.status === "Completed" || t.status === "Closed") e.completed++;
       e.weightedScoreSum += Number(t.weighted_score ?? 0);
       e.taskWeightSum += Number(t.task_weight ?? 0);
-      (t.sub_tasks || []).forEach(st => {
-        e.stTotal++;
-        if (st.status === "Completed" || st.status === "Closed") e.stCompleted++;
-        const stProgress = Number(st.progress);
-        e.stProgressSum += stProgress;
-        const stKpiTarget = Number(t.kpi_target_percent) || 100;
-        e.stKpiAchievementSum += stKpiTarget > 0 ? Math.min((stProgress / stKpiTarget) * 100, 100) : 0;
-        e.stWeightedScoreSum += Number(st.weighted_score ?? 0);
-        e.stTaskWeightSum += Number(st.task_weight ?? 0);
-      });
       map.set(key, e);
     });
     return Array.from(map.entries())
@@ -150,26 +138,59 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
         tasks: d.total,
         completed: d.completed,
         overallWeightedPerformance: d.taskWeightSum > 0 ? Math.round((d.weightedScoreSum / d.taskWeightSum) * 100 * 100) / 100 : 0,
+      }))
+      .sort((a, b) => b.overallWeightedPerformance - a.overallWeightedPerformance)
+      .slice(0, 10);
+  }, [filtered]);
+
+  // Sub-task performance grouped by sub-task's own assignee
+  const subTaskPerf = useMemo(() => {
+    const map = new Map<string, {
+      stTotal: number; stCompleted: number; stProgressSum: number; stKpiAchievementSum: number;
+      stWeightedScoreSum: number; stTaskWeightSum: number;
+    }>();
+    filtered.forEach(t => {
+      (t.sub_tasks || []).forEach(st => {
+        const key = (st as any).assignee_name || t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned";
+        const e = map.get(key) || {
+          stTotal: 0, stCompleted: 0, stProgressSum: 0, stKpiAchievementSum: 0, stWeightedScoreSum: 0, stTaskWeightSum: 0,
+        };
+        e.stTotal++;
+        if (st.status === "Completed" || st.status === "Closed") e.stCompleted++;
+        const stProgress = Number(st.progress);
+        e.stProgressSum += stProgress;
+        const stKpiTarget = Number(t.kpi_target_percent) || 100;
+        e.stKpiAchievementSum += stKpiTarget > 0 ? Math.min((stProgress / stKpiTarget) * 100, 100) : 0;
+        e.stWeightedScoreSum += Number(st.weighted_score ?? 0);
+        e.stTaskWeightSum += Number(st.task_weight ?? 0);
+        map.set(key, e);
+      });
+    });
+    return Array.from(map.entries())
+      .map(([name, d]) => ({
+        name: name.length > 15 ? name.slice(0, 15) + "…" : name,
+        fullName: name,
         stTotal: d.stTotal,
         stCompleted: d.stCompleted,
         stAvgProgress: d.stTotal > 0 ? Math.round(d.stProgressSum / d.stTotal) : 0,
         stAvgKpi: d.stTotal > 0 ? Math.round(d.stKpiAchievementSum / d.stTotal) : 0,
         stOverallWeightedPerf: d.stTaskWeightSum > 0 ? Math.round((d.stWeightedScoreSum / d.stTaskWeightSum) * 100 * 100) / 100 : 0,
       }))
-      .sort((a, b) => b.overallWeightedPerformance - a.overallWeightedPerformance)
+      .sort((a, b) => b.stOverallWeightedPerf - a.stOverallWeightedPerf)
       .slice(0, 10);
   }, [filtered]);
 
+  // Workload vs Output grouped by sub-task assignee
   const workloadVsOutput = useMemo(() => {
     const map = new Map<string, { totalSubTasks: number; completedSubTasks: number }>();
     filtered.forEach(t => {
-      const key = t.assignee_profile?.full_name || "Unassigned";
-      const e = map.get(key) || { totalSubTasks: 0, completedSubTasks: 0 };
       (t.sub_tasks || []).forEach(st => {
+        const key = (st as any).assignee_name || t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned";
+        const e = map.get(key) || { totalSubTasks: 0, completedSubTasks: 0 };
         e.totalSubTasks++;
         if (st.status === "Completed" || st.status === "Closed") e.completedSubTasks++;
+        map.set(key, e);
       });
-      map.set(key, e);
     });
     return Array.from(map.entries())
       .map(([name, d]) => ({
