@@ -213,6 +213,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
           remarks: formData.remarks || null,
           sla_frequency: formData.sla_frequency || null,
           related_module: formData.related_module || null,
+          recurrence: formData.recurrence as any,
+          recurrence_count: formData.recurrence_count,
         } as any,
       });
       toast({ title: "Task Updated", description: `"${formData.title}" has been updated.` });
@@ -787,7 +789,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Task — #{editingTask?.task_number}</DialogTitle></DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
+            {/* Basic Info */}
             <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Basic Information</h3>
               <div>
                 <label className={labelClass}>Title *</label>
                 <input className={inputClass} value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))} />
@@ -796,27 +800,96 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <label className={labelClass}>Description</label>
                 <textarea className={inputClass + " min-h-[60px]"} value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} />
               </div>
-              <div>
-                <label className={labelClass}>Task Owner / Assignee</label>
-                <select className={inputClass} value={formData.assignee_name} onChange={e => handleAssigneeChange(e.target.value)}>
-                  <option value="">Select person</option>
-                  {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
-                </select>
-              </div>
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Task Owner / Assignee</label>
+                  <select className={inputClass} value={formData.assignee_name} onChange={e => handleAssigneeChange(e.target.value)}>
+                    <option value="">Select person</option>
+                    {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                  </select>
+                </div>
                 <div>
                   <label className={labelClass}>Priority</label>
                   <select className={inputClass} value={formData.priority} onChange={e => setFormData(p => ({ ...p, priority: e.target.value as TaskPriority }))}>
                     {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className={labelClass}>Status</label>
+                <select className={inputClass} value={editingTask?.status || "Created"} onChange={e => editingTask && handleStatusChange(editingTask, e.target.value as TaskWorkflowStatus)}>
+                  {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Organization */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Organization</h3>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelClass}>Status</label>
-                  <select className={inputClass} value={editingTask?.status || "Created"} onChange={e => editingTask && handleStatusChange(editingTask, e.target.value as TaskWorkflowStatus)}>
-                    {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                  <label className={labelClass}>Department</label>
+                  <select className={inputClass} value={formData.department_id} onChange={e => setFormData(p => ({ ...p, department_id: e.target.value }))}>
+                    <option value="">Select department</option>
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Sector</label>
+                  <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value }))}>
+                    <option value="">Select sector</option>
+                    {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Company</label>
+                  <select className={inputClass} value={formData.company_id} onChange={e => setFormData(p => ({ ...p, company_id: e.target.value }))}>
+                    <option value="">Select company</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Location</label>
+                  <select className={inputClass} value={formData.location_id} onChange={e => setFormData(p => ({ ...p, location_id: e.target.value }))}>
+                    <option value="">Select location</option>
+                    {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Category & Type */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Category & Type</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Category</label>
+                  <select className={inputClass} value={formData.category_id} onChange={e => setFormData(p => ({ ...p, category_id: e.target.value }))}>
+                    <option value="">Select category</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Type</label>
+                  <select className={inputClass} value={formData.type_id} onChange={e => setFormData(p => ({ ...p, type_id: e.target.value }))}>
+                    <option value="">Select type</option>
+                    {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>SLA / Frequency</label>
+                  <select className={inputClass} value={formData.sla_frequency} onChange={e => setFormData(p => ({ ...p, sla_frequency: e.target.value }))}>
+                    {SLA_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Dates & KPI */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground border-b pb-1">Dates & KPI</h3>
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className={labelClass}>Start Date</label>
@@ -828,30 +901,48 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div>
                   <label className={labelClass}>KPI Target %</label>
-                  <input type="number" min={0} max={100} className={inputClass} value={formData.kpi_target_percent} onChange={e => setFormData(p => ({ ...p, kpi_target_percent: Number(e.target.value) }))} />
+                  <input type="number" min={0} max={100} className={inputClass} value={formData.kpi_target_percent} onChange={e => setFormData(p => ({ ...p, kpi_target_percent: Math.min(100, Math.max(0, Number(e.target.value))) }))} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelClass}>Category</label>
-                  <select className={inputClass} value={formData.category_id} onChange={e => setFormData(p => ({ ...p, category_id: e.target.value }))}>
-                    <option value="">Select</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  <label className={labelClass}>Related Module</label>
+                  <input className={inputClass} placeholder="e.g. Recruitment, Payroll" value={formData.related_module} onChange={e => setFormData(p => ({ ...p, related_module: e.target.value }))} />
                 </div>
-                <div>
-                  <label className={labelClass}>Type</label>
-                  <select className={inputClass} value={formData.type_id} onChange={e => setFormData(p => ({ ...p, type_id: e.target.value }))}>
-                    <option value="">Select</option>
-                    {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Remarks</label>
-                <textarea className={inputClass} value={formData.remarks} onChange={e => setFormData(p => ({ ...p, remarks: e.target.value }))} />
               </div>
             </div>
+
+            {/* Remarks */}
+            <div>
+              <label className={labelClass}>Remarks / Notes</label>
+              <textarea className={inputClass + " min-h-[50px]"} value={formData.remarks} onChange={e => setFormData(p => ({ ...p, remarks: e.target.value }))} />
+            </div>
+
+            {/* Recurrence */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-primary border-b pb-1">Recurring Task</h3>
+              <div className="flex items-center gap-4">
+                {(["none", "daily", "weekly", "monthly"] as const).map(freq => (
+                  <label key={freq} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                    <input type="radio" name="edit-recurrence" className="accent-primary" checked={formData.recurrence === freq} onChange={() => setFormData(p => ({ ...p, recurrence: freq, recurrence_count: freq === "none" ? 0 : Math.max(1, p.recurrence_count) }))} />
+                    {freq === "none" ? "None" : freq.charAt(0).toUpperCase() + freq.slice(1)}
+                  </label>
+                ))}
+              </div>
+              {formData.recurrence !== "none" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>Repeat Count</label>
+                    <input type="number" min={1} max={52} className={inputClass} value={formData.recurrence_count} onChange={e => setFormData(p => ({ ...p, recurrence_count: Math.max(1, Number(e.target.value)) }))} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Total tasks to create</label>
+                    <input type="text" disabled className={inputClass + " opacity-60"} value={`${formData.recurrence_count + 1} (original + ${formData.recurrence_count})`} />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={updateTask.isPending}>{updateTask.isPending ? "Saving..." : "Save Changes"}</Button>
