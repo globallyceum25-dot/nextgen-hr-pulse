@@ -62,6 +62,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [quickFilter, setQuickFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("All");
   const [companyFilter, setCompanyFilter] = useState<string>("All");
+  const [locationFilter, setLocationFilter] = useState<string>("All");
+  const [sectorFilter, setSectorFilter] = useState<string>("All");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   // UI state
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
@@ -325,6 +329,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (departmentFilter !== "All" && t.department_id !== departmentFilter) return false;
       if (companyFilter !== "All" && t.company_id !== companyFilter) return false;
+      if (locationFilter !== "All" && t.location_id !== locationFilter) return false;
+      if (sectorFilter !== "All" && t.sector_id !== sectorFilter) return false;
+      if (dateFrom && t.due_date && t.due_date < dateFrom) return false;
+      if (dateTo && t.due_date && t.due_date > dateTo) return false;
 
       if (quickFilter === "overdue") {
         const dl = getDeadlineInfo(t.due_date, t.status);
@@ -345,7 +353,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, quickFilter]);
+  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter]);
 
   // KPI summary cards
   const summary = useMemo(() => {
@@ -619,6 +627,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
           <option value="All">All Companies</option>
           {companies.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
         </select>
+        <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+          <option value="All">All Locations</option>
+          {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
+        </select>
+        <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+          <option value="All">All Sectors</option>
+          {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" title="Due from" />
+        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" title="Due to" />
       </div>
 
       {/* Task Table */}
