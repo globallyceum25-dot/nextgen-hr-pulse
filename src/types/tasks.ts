@@ -4,7 +4,7 @@ export type TaskWorkflowStatus =
   | "Created" | "Assigned" | "In Progress" | "Pending" | "Under Review"
   | "Completed" | "Closed" | "On Hold" | "Cancelled" | "Overdue";
 
-export type TaskPriority = "Critical" | "High" | "Medium" | "Low";
+export type TaskPriority = "High" | "Medium" | "Low";
 
 export type RecurrenceType = "none" | "daily" | "weekly" | "monthly" | "custom";
 
@@ -17,7 +17,7 @@ export const ACTIVE_STATUSES: TaskWorkflowStatus[] = [
   "Created", "Assigned", "In Progress", "Pending", "Under Review",
 ];
 
-export const PRIORITIES: TaskPriority[] = ["Critical", "High", "Medium", "Low"];
+export const PRIORITIES: TaskPriority[] = ["High", "Medium", "Low"];
 
 export const RECURRENCE_OPTIONS: RecurrenceType[] = ["none", "daily", "weekly", "monthly", "custom"];
 
@@ -120,7 +120,6 @@ export interface TaskMasterItem {
 // Helper functions
 export function getWeightFromPriority(priority: TaskPriority): number {
   switch (priority) {
-    case "Critical": return 1.2;
     case "High": return 1;
     case "Medium": return 0.6;
     case "Low": return 0.2;
@@ -162,7 +161,6 @@ export function getStatusColor(status: TaskWorkflowStatus): string {
 
 export function getPriorityColor(priority: TaskPriority): string {
   switch (priority) {
-    case "Critical": return "bg-red-100 text-red-800 border-red-300";
     case "High": return "bg-orange-50 text-orange-700 border-orange-200";
     case "Medium": return "bg-blue-50 text-blue-700 border-blue-200";
     case "Low": return "bg-slate-50 text-slate-600 border-slate-200";
