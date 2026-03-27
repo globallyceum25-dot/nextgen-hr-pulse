@@ -693,6 +693,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getPriorityColor(task.priority)}`}>{task.priority}</span>
                       </td>
                       <td className="px-3 py-2.5"><ProgressBar value={Math.round(Number(task.progress))} size="sm" /></td>
+                      <td className="px-3 py-2.5 text-center text-xs font-medium">{Math.round(Number(task.kpi_target_percent))}%</td>
+                      <td className="px-3 py-2.5 text-center text-xs font-medium">{Math.round(Number(task.kpi_achievement))}%</td>
                       <td className="px-3 py-2.5">
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getStatusColor(task.status)}`}>{task.status}</span>
                       </td>
