@@ -4,7 +4,7 @@ export type TaskWorkflowStatus =
   | "Created" | "Assigned" | "In Progress" | "Pending" | "Under Review"
   | "Completed" | "Closed" | "On Hold" | "Cancelled" | "Overdue";
 
-export type TaskPriority = "Critical" | "High" | "Medium" | "Low";
+export type TaskPriority = "High" | "Medium" | "Low";
 
 export type RecurrenceType = "none" | "daily" | "weekly" | "monthly" | "custom";
 
