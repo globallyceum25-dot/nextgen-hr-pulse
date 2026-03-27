@@ -787,7 +787,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       {/* Edit Task Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={open => { setEditDialogOpen(open); if (!open) { setEditingTask(null); resetForm(); } }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Edit Task — #{editingTask?.task_number}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Edit Task — #{editingTask?.task_number ? String(editingTask.task_number).padStart(3, '0') : ''}</DialogTitle></DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
             {/* Basic Info */}
             <div className="space-y-3">
