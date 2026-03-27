@@ -161,7 +161,6 @@ export function getStatusColor(status: TaskWorkflowStatus): string {
 
 export function getPriorityColor(priority: TaskPriority): string {
   switch (priority) {
-    case "Critical": return "bg-red-100 text-red-800 border-red-300";
     case "High": return "bg-orange-50 text-orange-700 border-orange-200";
     case "Medium": return "bg-blue-50 text-blue-700 border-blue-200";
     case "Low": return "bg-slate-50 text-slate-600 border-slate-200";
