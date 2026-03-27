@@ -145,7 +145,7 @@ export default function Reports({ selectedSector }: ReportsProps) {
       // Sub-tasks
       if (t.sub_tasks && t.sub_tasks.length > 0) {
         t.sub_tasks.forEach((st: any) => {
-          const subAssignee = st.assignee_name || assignee;
+          const subAssignee = st.assignee_profile?.full_name || assignee;
           const se = map.get(subAssignee) || { name: subAssignee, taskWeightedSum: 0, taskWeightSum: 0, subWeightedSum: 0, subWeightSum: 0, totalTasks: 0, totalSubTasks: 0, completed: 0, overdue: 0, kpiSum: 0, kpiCount: 0 };
           const sw = Number(st.task_weight) || 0;
           const sp = Number(st.progress) || 0;
