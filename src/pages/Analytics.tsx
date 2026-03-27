@@ -195,7 +195,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-xl font-bold text-foreground">Task Analysis</h1>
-        <p className="text-sm text-muted-foreground">{sectorName} — Performance Overview</p>
+        <p className="text-sm text-muted-foreground">Performance Overview</p>
       </div>
 
       <Tabs defaultValue="executive-summary" className="w-full">
