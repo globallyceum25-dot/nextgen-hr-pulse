@@ -1152,7 +1152,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
             ) : (
               <select className="text-xs border rounded-md px-2 py-1 bg-card" value={task.status}
                 onChange={e => onStatusChange(task, e.target.value as TaskWorkflowStatus)}>
-                {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                {MAIN_TASK_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             )}
           </div>
