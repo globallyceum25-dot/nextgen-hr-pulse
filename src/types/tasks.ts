@@ -34,6 +34,7 @@ export interface DbTask {
   category_id: string | null;
   type_id: string | null;
   assignee_id: string | null;
+  assignee_name: string | null;
   assigned_by: string | null;
   department_id: string | null;
   sector_id: string | null;
@@ -82,6 +83,7 @@ export interface DbSubTask {
   task_weight: number;
   weighted_score: number;
   assignee_id: string | null;
+  assignee_name: string | null;
   due_date: string | null;
   completed_date: string | null;
   remarks: string | null;

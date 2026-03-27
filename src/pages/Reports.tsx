@@ -130,7 +130,7 @@ export default function Reports({ selectedSector }: ReportsProps) {
   const employeePerformanceData = useMemo(() => {
     const map = new Map<string, { name: string; taskWeightedSum: number; taskWeightSum: number; subWeightedSum: number; subWeightSum: number; totalTasks: number; totalSubTasks: number; completed: number; overdue: number; kpiSum: number; kpiCount: number }>();
     filtered.forEach(t => {
-      const assignee = t.assignee_profile?.full_name || "Unassigned";
+      const assignee = t.assignee_profile?.full_name || t.assignee_name || "Unassigned";
       if (assignee === "Unassigned") return;
       const e = map.get(assignee) || { name: assignee, taskWeightedSum: 0, taskWeightSum: 0, subWeightedSum: 0, subWeightSum: 0, totalTasks: 0, totalSubTasks: 0, completed: 0, overdue: 0, kpiSum: 0, kpiCount: 0 };
       const weight = Number(t.task_weight) || 0;
@@ -142,20 +142,20 @@ export default function Reports({ selectedSector }: ReportsProps) {
       e.kpiCount++;
       if (t.status === "Completed" || t.status === "Closed") e.completed++;
       if (getDeadlineInfo(t.due_date, t.status).isOverdue) e.overdue++;
+      map.set(assignee, e);
       // Sub-tasks
       if (t.sub_tasks && t.sub_tasks.length > 0) {
         t.sub_tasks.forEach((st: any) => {
-          const subAssignee = st.assignee_profile?.full_name || assignee;
+          const subAssignee = st.assignee_name || assignee;
           const se = map.get(subAssignee) || { name: subAssignee, taskWeightedSum: 0, taskWeightSum: 0, subWeightedSum: 0, subWeightSum: 0, totalTasks: 0, totalSubTasks: 0, completed: 0, overdue: 0, kpiSum: 0, kpiCount: 0 };
           const sw = Number(st.task_weight) || 0;
           const sp = Number(st.progress) || 0;
           se.subWeightedSum += sw * (sp / 100);
           se.subWeightSum += sw;
           se.totalSubTasks++;
-          if (subAssignee !== assignee) map.set(subAssignee, se);
+          map.set(subAssignee, se);
         });
       }
-      map.set(assignee, e);
     });
     return Array.from(map.values()).map(d => {
       const taskPerf = d.taskWeightSum > 0 ? (d.taskWeightedSum / d.taskWeightSum) * 100 : 0;
