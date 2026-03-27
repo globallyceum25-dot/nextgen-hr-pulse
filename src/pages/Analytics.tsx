@@ -133,6 +133,33 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     }));
   }, [filtered]);
 
+  // KPI Achievement Distribution for donut chart
+  const KPI_RATING_COLORS = [
+    "hsl(270, 35%, 50%)",   // 1 - Unsatisfactory (purple)
+    "hsl(215, 50%, 42%)",   // 2 - Needs Improvement (blue)
+    "hsl(35, 65%, 50%)",    // 3 - Meets Expectations (amber)
+    "hsl(160, 40%, 45%)",   // 4 - Very Good (green)
+    "hsl(45, 70%, 50%)",    // 5 - Exceeds Expectations (gold)
+  ];
+
+  const kpiAchievementDist = useMemo(() => {
+    const buckets = [
+      { name: "1 - Unsatisfactory / Below Expectations", value: 0 },
+      { name: "2 - Needs Improvement", value: 0 },
+      { name: "3 - Meets Expectations", value: 0 },
+      { name: "4 - Very Good / Above Expectations", value: 0 },
+      { name: "5 - Exceeds Expectations", value: 0 },
+    ];
+    filtered.forEach(t => {
+      const kpi = Number(t.kpi_achievement) || 0;
+      if (kpi <= 20) buckets[0].value++;
+      else if (kpi <= 40) buckets[1].value++;
+      else if (kpi <= 60) buckets[2].value++;
+      else if (kpi <= 80) buckets[3].value++;
+      else buckets[4].value++;
+    });
+    return buckets.filter(b => b.value > 0);
+  }, [filtered]);
   // Employee Performance: Tasks=1.0, Sub-tasks=0.5
   // Step 1: Calculate task perf & sub-task perf separately per employee
   // Step 2: Combine with weighted average: (taskPerf×1.0 + subTaskPerf×0.5) / (1.0+0.5)
