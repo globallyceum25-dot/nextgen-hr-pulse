@@ -163,7 +163,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   const workloadVsOutput = useMemo(() => {
     const map = new Map<string, { totalSubTasks: number; completedSubTasks: number }>();
     filtered.forEach(t => {
-      const key = t.title;
+      const key = t.assignee_profile?.full_name || "Unassigned";
       const e = map.get(key) || { totalSubTasks: 0, completedSubTasks: 0 };
       (t.sub_tasks || []).forEach(st => {
         e.totalSubTasks++;
