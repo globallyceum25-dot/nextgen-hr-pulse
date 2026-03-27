@@ -111,6 +111,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   }, [filtered]);
 
   // Combined employee performance for CHART: tasks (1.0) + sub-tasks (0.5)
+  // Multiplier applies to NUMERATOR only — sub-tasks can contribute max 50% of their weight
   const employeePerf = useMemo(() => {
     const map = new Map<string, { weightedNumerator: number; weightedDenominator: number }>();
     const TYPE_TASK = 1.0;
@@ -130,8 +131,10 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
         const se = map.get(stKey) || { weightedNumerator: 0, weightedDenominator: 0 };
         const stWeight = Number(st.task_weight ?? 0);
         const stProgress = Number(st.progress ?? 0) / 100;
+        // Sub-task: numerator uses 0.5 multiplier, denominator uses full weight (1.0)
+        // This means sub-tasks can contribute at most 50% of their weight to performance
         se.weightedNumerator += stWeight * stProgress * TYPE_SUBTASK;
-        se.weightedDenominator += stWeight * TYPE_SUBTASK;
+        se.weightedDenominator += stWeight * TYPE_TASK;
         map.set(stKey, se);
       });
     });
