@@ -283,7 +283,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       title: st.title,
       status: st.status,
       priority: st.priority,
-      assignee_name: "",
+      assignee_name: (st as any).assignee_name || "",
       due_date: st.due_date || "",
       remarks: st.remarks || "",
     });
