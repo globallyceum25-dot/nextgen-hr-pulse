@@ -673,7 +673,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       <td className="px-3 py-2.5">
                         {subTasks.length > 0 && (expandedTask === task.id ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />)}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">{task.task_number}</td>
+                      <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">{String(task.task_number).padStart(3, '0')}</td>
                       <td className="px-3 py-2.5">
                         <button onClick={e => { e.stopPropagation(); openTaskDetail(task); }} className="text-left hover:text-primary transition-colors">
                           <span className="font-medium text-card-foreground max-w-[200px] truncate block">{task.title}</span>
@@ -787,7 +787,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       {/* Edit Task Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={open => { setEditDialogOpen(open); if (!open) { setEditingTask(null); resetForm(); } }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Edit Task — #{editingTask?.task_number}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Edit Task — #{editingTask?.task_number ? String(editingTask.task_number).padStart(3, '0') : ''}</DialogTitle></DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
             {/* Basic Info */}
             <div className="space-y-3">
@@ -1044,7 +1044,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
         <SheetHeader>
           <SheetTitle className="text-left">
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-mono text-sm">#{task.task_number}</span>
+              <span className="text-muted-foreground font-mono text-sm">#{String(task.task_number).padStart(3, '0')}</span>
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getStatusColor(task.status)}`}>{task.status}</span>
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getPriorityColor(task.priority)}`}>{task.priority}</span>
             </div>
