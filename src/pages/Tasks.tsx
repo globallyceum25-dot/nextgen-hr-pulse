@@ -849,9 +849,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
               </div>
               <div>
                 <label className={labelClass}>Status</label>
-                <select className={inputClass} value={editingTask?.status || "Created"} onChange={e => editingTask && handleStatusChange(editingTask, e.target.value as TaskWorkflowStatus)}>
-                  {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                {(editingTask?.sub_tasks && editingTask.sub_tasks.length > 0) ? (
+                  <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                    {editingTask?.status || "Created"}
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Auto-calculated from sub-tasks</p>
+                  </div>
+                ) : (
+                  <select className={inputClass} value={editingTask?.status || "Created"} onChange={e => editingTask && handleStatusChange(editingTask, e.target.value as TaskWorkflowStatus)}>
+                    {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                )}
               </div>
             </div>
 
@@ -1140,10 +1147,14 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
             <Button size="sm" variant="outline" onClick={() => { onEdit(task); onOpenChange(false); }}>
               <Pencil size={14} className="mr-1" /> Edit
             </Button>
-            <select className="text-xs border rounded-md px-2 py-1 bg-card" value={task.status}
-              onChange={e => onStatusChange(task, e.target.value as TaskWorkflowStatus)}>
-              {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            {subTasks.length > 0 ? (
+              <span className="text-xs text-muted-foreground italic px-2 py-1">Status auto-calculated</span>
+            ) : (
+              <select className="text-xs border rounded-md px-2 py-1 bg-card" value={task.status}
+                onChange={e => onStatusChange(task, e.target.value as TaskWorkflowStatus)}>
+                {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
           </div>
 
           {/* Deadline Alert */}

@@ -299,17 +299,25 @@ export function useUpdateTask() {
         const avgProgress = subTasks.reduce((sum, s) => sum + Number(s.progress), 0) / subTasks.length;
         const progress = Math.round(avgProgress * 100) / 100;
 
+        // Auto-determine status from progress when sub-tasks exist
+        const { getStatusFromProgress } = await import("@/types/tasks");
+        const autoStatus = getStatusFromProgress(progress);
+
         const { data: taskMeta } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", id).single();
         const kpiTarget = taskMeta?.kpi_target_percent || 100;
         const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
         const taskWeight = taskMeta?.task_weight || 0.6;
         const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
 
+        // Remove any user-supplied status override — status is auto-calculated
+        delete (finalUpdates as any).status;
         finalUpdates = {
           ...finalUpdates,
+          status: autoStatus,
           progress,
           kpi_achievement: kpiAchievement,
           weighted_score: weightedScore,
+          completed_date: progress >= 100 ? new Date().toISOString().split("T")[0] : null,
         } as any;
       } else if (updates.status) {
         // No sub-tasks — calculate progress from task status
