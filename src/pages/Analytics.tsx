@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { getLiveTasks, SECTORS, TASKS_UPDATED_EVENT, type Task, getKPIData } from "@/data/mockData";
+import { useMemo } from "react";
+import { useTasks } from "@/hooks/useTasks";
+import type { DbTask } from "@/types/tasks";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import KPICard from "@/components/dashboard/KPICard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AnalyticsProps {
   selectedSector: number | null;
@@ -11,31 +12,30 @@ interface AnalyticsProps {
 // Formal corporate color palette for donut/pie charts - high contrast & distinguishable
 const COLORS = [
   "hsl(152, 45%, 40%)",   // Forest green (Completed)
-  "hsl(215, 50%, 42%)",   // Deep navy blue (Almost Completed)
+  "hsl(215, 50%, 42%)",   // Deep navy blue
   "hsl(35, 65%, 50%)",    // Warm amber (In Progress)
-  "hsl(0, 50%, 48%)",     // Muted crimson (Started / Overdue)
+  "hsl(0, 50%, 48%)",     // Muted crimson
   "hsl(270, 35%, 50%)",   // Plum purple (Pending)
-  "hsl(195, 40%, 48%)",   // Teal (Not Started)
+  "hsl(195, 40%, 48%)",   // Teal
   "hsl(220, 15%, 55%)",   // Cool grey
+  "hsl(45, 70%, 50%)",    // Gold
+  "hsl(330, 40%, 50%)",   // Rose
+  "hsl(160, 40%, 45%)",   // Sage
 ];
 
 // Chart-specific formal colors
 const CHART_COLORS = {
-  primary: "hsl(215, 50%, 35%)",       // Deep navy - main bars
-  secondary: "hsl(200, 30%, 65%)",     // Muted slate blue - secondary bars
-  accent: "hsl(210, 40%, 52%)",        // Steel blue
-  target: "hsl(215, 50%, 35%)",        // Navy for KPI target
-  achievement: "hsl(200, 30%, 65%)",   // Slate blue for KPI achievement
-  workload: "hsl(215, 50%, 35%)",      // Navy for total tasks
-  output: "hsl(195, 35%, 55%)",        // Teal-grey for completed
-  referenceLine: "hsl(0, 45%, 45%)",   // Muted burgundy for reference lines
-  grid: "hsl(214, 20%, 88%)",          // Light grey grid
-  axisText: "hsl(215, 16%, 47%)",      // Axis labels
+  primary: "hsl(215, 50%, 35%)",
+  secondary: "hsl(200, 30%, 65%)",
+  accent: "hsl(210, 40%, 52%)",
+  target: "hsl(215, 50%, 35%)",
+  achievement: "hsl(200, 30%, 65%)",
+  workload: "hsl(215, 50%, 35%)",
+  output: "hsl(195, 35%, 55%)",
+  referenceLine: "hsl(0, 45%, 45%)",
+  grid: "hsl(214, 20%, 88%)",
+  axisText: "hsl(215, 16%, 47%)",
 };
-
-function areTasksEqual(a: Task[], b: Task[]): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
 
 const RADIAN = Math.PI / 180;
 
@@ -57,33 +57,28 @@ function renderPieLabel(total: number) {
 }
 
 export default function Analytics({ selectedSector }: AnalyticsProps) {
-  const [liveTasks, setLiveTasks] = useState<Task[]>(() => getLiveTasks());
+  const { data: tasks = [], isLoading } = useTasks();
 
-  useEffect(() => {
-    const syncTasks = () => {
-      const latest = getLiveTasks();
-      setLiveTasks(prev => (areTasksEqual(prev, latest) ? prev : latest));
-    };
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") syncTasks();
-    };
-    window.addEventListener(TASKS_UPDATED_EVENT, syncTasks as EventListener);
-    window.addEventListener("storage", syncTasks);
-    window.addEventListener("focus", syncTasks);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => {
-      window.removeEventListener(TASKS_UPDATED_EVENT, syncTasks as EventListener);
-      window.removeEventListener("storage", syncTasks);
-      window.removeEventListener("focus", syncTasks);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, []);
+  const filtered = useMemo(() => tasks, [tasks]);
 
-  const filtered = useMemo(() => {
-    return selectedSector ? liveTasks.filter(t => t.sectorId === selectedSector) : liveTasks;
-  }, [selectedSector, liveTasks]);
-
-  const kpiData = useMemo(() => getKPIData(selectedSector ?? undefined, liveTasks), [selectedSector, liveTasks]);
+  // KPI summary
+  const kpiData = useMemo(() => {
+    const total = filtered.length;
+    const completed = filtered.filter(t => t.status === "Completed" || t.status === "Closed").length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + Number(t.kpi_achievement), 0) / total) : 0;
+    const overdue = filtered.filter(t => {
+      if (t.status === "Completed" || t.status === "Closed") return false;
+      if (!t.due_date) return false;
+      return new Date(t.due_date) < new Date();
+    }).length;
+    return [
+      { label: "Total Tasks", value: total, change: 0, trend: "neutral" as const },
+      { label: "Completion Rate", value: completionRate, change: 0, trend: "up" as const },
+      { label: "Avg KPI Score", value: avgKpi, change: 0, trend: "up" as const },
+      { label: "Overdue Tasks", value: overdue, change: 0, trend: overdue > 0 ? "up" as const : "down" as const },
+    ];
+  }, [filtered]);
 
   const statusDist = useMemo(() => {
     const counts: Record<string, number> = { Completed: 0, "Almost Completed": 0, "In Progress": 0, Started: 0, Pending: 0, "Not Started": 0, Overdue: 0 };
