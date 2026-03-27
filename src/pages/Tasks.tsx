@@ -200,6 +200,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           description: formData.description || null,
           category_id: formData.category_id || null,
           type_id: formData.type_id || null,
+          assignee_name: formData.assignee_name || null,
           department_id: formData.department_id || null,
           sector_id: formData.sector_id || null,
           company_id: formData.company_id || null,
