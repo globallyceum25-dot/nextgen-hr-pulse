@@ -429,10 +429,8 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                   <tr className="border-b">
                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Employee</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Total Tasks</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Total Items</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Completed</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg Progress</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Avg KPI Achievement</th>
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Overall Weighted Perf.</th>
                   </tr>
                 </thead>
@@ -443,10 +441,6 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                       <td className="px-3 py-2 text-card-foreground font-medium">{emp.fullName}</td>
                       <td className="px-3 py-2 text-center text-card-foreground">{emp.tasks}</td>
                       <td className="px-3 py-2 text-center text-card-foreground">{emp.completed}</td>
-                      <td className="px-3 py-2 text-center text-card-foreground">{emp.avgProgress}%</td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={`font-semibold ${emp.kpi >= 80 ? "text-success" : emp.kpi >= 50 ? "text-primary" : emp.kpi >= 30 ? "text-warning" : "text-destructive"}`}>{emp.kpi}%</span>
-                      </td>
                       <td className="px-3 py-2 text-center">
                         <span className={`font-bold ${emp.overallWeightedPerformance >= 70 ? "text-success" : emp.overallWeightedPerformance >= 50 ? "text-primary" : emp.overallWeightedPerformance >= 30 ? "text-warning" : "text-destructive"}`}>{emp.overallWeightedPerformance}%</span>
                       </td>
