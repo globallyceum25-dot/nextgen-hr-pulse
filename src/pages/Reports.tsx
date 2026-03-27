@@ -127,6 +127,70 @@ export default function Reports({ selectedSector }: ReportsProps) {
     exportToExcel(rows, `Performance_Report_${new Date().toISOString().split("T")[0]}`);
   };
 
+  const employeePerformanceData = useMemo(() => {
+    const map = new Map<string, { name: string; taskWeightedSum: number; taskWeightSum: number; subWeightedSum: number; subWeightSum: number; totalTasks: number; totalSubTasks: number; completed: number; overdue: number; kpiSum: number; kpiCount: number }>();
+    filtered.forEach(t => {
+      const assignee = (t as any).assignee_profile?.full_name || t.assignee_name || "Unassigned";
+      if (assignee === "Unassigned") return;
+      const e = map.get(assignee) || { name: assignee, taskWeightedSum: 0, taskWeightSum: 0, subWeightedSum: 0, subWeightSum: 0, totalTasks: 0, totalSubTasks: 0, completed: 0, overdue: 0, kpiSum: 0, kpiCount: 0 };
+      const weight = Number(t.task_weight) || 0;
+      const progress = Number(t.progress) || 0;
+      e.taskWeightedSum += weight * (progress / 100);
+      e.taskWeightSum += weight;
+      e.totalTasks++;
+      e.kpiSum += Number(t.kpi_achievement) || 0;
+      e.kpiCount++;
+      if (t.status === "Completed" || t.status === "Closed") e.completed++;
+      if (getDeadlineInfo(t.due_date, t.status).isOverdue) e.overdue++;
+      // Sub-tasks
+      if (t.sub_tasks && t.sub_tasks.length > 0) {
+        t.sub_tasks.forEach((st: any) => {
+          const subAssignee = st.assignee_name || assignee;
+          const se = map.get(subAssignee) || { name: subAssignee, taskWeightedSum: 0, taskWeightSum: 0, subWeightedSum: 0, subWeightSum: 0, totalTasks: 0, totalSubTasks: 0, completed: 0, overdue: 0, kpiSum: 0, kpiCount: 0 };
+          const sw = Number(st.task_weight) || 0;
+          const sp = Number(st.progress) || 0;
+          se.subWeightedSum += sw * (sp / 100);
+          se.subWeightSum += sw;
+          se.totalSubTasks++;
+          if (subAssignee !== assignee) map.set(subAssignee, se);
+        });
+      }
+      map.set(assignee, e);
+    });
+    return Array.from(map.values()).map(d => {
+      const taskPerf = d.taskWeightSum > 0 ? (d.taskWeightedSum / d.taskWeightSum) * 100 : 0;
+      const subPerf = d.subWeightSum > 0 ? (d.subWeightedSum / d.subWeightSum) * 100 : 0;
+      let overall: number;
+      if (d.totalTasks > 0 && d.totalSubTasks > 0) {
+        overall = (taskPerf * 1.0 + subPerf * 0.5) / 1.5;
+      } else if (d.totalSubTasks > 0) {
+        overall = subPerf * 0.5;
+      } else {
+        overall = taskPerf;
+      }
+      const avgKpi = d.kpiCount > 0 ? d.kpiSum / d.kpiCount : 0;
+      const kpiStatus = avgKpi <= 20 ? "1 - Unsatisfactory" : avgKpi <= 40 ? "2 - Needs Improvement" : avgKpi <= 60 ? "3 - Meets Expectations" : avgKpi <= 80 ? "4 - Very Good" : "5 - Exceeds Expectations";
+      return { ...d, taskPerf: Math.round(taskPerf * 100) / 100, subPerf: Math.round(subPerf * 100) / 100, overall: Math.round(overall * 100) / 100, avgKpi: Math.round(avgKpi * 100) / 100, kpiStatus };
+    }).sort((a, b) => b.overall - a.overall);
+  }, [filtered]);
+
+  const exportEmployeePerformance = () => {
+    const rows = employeePerformanceData.map((d, i) => ({
+      "#": i + 1,
+      "Employee": d.name,
+      "Tasks": d.totalTasks,
+      "Sub-Tasks": d.totalSubTasks,
+      "Completed": d.completed,
+      "Overdue": d.overdue,
+      "Task Perf %": d.taskPerf,
+      "Sub-Task Perf %": d.subPerf,
+      "Overall Weighted Perf %": d.overall,
+      "Avg KPI %": d.avgKpi,
+      "KPI Status": d.kpiStatus,
+    }));
+    exportToExcel(rows, `Employee_Performance_${new Date().toISOString().split("T")[0]}`);
+  };
+
   const exportOverdueReport = () => {
     const overdue = filtered.filter(t => getDeadlineInfo(t.due_date, t.status).isOverdue);
     const rows = overdue.map((t, i) => {
