@@ -121,16 +121,25 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
   const totalSubTasks = useMemo(() => subTaskStatusDist.reduce((s, d) => s + d.value, 0), [subTaskStatusDist]);
 
   const taskKpiData = useMemo(() => {
-    return filtered.map(t => ({
-      name: t.title.length > 25 ? t.title.slice(0, 25) + "…" : t.title,
-      fullName: t.title,
-      target: Number(t.kpi_target_percent),
-      achievement: Math.round(Number(t.kpi_achievement) * 100) / 100,
-      progress: Number(t.progress),
-      status: t.status,
-      responsible: t.assignee_profile?.full_name || "Unassigned",
-      priority: t.priority,
-    }));
+    return filtered.map(t => {
+      const achievement = Math.round(Number(t.kpi_achievement) * 100) / 100;
+      const kpiStatus = achievement <= 20 ? "1 - Unsatisfactory"
+        : achievement <= 40 ? "2 - Needs Improvement"
+        : achievement <= 60 ? "3 - Meets Expectations"
+        : achievement <= 80 ? "4 - Very Good"
+        : "5 - Exceeds Expectations";
+      return {
+        name: t.title.length > 25 ? t.title.slice(0, 25) + "…" : t.title,
+        fullName: t.title,
+        target: Number(t.kpi_target_percent),
+        achievement,
+        progress: Number(t.progress),
+        status: t.status,
+        responsible: t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned",
+        priority: t.priority,
+        kpiStatus,
+      };
+    });
   }, [filtered]);
 
   // KPI Achievement Distribution for donut chart
