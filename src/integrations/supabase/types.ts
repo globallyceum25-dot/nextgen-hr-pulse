@@ -183,6 +183,47 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          task_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          task_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          task_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -215,6 +256,389 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sectors: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sub_tasks: {
+        Row: {
+          assignee_id: string | null
+          completed_date: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          priority: Database["public"]["Enums"]["task_priority"]
+          progress: number
+          remarks: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["task_workflow_status"]
+          task_id: string
+          task_weight: number
+          title: string
+          updated_at: string
+          updated_by: string | null
+          weighted_score: number
+        }
+        Insert: {
+          assignee_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          progress?: number
+          remarks?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["task_workflow_status"]
+          task_id: string
+          task_weight?: number
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          weighted_score?: number
+        }
+        Update: {
+          assignee_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          progress?: number
+          remarks?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["task_workflow_status"]
+          task_id?: string
+          task_weight?: number
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          weighted_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          field_name: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          task_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          task_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          task_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_activity_log_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_by: string | null
+          assignee_id: string | null
+          category_id: string | null
+          company_id: string | null
+          completed_date: string | null
+          created_at: string
+          created_by: string | null
+          department_id: string | null
+          description: string | null
+          due_date: string | null
+          escalation_person_id: string | null
+          id: string
+          kpi_achievement: number
+          kpi_target_percent: number
+          location_id: string | null
+          parent_recurring_id: string | null
+          priority: Database["public"]["Enums"]["task_priority"]
+          progress: number
+          recurrence: Database["public"]["Enums"]["recurrence_type"]
+          recurrence_count: number | null
+          related_module: string | null
+          remarks: string | null
+          sector_id: string | null
+          sla_frequency: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["task_workflow_status"]
+          task_number: number
+          task_weight: number
+          title: string
+          type_id: string | null
+          updated_at: string
+          updated_by: string | null
+          weighted_score: number
+        }
+        Insert: {
+          assigned_by?: string | null
+          assignee_id?: string | null
+          category_id?: string | null
+          company_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          department_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          escalation_person_id?: string | null
+          id?: string
+          kpi_achievement?: number
+          kpi_target_percent?: number
+          location_id?: string | null
+          parent_recurring_id?: string | null
+          priority?: Database["public"]["Enums"]["task_priority"]
+          progress?: number
+          recurrence?: Database["public"]["Enums"]["recurrence_type"]
+          recurrence_count?: number | null
+          related_module?: string | null
+          remarks?: string | null
+          sector_id?: string | null
+          sla_frequency?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["task_workflow_status"]
+          task_number?: number
+          task_weight?: number
+          title: string
+          type_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          weighted_score?: number
+        }
+        Update: {
+          assigned_by?: string | null
+          assignee_id?: string | null
+          category_id?: string | null
+          company_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          department_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          escalation_person_id?: string | null
+          id?: string
+          kpi_achievement?: number
+          kpi_target_percent?: number
+          location_id?: string | null
+          parent_recurring_id?: string | null
+          priority?: Database["public"]["Enums"]["task_priority"]
+          progress?: number
+          recurrence?: Database["public"]["Enums"]["recurrence_type"]
+          recurrence_count?: number | null
+          related_module?: string | null
+          remarks?: string | null
+          sector_id?: string | null
+          sla_frequency?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["task_workflow_status"]
+          task_number?: number
+          task_weight?: number
+          title?: string
+          type_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          weighted_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "task_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_recurring_id_fkey"
+            columns: ["parent_recurring_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_type_id_fkey"
+            columns: ["type_id"]
+            isOneToOne: false
+            referencedRelation: "task_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -256,6 +680,19 @@ export type Database = {
         | "sector_hr_admin"
         | "responsible_person"
         | "viewer"
+      recurrence_type: "none" | "daily" | "weekly" | "monthly" | "custom"
+      task_priority: "Critical" | "High" | "Medium" | "Low"
+      task_workflow_status:
+        | "Created"
+        | "Assigned"
+        | "In Progress"
+        | "Pending"
+        | "Under Review"
+        | "Completed"
+        | "Closed"
+        | "On Hold"
+        | "Cancelled"
+        | "Overdue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -388,6 +825,20 @@ export const Constants = {
         "sector_hr_admin",
         "responsible_person",
         "viewer",
+      ],
+      recurrence_type: ["none", "daily", "weekly", "monthly", "custom"],
+      task_priority: ["Critical", "High", "Medium", "Low"],
+      task_workflow_status: [
+        "Created",
+        "Assigned",
+        "In Progress",
+        "Pending",
+        "Under Review",
+        "Completed",
+        "Closed",
+        "On Hold",
+        "Cancelled",
+        "Overdue",
       ],
     },
   },
