@@ -132,6 +132,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
     sectorId: 1,
     startDate: new Date().toISOString().split("T")[0],
     dueDate: "",
+    repeatEnabled: false,
+    repeatFrequency: "monthly" as "daily" | "weekly" | "monthly",
+    repeatCount: 1,
     repeatMonthly: false,
     repeatMonths: 1,
   });
@@ -144,6 +147,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       stage: "Planning", totalTasks: 0, completedCount: 0, pendingCount: 0,
       kpiTargetPercent: 100, maxWeight: 0.6, sectorId: selectedSector || 1,
       startDate: new Date().toISOString().split("T")[0], dueDate: "",
+      repeatEnabled: false, repeatFrequency: "monthly", repeatCount: 1,
       repeatMonthly: false, repeatMonths: 1,
     });
   };
@@ -224,15 +228,33 @@ export default function Tasks({ selectedSector }: TasksProps) {
     };
     const allNewTasks: Task[] = [newTask];
 
-    // Create repeated tasks for future months if enabled
-    if (formData.repeatMonthly && formData.repeatMonths > 0) {
-      for (let m = 1; m <= formData.repeatMonths; m++) {
+    // Create repeated tasks if enabled (daily, weekly, or monthly)
+    const useRepeat = formData.repeatEnabled && formData.repeatCount > 0;
+    // Also support legacy repeatMonthly
+    const useLegacyRepeat = !formData.repeatEnabled && formData.repeatMonthly && formData.repeatMonths > 0;
+    
+    if (useRepeat || useLegacyRepeat) {
+      const count = useRepeat ? formData.repeatCount : formData.repeatMonths;
+      const freq = useRepeat ? formData.repeatFrequency : "monthly";
+      
+      for (let m = 1; m <= count; m++) {
         const futureStart = new Date(formData.startDate || new Date());
-        futureStart.setMonth(futureStart.getMonth() + m);
         const futureDue = new Date(formData.dueDate);
-        futureDue.setMonth(futureDue.getMonth() + m);
         const futureCreated = new Date();
-        futureCreated.setMonth(futureCreated.getMonth() + m);
+        
+        if (freq === "daily") {
+          futureStart.setDate(futureStart.getDate() + m);
+          futureDue.setDate(futureDue.getDate() + m);
+          futureCreated.setDate(futureCreated.getDate() + m);
+        } else if (freq === "weekly") {
+          futureStart.setDate(futureStart.getDate() + m * 7);
+          futureDue.setDate(futureDue.getDate() + m * 7);
+          futureCreated.setDate(futureCreated.getDate() + m * 7);
+        } else {
+          futureStart.setMonth(futureStart.getMonth() + m);
+          futureDue.setMonth(futureDue.getMonth() + m);
+          futureCreated.setMonth(futureCreated.getMonth() + m);
+        }
 
         const repeatedTask: Task = {
           ...newTask,
@@ -260,7 +282,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
     }
 
     persistTaskChanges(prev => [...allNewTasks, ...prev]);
-    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created${formData.repeatMonthly ? ` (repeated for ${formData.repeatMonths} months)` : ""}`, changes: [
+    const repeatDesc = formData.repeatEnabled ? ` (repeated ${formData.repeatCount} times ${formData.repeatFrequency})` : (formData.repeatMonthly ? ` (repeated for ${formData.repeatMonths} months)` : "");
+    addEntry({ action: "created", taskName: newTask.name, taskId: newTask.taskId, description: `New task created${repeatDesc}`, changes: [
       { field: "Name", oldValue: "", newValue: newTask.name },
       { field: "Responsible", oldValue: "", newValue: newTask.responsible },
       { field: "Priority", oldValue: "", newValue: newTask.priority },
@@ -269,7 +292,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     ] });
     resetForm();
     setDialogOpen(false);
-    const countMsg = formData.repeatMonthly ? ` + ${formData.repeatMonths} repeated months` : "";
+    const countMsg = formData.repeatEnabled ? ` + ${formData.repeatCount} repeated ${formData.repeatFrequency}` : (formData.repeatMonthly ? ` + ${formData.repeatMonths} repeated months` : "");
     toast({ title: "Task Created", description: `"${newTask.name}" has been added successfully.${countMsg}` });
   };
 
@@ -295,6 +318,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
       sectorId: task.sectorId,
       startDate: task.startDate,
       dueDate: task.dueDate,
+      repeatEnabled: false,
+      repeatFrequency: "monthly",
+      repeatCount: 1,
       repeatMonthly: false,
       repeatMonths: 1,
     });
@@ -675,21 +701,34 @@ export default function Tasks({ selectedSector }: TasksProps) {
               {/* Section 6: Repeat */}
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-primary border-b pb-1">Repeat Task</h3>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground">
-                    <input type="checkbox" className="accent-primary w-4 h-4" checked={formData.repeatMonthly} onChange={e => setFormData(p => ({ ...p, repeatMonthly: e.target.checked }))} />
-                    Repeat this task monthly
+                    <input type="checkbox" className="accent-primary w-4 h-4" checked={formData.repeatEnabled} onChange={e => setFormData(p => ({ ...p, repeatEnabled: e.target.checked }))} />
+                    Enable Repeat
                   </label>
                 </div>
-                {formData.repeatMonthly && (
-                  <div className="grid grid-cols-2 gap-3">
+                {formData.repeatEnabled && (
+                  <div className="space-y-3">
                     <div>
-                      <label className={labelClass}>Repeat for next (months)</label>
-                      <input type="number" min={1} max={12} className={inputClass} value={formData.repeatMonths} onChange={e => setFormData(p => ({ ...p, repeatMonths: Math.min(12, Math.max(1, Number(e.target.value) || 1)) }))} />
+                      <label className={labelClass}>Repeat Frequency</label>
+                      <div className="flex items-center gap-4 mt-1">
+                        {(["daily", "weekly", "monthly"] as const).map(freq => (
+                          <label key={freq} className="flex items-center gap-1.5 cursor-pointer text-sm text-foreground">
+                            <input type="radio" name="repeatFreq" className="accent-primary" checked={formData.repeatFrequency === freq} onChange={() => setFormData(p => ({ ...p, repeatFrequency: freq }))} />
+                            {freq.charAt(0).toUpperCase() + freq.slice(1)}
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <label className={labelClass}>Total tasks to be created</label>
-                      <input type="text" disabled className={inputClass + " opacity-60"} value={`${formData.repeatMonths + 1} (this + ${formData.repeatMonths} months)`} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelClass}>Repeat count</label>
+                        <input type="number" min={1} max={formData.repeatFrequency === "daily" ? 30 : formData.repeatFrequency === "weekly" ? 52 : 12} className={inputClass} value={formData.repeatCount} onChange={e => setFormData(p => ({ ...p, repeatCount: Math.max(1, Number(e.target.value) || 1) }))} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Total tasks to be created</label>
+                        <input type="text" disabled className={inputClass + " opacity-60"} value={`${formData.repeatCount + 1} (this + ${formData.repeatCount} ${formData.repeatFrequency === "daily" ? "days" : formData.repeatFrequency === "weekly" ? "weeks" : "months"})`} />
+                      </div>
                     </div>
                   </div>
                 )}
