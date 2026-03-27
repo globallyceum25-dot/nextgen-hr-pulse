@@ -169,6 +169,57 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     });
     return buckets.filter(b => b.value > 0);
   }, [filtered]);
+
+  // Sub-task KPI table data
+  const subTaskKpiTableData = useMemo(() => {
+    return filtered.flatMap(t => {
+      const parentTarget = Number(t.kpi_target_percent) || 100;
+      return (t.sub_tasks || []).map(st => {
+        const progress = Number(st.progress);
+        const achievement = parentTarget > 0 ? Math.min(Math.round((progress / parentTarget) * 10000) / 100, 100) : 0;
+        const kpiStatus = achievement <= 20 ? "1 - Unsatisfactory"
+          : achievement <= 40 ? "2 - Needs Improvement"
+          : achievement <= 60 ? "3 - Meets Expectations"
+          : achievement <= 80 ? "4 - Very Good"
+          : "5 - Exceeds Expectations";
+        return {
+          name: st.title.length > 25 ? st.title.slice(0, 25) + "…" : st.title,
+          fullName: st.title,
+          parentTask: t.title.length > 20 ? t.title.slice(0, 20) + "…" : t.title,
+          target: parentTarget,
+          achievement,
+          progress,
+          status: st.status,
+          responsible: (st as any).assignee_name || t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned",
+          priority: st.priority,
+          kpiStatus,
+        };
+      });
+    });
+  }, [filtered]);
+
+  const totalSubTasksKpi = subTaskKpiTableData.length;
+
+  // Sub-task KPI Achievement Distribution
+  const subTaskKpiAchievementDist = useMemo(() => {
+    const buckets = [
+      { name: "1 - Unsatisfactory / Below Expectations", value: 0 },
+      { name: "2 - Needs Improvement", value: 0 },
+      { name: "3 - Meets Expectations", value: 0 },
+      { name: "4 - Very Good / Above Expectations", value: 0 },
+      { name: "5 - Exceeds Expectations", value: 0 },
+    ];
+    subTaskKpiTableData.forEach(st => {
+      const kpi = st.achievement;
+      if (kpi <= 20) buckets[0].value++;
+      else if (kpi <= 40) buckets[1].value++;
+      else if (kpi <= 60) buckets[2].value++;
+      else if (kpi <= 80) buckets[3].value++;
+      else buckets[4].value++;
+    });
+    return buckets.filter(b => b.value > 0);
+  }, [subTaskKpiTableData]);
+
   // Employee Performance: Tasks=1.0, Sub-tasks=0.5
   // Step 1: Calculate task perf & sub-task perf separately per employee
   // Step 2: Combine with weighted average: (taskPerf×1.0 + subTaskPerf×0.5) / (1.0+0.5)
