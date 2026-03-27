@@ -76,6 +76,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [selectedTask, setSelectedTask] = useState<DbTask | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: DbSubTask } | null>(null);
+  const [subTaskDetailOpen, setSubTaskDetailOpen] = useState(false);
+  const [detailSubTask, setDetailSubTask] = useState<{ task: DbTask; subTask: DbSubTask } | null>(null);
 
   // Data hooks
   const { data: tasks = [], isLoading } = useTasks({ search: search || undefined });
@@ -83,6 +85,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const updateSubTask = useUpdateSubTask();
+  const deleteSubTask = useDeleteSubTask();
 
   // Form state
   const [formData, setFormData] = useState({
