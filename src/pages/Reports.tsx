@@ -130,7 +130,7 @@ export default function Reports({ selectedSector }: ReportsProps) {
   const employeePerformanceData = useMemo(() => {
     const map = new Map<string, { name: string; taskWeightedSum: number; taskWeightSum: number; subWeightedSum: number; subWeightSum: number; totalTasks: number; totalSubTasks: number; completed: number; overdue: number; kpiSum: number; kpiCount: number }>();
     filtered.forEach(t => {
-      const assignee = (t as any).assignee_profile?.full_name || t.assignee_name || "Unassigned";
+      const assignee = t.assignee_profile?.full_name || "Unassigned";
       if (assignee === "Unassigned") return;
       const e = map.get(assignee) || { name: assignee, taskWeightedSum: 0, taskWeightSum: 0, subWeightedSum: 0, subWeightSum: 0, totalTasks: 0, totalSubTasks: 0, completed: 0, overdue: 0, kpiSum: 0, kpiCount: 0 };
       const weight = Number(t.task_weight) || 0;
