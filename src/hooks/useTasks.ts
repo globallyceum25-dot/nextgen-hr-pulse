@@ -152,6 +152,7 @@ export function useCreateTask() {
         category_id: input.category_id || null,
         type_id: input.type_id || null,
         assignee_id: input.assignee_id || null,
+        assignee_name: input.assignee_name || null,
         assigned_by: input.assigned_by || userId || null,
         department_id: input.department_id || null,
         sector_id: input.sector_id || null,
