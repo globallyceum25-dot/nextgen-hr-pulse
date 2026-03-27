@@ -110,42 +110,64 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     }));
   }, [filtered]);
 
-  // Combined employee performance for CHART: tasks (1.0) + sub-tasks (0.5)
-  // Both numerator & denominator use the multiplier so tasks have 2x influence over sub-tasks
-  // For mixed employees: tasks pull harder; for sub-task-only: shows their actual progress
+  // Employee Performance: Tasks=1.0, Sub-tasks=0.5
+  // Step 1: Calculate task perf & sub-task perf separately per employee
+  // Step 2: Combine with weighted average: (taskPerf×1.0 + subTaskPerf×0.5) / (1.0+0.5)
+  // If only tasks → taskPerf. If only sub-tasks → subTaskPerf × 0.5
   const employeePerf = useMemo(() => {
-    const map = new Map<string, { weightedNumerator: number; weightedDenominator: number }>();
     const TYPE_TASK = 1.0;
     const TYPE_SUBTASK = 0.5;
 
+    const map = new Map<string, {
+      taskWeightedNum: number; taskWeightedDen: number;
+      stWeightedNum: number; stWeightedDen: number;
+    }>();
+
     filtered.forEach(t => {
+      // Main task → assigned to task assignee
       const taskKey = t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned";
-      const te = map.get(taskKey) || { weightedNumerator: 0, weightedDenominator: 0 };
-      const taskWeight = Number(t.task_weight ?? 0);
-      const taskProgress = Number(t.progress ?? 0) / 100;
-      te.weightedNumerator += taskWeight * taskProgress * TYPE_TASK;
-      te.weightedDenominator += taskWeight * TYPE_TASK;
+      const te = map.get(taskKey) || { taskWeightedNum: 0, taskWeightedDen: 0, stWeightedNum: 0, stWeightedDen: 0 };
+      const tw = Number(t.task_weight ?? 0);
+      const tp = Number(t.progress ?? 0) / 100;
+      te.taskWeightedNum += tw * tp;
+      te.taskWeightedDen += tw;
       map.set(taskKey, te);
 
+      // Sub-tasks → assigned to sub-task assignee
       (t.sub_tasks || []).forEach(st => {
         const stKey = (st as any).assignee_name || taskKey;
-        const se = map.get(stKey) || { weightedNumerator: 0, weightedDenominator: 0 };
-        const stWeight = Number(st.task_weight ?? 0);
-        const stProgress = Number(st.progress ?? 0) / 100;
-        se.weightedNumerator += stWeight * stProgress * TYPE_SUBTASK;
-        se.weightedDenominator += stWeight * TYPE_SUBTASK;
+        const se = map.get(stKey) || { taskWeightedNum: 0, taskWeightedDen: 0, stWeightedNum: 0, stWeightedDen: 0 };
+        const sw = Number(st.task_weight ?? 0);
+        const sp = Number(st.progress ?? 0) / 100;
+        se.stWeightedNum += sw * sp;
+        se.stWeightedDen += sw;
         map.set(stKey, se);
       });
     });
 
     return Array.from(map.entries())
-      .map(([name, d]) => ({
-        name: name.length > 15 ? name.slice(0, 15) + "…" : name,
-        fullName: name,
-        overallWeightedPerformance: d.weightedDenominator > 0
-          ? Math.round((d.weightedNumerator / d.weightedDenominator) * 100 * 100) / 100
-          : 0,
-      }))
+      .map(([name, d]) => {
+        const hasTask = d.taskWeightedDen > 0;
+        const hasSt = d.stWeightedDen > 0;
+        const taskPerf = hasTask ? (d.taskWeightedNum / d.taskWeightedDen) * 100 : 0;
+        const stPerf = hasSt ? (d.stWeightedNum / d.stWeightedDen) * 100 : 0;
+
+        let overall = 0;
+        if (hasTask && hasSt) {
+          // Weighted average: tasks count 1.0, sub-tasks count 0.5
+          overall = (taskPerf * TYPE_TASK + stPerf * TYPE_SUBTASK) / (TYPE_TASK + TYPE_SUBTASK);
+        } else if (hasTask) {
+          overall = taskPerf;
+        } else if (hasSt) {
+          overall = stPerf * TYPE_SUBTASK;
+        }
+
+        return {
+          name: name.length > 15 ? name.slice(0, 15) + "…" : name,
+          fullName: name,
+          overallWeightedPerformance: Math.round(overall * 100) / 100,
+        };
+      })
       .sort((a, b) => b.overallWeightedPerformance - a.overallWeightedPerformance)
       .slice(0, 10);
   }, [filtered]);
