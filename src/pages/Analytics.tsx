@@ -484,14 +484,15 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Task Name</th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Responsible</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Priority</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Progress</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Target %</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Achievement %</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
+                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
+                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Task Name</th>
+                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Owner / Assignee</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Priority</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Progress</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Target %</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Achievement %</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Status</th>
+                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
                   </tr>
                 </thead>
                 <tbody>
