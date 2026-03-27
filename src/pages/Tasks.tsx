@@ -213,6 +213,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
           remarks: formData.remarks || null,
           sla_frequency: formData.sla_frequency || null,
           related_module: formData.related_module || null,
+          recurrence: formData.recurrence as any,
+          recurrence_count: formData.recurrence_count,
         } as any,
       });
       toast({ title: "Task Updated", description: `"${formData.title}" has been updated.` });
