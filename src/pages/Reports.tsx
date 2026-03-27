@@ -234,7 +234,7 @@ export default function Reports({ selectedSector }: ReportsProps) {
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-card">
                   <tr className="border-b">
-                    <th className="text-left px-2 py-2 font-medium text-muted-foreground">#</th>
+                    <th className="text-left px-2 py-2 font-medium text-muted-foreground">Task ID</th>
                     <th className="text-left px-2 py-2 font-medium text-muted-foreground">Title</th>
                     <th className="text-left px-2 py-2 font-medium text-muted-foreground">Department</th>
                     <th className="text-left px-2 py-2 font-medium text-muted-foreground">Priority</th>
