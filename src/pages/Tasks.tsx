@@ -1044,7 +1044,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
         <SheetHeader>
           <SheetTitle className="text-left">
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-mono text-sm">#{task.task_number}</span>
+              <span className="text-muted-foreground font-mono text-sm">#{String(task.task_number).padStart(3, '0')}</span>
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getStatusColor(task.status)}`}>{task.status}</span>
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getPriorityColor(task.priority)}`}>{task.priority}</span>
             </div>
