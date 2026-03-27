@@ -6,6 +6,20 @@ import { getWeightFromPriority } from "@/types/tasks";
 const TASKS_KEY = ["tasks"];
 const SUB_TASKS_KEY = ["sub_tasks"];
 
+// Status-to-progress mapping for tasks without sub-tasks
+const statusToProgress: Record<string, number> = {
+  "Created": 0,
+  "Assigned": 10,
+  "In Progress": 50,
+  "Pending": 40,
+  "Under Review": 80,
+  "Completed": 100,
+  "Closed": 100,
+  "On Hold": 0,
+  "Cancelled": 0,
+  "Overdue": 0,
+};
+
 export function useTasks(filters?: {
   status?: TaskWorkflowStatus | "All";
   priority?: TaskPriority | "All";
