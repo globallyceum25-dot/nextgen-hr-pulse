@@ -309,14 +309,30 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
         {/* ===== TAB 1: Executive Summary ===== */}
         <TabsContent value="executive-summary" className="space-y-6 mt-4">
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {kpiData.map(d => (
-              <div key={d.label} className="bg-card rounded-lg border p-4">
-                <span className="text-xs text-muted-foreground">{d.label}</span>
-                <p className="text-2xl font-bold text-foreground mt-1">{typeof d.value === "number" && d.label.includes("%") ? `${d.value}%` : d.value}</p>
-              </div>
-            ))}
+          {/* Task KPI Cards */}
+          <div>
+            <h2 className="text-sm font-semibold text-card-foreground mb-2">Tasks</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {kpiData.map(d => (
+                <div key={d.label} className="bg-card rounded-lg border p-4">
+                  <span className="text-xs text-muted-foreground">{d.label}</span>
+                  <p className="text-2xl font-bold text-foreground mt-1">{d.value}{(d as any).suffix || ""}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Sub-Task KPI Cards */}
+          <div>
+            <h2 className="text-sm font-semibold text-card-foreground mb-2">Sub-Tasks</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {subTaskKpiData.map(d => (
+                <div key={d.label} className="bg-card rounded-lg border p-4">
+                  <span className="text-xs text-muted-foreground">{d.label}</span>
+                  <p className="text-2xl font-bold text-foreground mt-1">{d.value}{(d as any).suffix || ""}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
