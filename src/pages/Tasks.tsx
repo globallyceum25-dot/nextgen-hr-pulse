@@ -856,7 +856,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </div>
                 ) : (
                   <select className={inputClass} value={editingTask?.status || "Created"} onChange={e => editingTask && handleStatusChange(editingTask, e.target.value as TaskWorkflowStatus)}>
-                    {WORKFLOW_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                    {MAIN_TASK_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 )}
               </div>
