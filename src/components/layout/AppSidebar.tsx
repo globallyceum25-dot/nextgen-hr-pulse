@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { SECTORS } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
-  ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut,
+  ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut, FileText,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
