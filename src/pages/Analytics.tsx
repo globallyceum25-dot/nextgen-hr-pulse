@@ -118,7 +118,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       stWeightedScoreSum: number; stTaskWeightSum: number;
     }>();
     filtered.forEach(t => {
-      const key = t.title; // Group by task title for now
+      const key = t.assignee_name || "Unassigned";
       const e = map.get(key) || {
         total: 0, kpiAchievementSum: 0, completed: 0, progressSum: 0, weightedScoreSum: 0, taskWeightSum: 0,
         stTotal: 0, stCompleted: 0, stProgressSum: 0, stKpiAchievementSum: 0, stWeightedScoreSum: 0, stTaskWeightSum: 0,
@@ -127,9 +127,9 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       e.kpiAchievementSum += Number(t.kpi_achievement);
       e.progressSum += Number(t.progress);
       if (t.status === "Completed" || t.status === "Closed") e.completed++;
+      e.weightedScoreSum += Number(t.weighted_score ?? 0);
+      e.taskWeightSum += Number(t.task_weight ?? 0);
       (t.sub_tasks || []).forEach(st => {
-        e.weightedScoreSum += Number(st.weighted_score ?? 0);
-        e.taskWeightSum += Number(st.task_weight ?? 0);
         e.stTotal++;
         if (st.status === "Completed" || st.status === "Closed") e.stCompleted++;
         const stProgress = Number(st.progress);
