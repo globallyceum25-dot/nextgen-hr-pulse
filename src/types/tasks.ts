@@ -120,7 +120,6 @@ export interface TaskMasterItem {
 // Helper functions
 export function getWeightFromPriority(priority: TaskPriority): number {
   switch (priority) {
-    case "Critical": return 1.2;
     case "High": return 1;
     case "Medium": return 0.6;
     case "Low": return 0.2;
