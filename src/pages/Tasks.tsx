@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useMemo, useState } from "react";
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateSubTask, useTaskComments, useAddComment } from "@/hooks/useTasks";
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateSubTask, useDeleteSubTask, useTaskComments, useAddComment } from "@/hooks/useTasks";
 import { useTaskCategories, useTaskTypes, useSectors } from "@/hooks/useTaskMasterData";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -8,7 +8,7 @@ import { useLocations } from "@/hooks/useLocations";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceType } from "@/types/tasks";
 import { WORKFLOW_STATUSES, PRIORITIES, getWeightFromPriority, getStatusColor, getPriorityColor, getDeadlineInfo, getProgressFromStatus } from "@/types/tasks";
-import { Search, ChevronDown, ChevronRight, Plus, Pencil, Trash2, Filter, Calendar, AlertTriangle, CheckCircle2, Clock, X, MessageSquare, Send } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Plus, Pencil, Trash2, Filter, Calendar, AlertTriangle, CheckCircle2, Clock, X, MessageSquare, Send, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -76,6 +76,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [selectedTask, setSelectedTask] = useState<DbTask | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: DbSubTask } | null>(null);
+  const [subTaskDetailOpen, setSubTaskDetailOpen] = useState(false);
+  const [detailSubTask, setDetailSubTask] = useState<{ task: DbTask; subTask: DbSubTask } | null>(null);
 
   // Data hooks
   const { data: tasks = [], isLoading } = useTasks({ search: search || undefined });
@@ -83,6 +85,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const updateSubTask = useUpdateSubTask();
+  const deleteSubTask = useDeleteSubTask();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -746,7 +749,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                               <span className="w-16 text-right">Weight</span>
                               <span className="w-16 text-right">W.Score</span>
                               <span className="w-20">Due Date</span>
-                              <span className="w-6"></span>
+                              <span className="w-20 text-right">Actions</span>
                             </div>
                             {subTasks.map((st, idx) => {
                               const stDl = getDeadlineInfo(st.due_date, st.status);
@@ -760,9 +763,37 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                   <span className="text-[10px] w-16 text-right text-muted-foreground">{Number(st.task_weight).toFixed(1)}</span>
                                   <span className="text-[10px] w-16 text-right text-muted-foreground">{Number(st.weighted_score).toFixed(2)}</span>
                                   <span className="w-20 text-[10px] text-muted-foreground">{st.due_date || "—"}</span>
-                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
-                                    <Pencil size={12} />
-                                  </Button>
+                                  <div className="flex items-center gap-0.5">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" title="View Details" onClick={e => { e.stopPropagation(); setDetailSubTask({ task, subTask: st }); setSubTaskDetailOpen(true); }}>
+                                      <Eye size={12} />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
+                                      <Pencil size={12} />
+                                    </Button>
+                                    {isAdmin && (
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" title="Delete" onClick={e => e.stopPropagation()}>
+                                            <Trash2 size={12} />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Sub-task</AlertDialogTitle>
+                                            <AlertDialogDescription>Delete "<strong>{st.title}</strong>"? This cannot be undone.</AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => {
+                                              deleteSubTask.mutateAsync({ id: st.id, taskId: task.id }).then(() => {
+                                                toast({ title: "Sub-task Deleted", description: `"${st.title}" removed. Parent recalculated.` });
+                                              }).catch((err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }));
+                                            }}>Delete</AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}
@@ -1006,7 +1037,44 @@ export default function Tasks({ selectedSector }: TasksProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Task Detail Drawer */}
+      {/* Sub-task Detail Sheet */}
+      <Sheet open={subTaskDetailOpen} onOpenChange={setSubTaskDetailOpen}>
+        <SheetContent className="w-[440px] sm:w-[480px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-left">Sub-task Details</SheetTitle>
+          </SheetHeader>
+          {detailSubTask && (
+            <div className="mt-4 space-y-4">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">{detailSubTask.subTask.title}</h2>
+                <p className="text-xs text-muted-foreground mt-1">Parent: {detailSubTask.task.title}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground text-xs">Status</span><p className={`text-xs font-semibold px-2 py-0.5 rounded-full border inline-block mt-1 ${getStatusColor(detailSubTask.subTask.status)}`}>{detailSubTask.subTask.status}</p></div>
+                <div><span className="text-muted-foreground text-xs">Priority</span><p className={`text-xs font-semibold px-2 py-0.5 rounded-full border inline-block mt-1 ${getPriorityColor(detailSubTask.subTask.priority)}`}>{detailSubTask.subTask.priority}</p></div>
+                <div><span className="text-muted-foreground text-xs">Owner / Assignee</span><p className="font-medium">{(detailSubTask.subTask as any).assignee_name || "—"}</p></div>
+                <div><span className="text-muted-foreground text-xs">Due Date</span><p className="font-medium">{detailSubTask.subTask.due_date || "—"}</p></div>
+                <div><span className="text-muted-foreground text-xs">Progress</span><p className="font-medium">{Number(detailSubTask.subTask.progress).toFixed(1)}%</p></div>
+                <div><span className="text-muted-foreground text-xs">Weight</span><p className="font-medium">{Number(detailSubTask.subTask.task_weight).toFixed(1)}</p></div>
+                <div><span className="text-muted-foreground text-xs">Weighted Score</span><p className="font-medium">{Number(detailSubTask.subTask.weighted_score).toFixed(4)}</p></div>
+                <div><span className="text-muted-foreground text-xs">Completed Date</span><p className="font-medium">{detailSubTask.subTask.completed_date || "—"}</p></div>
+              </div>
+              {detailSubTask.subTask.remarks && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-1">Remarks</h3>
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">{detailSubTask.subTask.remarks}</p>
+                </div>
+              )}
+              <div className="flex gap-2 pt-2">
+                <Button size="sm" variant="outline" onClick={() => { setSubTaskDetailOpen(false); openSubTaskEdit(detailSubTask.task.id, detailSubTask.subTask); }}>
+                  <Pencil size={14} className="mr-1" /> Edit
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
       <TaskDetailDrawer
         task={selectedTask}
         open={detailDrawerOpen}

@@ -447,7 +447,53 @@ export function useUpdateSubTask() {
   });
 }
 
-// Task comments
+export function useDeleteSubTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, taskId }: { id: string; taskId: string }) => {
+      const { error } = await supabase.from("sub_tasks").delete().eq("id", id);
+      if (error) throw error;
+
+      // Recalculate parent task progress
+      const { data: allSubTasks } = await supabase
+        .from("sub_tasks")
+        .select("*")
+        .eq("task_id", taskId);
+
+      if (allSubTasks && allSubTasks.length > 0) {
+        const total = allSubTasks.length;
+        const completedCount = allSubTasks.filter(s => s.status === "Completed" || s.status === "Closed").length;
+        const avgProgress = allSubTasks.reduce((sum, s) => sum + Number(s.progress), 0) / total;
+        const progress = Math.round(avgProgress * 100) / 100;
+        const { data: parentTask } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", taskId).single();
+        const kpiTarget = parentTask?.kpi_target_percent || 100;
+        const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
+        const taskWeight = parentTask?.task_weight || 0.6;
+        const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
+
+        let newStatus: TaskWorkflowStatus = "In Progress";
+        if (progress === 0) newStatus = "Created";
+        else if (progress >= 100) newStatus = "Completed";
+        else if (progress >= 80) newStatus = "Under Review";
+
+        await supabase.from("tasks").update({
+          progress, kpi_achievement: kpiAchievement, weighted_score: weightedScore,
+          status: completedCount === total ? "Completed" : newStatus,
+          completed_date: completedCount === total ? new Date().toISOString().split("T")[0] : null,
+        }).eq("id", taskId);
+      } else {
+        // No sub-tasks left, reset to status-based progress
+        await supabase.from("tasks").update({ progress: 0, kpi_achievement: 0, weighted_score: 0 }).eq("id", taskId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+      queryClient.invalidateQueries({ queryKey: SUB_TASKS_KEY });
+    },
+  });
+}
+
+
 export function useTaskComments(taskId: string | null) {
   return useQuery({
     queryKey: ["task_comments", taskId],
