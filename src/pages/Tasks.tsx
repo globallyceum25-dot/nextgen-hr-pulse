@@ -299,6 +299,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
       sectorId: task.sectorId,
       startDate: task.startDate,
       dueDate: task.dueDate,
+      repeatEnabled: false,
+      repeatFrequency: "monthly",
+      repeatCount: 1,
       repeatMonthly: false,
       repeatMonths: 1,
     });
