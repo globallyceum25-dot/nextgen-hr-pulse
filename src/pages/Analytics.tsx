@@ -456,7 +456,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {employeePerf.map((emp, i) => (
+                  {subTaskPerf.map((emp, i) => (
                     <tr key={emp.fullName} className="border-b last:border-0 hover:bg-muted/50">
                       <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                       <td className="px-3 py-2 text-card-foreground font-medium">{emp.fullName}</td>
