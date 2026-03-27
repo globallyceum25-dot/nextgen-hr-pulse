@@ -231,7 +231,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       description: task.description || "",
       category_id: task.category_id || "",
       type_id: task.type_id || "",
-      assignee_name: "",
+      assignee_name: (task as any).assignee_name || "",
       department_id: task.department_id || "",
       sector_id: task.sector_id || "",
       company_id: task.company_id || "",
