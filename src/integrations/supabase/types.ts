@@ -284,6 +284,7 @@ export type Database = {
       sub_tasks: {
         Row: {
           assignee_id: string | null
+          assignee_name: string | null
           completed_date: string | null
           created_at: string
           created_by: string | null
@@ -303,6 +304,7 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          assignee_name?: string | null
           completed_date?: string | null
           created_at?: string
           created_by?: string | null
@@ -322,6 +324,7 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          assignee_name?: string | null
           completed_date?: string | null
           created_at?: string
           created_by?: string | null
