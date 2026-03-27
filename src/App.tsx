@@ -12,6 +12,7 @@ import Dashboard from "@/pages/Dashboard";
 import Tasks from "@/pages/Tasks";
 import Analytics from "@/pages/Analytics";
 import Employees from "@/pages/Employees";
+import Reports from "@/pages/Reports";
 import NotFound from "@/pages/NotFound";
 import Administration from "@/pages/admin/Administration";
 import Login from "@/pages/Login";
@@ -66,6 +67,7 @@ const App = () => (
                   <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
                   <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
                   <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
+                  <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
                   <Route path="/admin" element={<Administration />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
