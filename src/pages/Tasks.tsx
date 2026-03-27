@@ -796,7 +796,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <label className={labelClass}>Description</label>
                 <textarea className={inputClass + " min-h-[60px]"} value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Task Owner / Assignee</label>
+                <select className={inputClass} value={formData.assignee_name} onChange={e => handleAssigneeChange(e.target.value)}>
+                  <option value="">Select person</option>
+                  {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                </select>
+              </div>
                 <div>
                   <label className={labelClass}>Priority</label>
                   <select className={inputClass} value={formData.priority} onChange={e => setFormData(p => ({ ...p, priority: e.target.value as TaskPriority }))}>
