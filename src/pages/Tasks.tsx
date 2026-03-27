@@ -132,6 +132,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
     sectorId: 1,
     startDate: new Date().toISOString().split("T")[0],
     dueDate: "",
+    repeatEnabled: false,
+    repeatFrequency: "monthly" as "daily" | "weekly" | "monthly",
+    repeatCount: 1,
     repeatMonthly: false,
     repeatMonths: 1,
   });
