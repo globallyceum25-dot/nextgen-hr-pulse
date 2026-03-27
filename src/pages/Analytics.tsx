@@ -437,6 +437,37 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             </ResponsiveContainer>
           </div>
 
+          {/* KPI Achievement Distribution Donut Chart */}
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">KPI Achievement Distribution</h2>
+            <div className="flex items-center gap-8">
+              <ResponsiveContainer width={220} height={220}>
+                <PieChart>
+                  <Pie data={kpiAchievementDist} dataKey="value" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2} label={renderPieLabel(filtered.length)} labelLine={false}>
+                    {kpiAchievementDist.map((entry, i) => {
+                      const originalIndex = ["1 - Unsatisfactory / Below Expectations", "2 - Needs Improvement", "3 - Meets Expectations", "4 - Very Good / Above Expectations", "5 - Exceeds Expectations"].indexOf(entry.name);
+                      return <Cell key={i} fill={KPI_RATING_COLORS[originalIndex >= 0 ? originalIndex : i]} />;
+                    })}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px" }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2.5">
+                {kpiAchievementDist.map((item, i) => {
+                  const pct = filtered.length > 0 ? ((item.value / filtered.length) * 100).toFixed(1) : "0";
+                  const originalIndex = ["1 - Unsatisfactory / Below Expectations", "2 - Needs Improvement", "3 - Meets Expectations", "4 - Very Good / Above Expectations", "5 - Exceeds Expectations"].indexOf(item.name);
+                  return (
+                    <div key={item.name} className="flex items-center gap-2 text-xs">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: KPI_RATING_COLORS[originalIndex >= 0 ? originalIndex : i] }} />
+                      <span className="text-muted-foreground">{item.name}</span>
+                      <span className="font-semibold text-card-foreground ml-auto">{item.value} <span className="text-muted-foreground font-normal">({pct}%)</span></span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           {/* Task KPI Table */}
           <div className="bg-card rounded-lg border p-5">
             <h2 className="text-sm font-semibold text-card-foreground mb-4">Task KPI Details</h2>
