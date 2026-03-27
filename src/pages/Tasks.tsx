@@ -164,6 +164,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         description: formData.description || undefined,
         category_id: formData.category_id || undefined,
         type_id: formData.type_id || undefined,
+        assignee_name: formData.assignee_name || undefined,
         department_id: formData.department_id || undefined,
         sector_id: formData.sector_id || undefined,
         company_id: formData.company_id || undefined,
