@@ -765,7 +765,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                   <span className="w-20 text-[10px] text-muted-foreground">{st.due_date || "—"}</span>
                                   <div className="flex items-center gap-0.5">
                                     <Button variant="ghost" size="icon" className="h-6 w-6" title="View Details" onClick={e => { e.stopPropagation(); setDetailSubTask({ task, subTask: st }); setSubTaskDetailOpen(true); }}>
-                                      <MessageSquare size={12} />
+                                      <Eye size={12} />
                                     </Button>
                                     <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
                                       <Pencil size={12} />
