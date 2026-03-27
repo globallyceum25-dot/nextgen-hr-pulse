@@ -127,6 +127,15 @@ export function getWeightFromPriority(priority: TaskPriority): number {
   }
 }
 
+export function getStatusFromProgress(progress: number): TaskWorkflowStatus {
+  if (progress >= 100) return "Completed";
+  if (progress >= 80) return "Under Review";
+  if (progress >= 50) return "In Progress";
+  if (progress >= 10) return "Assigned";
+  if (progress > 0) return "Created";
+  return "Created";
+}
+
 export function getProgressFromStatus(status: TaskWorkflowStatus): number {
   switch (status) {
     case "Created": return 0;
