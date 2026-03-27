@@ -803,6 +803,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
                 </select>
               </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Priority</label>
                   <select className={inputClass} value={formData.priority} onChange={e => setFormData(p => ({ ...p, priority: e.target.value as TaskPriority }))}>
