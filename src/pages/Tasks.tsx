@@ -732,7 +732,6 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     </div>
                   </div>
                 )}
-                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
