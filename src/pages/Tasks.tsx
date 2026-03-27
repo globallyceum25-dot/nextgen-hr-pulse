@@ -977,12 +977,21 @@ export default function Tasks({ selectedSector }: TasksProps) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Weight (Auto)</label>
-                <input type="text" disabled className={inputClass + " opacity-60"} value={getWeightFromPriority(subTaskForm.priority)} />
+                <label className={labelClass}>Owner / Assignee</label>
+                <select className={inputClass} value={subTaskForm.assignee_name} onChange={e => setSubTaskForm(p => ({ ...p, assignee_name: e.target.value }))}>
+                  <option value="">Select person</option>
+                  {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                </select>
               </div>
               <div>
                 <label className={labelClass}>Due Date</label>
                 <input type="date" className={inputClass} value={subTaskForm.due_date} onChange={e => setSubTaskForm(p => ({ ...p, due_date: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Weight (Auto)</label>
+                <input type="text" disabled className={inputClass + " opacity-60"} value={getWeightFromPriority(subTaskForm.priority)} />
               </div>
             </div>
             <div>
