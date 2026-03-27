@@ -673,7 +673,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       <td className="px-3 py-2.5">
                         {subTasks.length > 0 && (expandedTask === task.id ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />)}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">{task.task_number}</td>
+                      <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">{String(task.task_number).padStart(3, '0')}</td>
                       <td className="px-3 py-2.5">
                         <button onClick={e => { e.stopPropagation(); openTaskDetail(task); }} className="text-left hover:text-primary transition-colors">
                           <span className="font-medium text-card-foreground max-w-[200px] truncate block">{task.title}</span>
