@@ -169,6 +169,57 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     });
     return buckets.filter(b => b.value > 0);
   }, [filtered]);
+
+  // Sub-task KPI table data
+  const subTaskKpiTableData = useMemo(() => {
+    return filtered.flatMap(t => {
+      const parentTarget = Number(t.kpi_target_percent) || 100;
+      return (t.sub_tasks || []).map(st => {
+        const progress = Number(st.progress);
+        const achievement = parentTarget > 0 ? Math.min(Math.round((progress / parentTarget) * 10000) / 100, 100) : 0;
+        const kpiStatus = achievement <= 20 ? "1 - Unsatisfactory"
+          : achievement <= 40 ? "2 - Needs Improvement"
+          : achievement <= 60 ? "3 - Meets Expectations"
+          : achievement <= 80 ? "4 - Very Good"
+          : "5 - Exceeds Expectations";
+        return {
+          name: st.title.length > 25 ? st.title.slice(0, 25) + "…" : st.title,
+          fullName: st.title,
+          parentTask: t.title.length > 20 ? t.title.slice(0, 20) + "…" : t.title,
+          target: parentTarget,
+          achievement,
+          progress,
+          status: st.status,
+          responsible: (st as any).assignee_name || t.assignee_profile?.full_name || (t as any).assignee_name || "Unassigned",
+          priority: st.priority,
+          kpiStatus,
+        };
+      });
+    });
+  }, [filtered]);
+
+  const totalSubTasksKpi = subTaskKpiTableData.length;
+
+  // Sub-task KPI Achievement Distribution
+  const subTaskKpiAchievementDist = useMemo(() => {
+    const buckets = [
+      { name: "1 - Unsatisfactory / Below Expectations", value: 0 },
+      { name: "2 - Needs Improvement", value: 0 },
+      { name: "3 - Meets Expectations", value: 0 },
+      { name: "4 - Very Good / Above Expectations", value: 0 },
+      { name: "5 - Exceeds Expectations", value: 0 },
+    ];
+    subTaskKpiTableData.forEach(st => {
+      const kpi = st.achievement;
+      if (kpi <= 20) buckets[0].value++;
+      else if (kpi <= 40) buckets[1].value++;
+      else if (kpi <= 60) buckets[2].value++;
+      else if (kpi <= 80) buckets[3].value++;
+      else buckets[4].value++;
+    });
+    return buckets.filter(b => b.value > 0);
+  }, [subTaskKpiTableData]);
+
   // Employee Performance: Tasks=1.0, Sub-tasks=0.5
   // Step 1: Calculate task perf & sub-task perf separately per employee
   // Step 2: Combine with weighted average: (taskPerf×1.0 + subTaskPerf×0.5) / (1.0+0.5)
@@ -529,6 +580,100 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${t.status === "Completed" ? "bg-success/10 text-success" : t.status === "In Progress" || t.status === "Under Review" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{t.status}</span>
                        </td>
                      </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ===== Sub-Task KPI Section ===== */}
+          <h2 className="text-base font-semibold text-card-foreground mt-6">Sub-Task KPI Monitoring</h2>
+
+          {/* Sub-Task KPI Achievement Distribution Donut Chart */}
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Sub-Task KPI Achievement Distribution <span className="text-muted-foreground font-normal">({totalSubTasksKpi} sub-tasks)</span></h2>
+            <div className="flex items-center gap-8">
+              <ResponsiveContainer width={220} height={220}>
+                <PieChart>
+                  <Pie data={subTaskKpiAchievementDist} dataKey="value" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2} label={renderPieLabel(totalSubTasksKpi)} labelLine={false}>
+                    {subTaskKpiAchievementDist.map((entry, i) => {
+                      const originalIndex = ["1 - Unsatisfactory / Below Expectations", "2 - Needs Improvement", "3 - Meets Expectations", "4 - Very Good / Above Expectations", "5 - Exceeds Expectations"].indexOf(entry.name);
+                      return <Cell key={i} fill={KPI_RATING_COLORS[originalIndex >= 0 ? originalIndex : i]} />;
+                    })}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px" }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2.5">
+                {subTaskKpiAchievementDist.map((item, i) => {
+                  const pct = totalSubTasksKpi > 0 ? ((item.value / totalSubTasksKpi) * 100).toFixed(1) : "0";
+                  const originalIndex = ["1 - Unsatisfactory / Below Expectations", "2 - Needs Improvement", "3 - Meets Expectations", "4 - Very Good / Above Expectations", "5 - Exceeds Expectations"].indexOf(item.name);
+                  return (
+                    <div key={item.name} className="flex items-center gap-2 text-xs">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: KPI_RATING_COLORS[originalIndex >= 0 ? originalIndex : i] }} />
+                      <span className="text-muted-foreground">{item.name}</span>
+                      <span className="font-semibold text-card-foreground ml-auto">{item.value} <span className="text-muted-foreground font-normal">({pct}%)</span></span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Sub-Task KPI Table */}
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Sub-Task KPI Details</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Sub-Task Name</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Parent Task</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Owner / Assignee</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Priority</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Progress</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Target %</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Achievement %</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">KPI Status</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subTaskKpiTableData.map((st, i) => (
+                    <tr key={i} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="px-3 py-2 text-card-foreground font-medium" title={st.fullName}>{st.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{st.parentTask}</td>
+                      <td className="px-3 py-2 text-card-foreground">{st.responsible}</td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${st.priority === "High" ? "bg-destructive/10 text-destructive" : st.priority === "Medium" ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground"}`}>{st.priority}</span>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-primary" style={{ width: `${st.progress}%` }} />
+                          </div>
+                          <span className="text-muted-foreground w-8 text-right">{st.progress.toFixed(0)}%</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-center font-semibold text-card-foreground">{st.target}%</td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`font-semibold ${st.achievement >= 80 ? "text-success" : st.achievement >= 50 ? "text-primary" : st.achievement >= 30 ? "text-warning" : "text-destructive"}`}>{st.achievement.toFixed(2)}%</span>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                          st.kpiStatus.startsWith("5") ? "bg-success/10 text-success" :
+                          st.kpiStatus.startsWith("4") ? "bg-primary/10 text-primary" :
+                          st.kpiStatus.startsWith("3") ? "bg-warning/10 text-warning" :
+                          st.kpiStatus.startsWith("2") ? "bg-orange-100 text-orange-600" :
+                          "bg-destructive/10 text-destructive"
+                        }`}>{st.kpiStatus}</span>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${st.status === "Completed" ? "bg-success/10 text-success" : st.status === "In Progress" || st.status === "Under Review" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{st.status}</span>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
