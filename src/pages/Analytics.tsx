@@ -641,7 +641,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 </thead>
                 <tbody>
                   {subTaskKpiTableData.map((st, i) => (
-                    <tr key={i} className="border-b last:border-0 hover:bg-muted/50">
+                    <tr key={i} className={`border-b last:border-0 ${st.achievement < 50 ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"}`}>
                       <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                       <td className="px-3 py-2 text-card-foreground font-medium" title={st.fullName}>{st.name}</td>
                       <td className="px-3 py-2 text-muted-foreground">{st.parentTask}</td>
