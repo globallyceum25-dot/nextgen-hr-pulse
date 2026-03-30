@@ -501,18 +501,22 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
         {/* ===== TAB 2: Task KPI Monitoring ===== */}
         <TabsContent value="task-kpi" className="space-y-6 mt-4">
-          {/* KPI Achievement Overview Chart */}
+          {/* Sub Tasks Completion by SBU / Location */}
           <div className="bg-card rounded-lg border p-5">
-            <h2 className="text-sm font-semibold text-card-foreground mb-4">KPI Achievement vs Target by Task</h2>
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Sub Tasks Completion by SBU / Location</h2>
             <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={taskKpiData.slice(0, 15)} barGap={2} layout="vertical">
+              <BarChart data={subTaskCompletionByLocation} barGap={4} margin={{ bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} />
-                <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 10, fill: CHART_COLORS.axisText }} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Location", position: "insideBottom", offset: -15, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Count", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
                 <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="target" name="KPI Target %" fill={CHART_COLORS.secondary} radius={[0, 3, 3, 0]} />
-                <Bar dataKey="achievement" name="KPI Achievement %" fill={CHART_COLORS.primary} radius={[0, 3, 3, 0]} />
+                <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
+                <Bar dataKey="completed" name="Completed" stackId="a" fill="hsl(215, 50%, 55%)" radius={[0, 0, 0, 0]}>
+                  <LabelList dataKey="completed" position="inside" fontSize={11} fontWeight={700} fill="#fff" />
+                </Bar>
+                <Bar dataKey="pending" name="Pending" stackId="a" fill="hsl(130, 45%, 50%)" radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="pending" position="inside" fontSize={11} fontWeight={700} fill="#fff" />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
