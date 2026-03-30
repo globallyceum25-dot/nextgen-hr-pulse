@@ -508,14 +508,14 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
               <BarChart data={subTaskCompletionByLocation} barGap={4} margin={{ bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Location", position: "insideBottom", offset: -15, fontSize: 12, fill: CHART_COLORS.axisText }} />
-                <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Count", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
+                <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Completed", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
                 <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
                 <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
-                <Bar dataKey="completed" name="Completed" stackId="a" fill="hsl(215, 50%, 55%)" radius={[0, 0, 0, 0]}>
-                  <LabelList dataKey="completed" position="inside" fontSize={11} fontWeight={700} fill="#fff" />
+                <Bar dataKey="completed" name="Completed" fill="hsl(215, 50%, 55%)" radius={[3, 3, 0, 0]} barSize={40}>
+                  <LabelList dataKey="completed" position="top" fontSize={11} fontWeight={700} fill="hsl(215, 50%, 55%)" />
                 </Bar>
-                <Bar dataKey="pending" name="Pending" stackId="a" fill="hsl(130, 45%, 50%)" radius={[3, 3, 0, 0]}>
-                  <LabelList dataKey="pending" position="inside" fontSize={11} fontWeight={700} fill="#fff" />
+                <Bar dataKey="pending" name="Pending" fill="hsl(130, 45%, 50%)" radius={[3, 3, 0, 0]} barSize={40}>
+                  <LabelList dataKey="pending" position="top" fontSize={11} fontWeight={700} fill="hsl(130, 45%, 50%)" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
