@@ -220,6 +220,26 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     return buckets.filter(b => b.value > 0);
   }, [subTaskKpiTableData]);
 
+  // Sub-task completion by location
+  const subTaskCompletionByLocation = useMemo(() => {
+    const map = new Map<string, { completed: number; pending: number }>();
+    filtered.forEach(t => {
+      const locationName = (t as any).location?.location_name || "Unknown";
+      (t.sub_tasks || []).forEach(st => {
+        const e = map.get(locationName) || { completed: 0, pending: 0 };
+        if (st.status === "Completed" || st.status === "Closed") {
+          e.completed++;
+        } else {
+          e.pending++;
+        }
+        map.set(locationName, e);
+      });
+    });
+    return Array.from(map.entries())
+      .map(([name, d]) => ({ name, completed: d.completed, pending: d.pending }))
+      .sort((a, b) => (b.completed + b.pending) - (a.completed + a.pending));
+  }, [filtered]);
+
   // Employee Performance: Tasks=1.0, Sub-tasks=0.5
   // Step 1: Calculate task perf & sub-task perf separately per employee
   // Step 2: Combine with weighted average: (taskPerf×1.0 + subTaskPerf×0.5) / (1.0+0.5)
