@@ -234,7 +234,7 @@ export default function SystemHealthMonitoring() {
           <div>
             <h2 className={`text-lg font-bold ${statusTextColor}`}>System Status: {systemStatus}</h2>
             <p className="text-xs text-muted-foreground">
-              Based on error rate ({errorRate.toFixed(1)}%), overdue tasks, and data quality
+              Based on database connectivity, authentication, and API response ({apiLatency}ms)
             </p>
           </div>
         </div>
