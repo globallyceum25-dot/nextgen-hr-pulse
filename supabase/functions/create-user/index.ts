@@ -135,6 +135,20 @@ Deno.serve(async (req) => {
     const existingUser = await findExistingUserByEmail(adminClient, normalizedEmail);
     if (existingUser?.userId) {
       targetUserId = existingUser.userId;
+
+      // Update the password and confirm email for existing user
+      const { error: updateError } = await adminClient.auth.admin.updateUserById(
+        targetUserId,
+        {
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: full_name || existingUser.fullName || normalizedEmail },
+        },
+      );
+
+      if (updateError) {
+        console.error("Failed to update existing user password:", updateError.message);
+      }
     } else {
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email: normalizedEmail,
@@ -147,6 +161,12 @@ Deno.serve(async (req) => {
         const recoveredUser = await findExistingUserByEmail(adminClient, normalizedEmail);
         if (recoveredUser?.userId) {
           targetUserId = recoveredUser.userId;
+
+          // Also update password for recovered user
+          await adminClient.auth.admin.updateUserById(targetUserId, {
+            password,
+            email_confirm: true,
+          });
         } else {
           return jsonResponse({ error: createError.message }, 400);
         }
