@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import TaskProgressVisualization from "@/components/analytics/TaskProgressVisualization";
+import { ListChecks, CheckCircle2, TrendingUp, Clock, AlertTriangle, Users, Calendar } from "lucide-react";
 
 interface AnalyticsProps {
   selectedSector: number | null;
@@ -62,46 +63,41 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
   const filtered = useMemo(() => tasks, [tasks]);
 
-  // KPI summary - Tasks
-  const kpiData = useMemo(() => {
+  // Executive Summary - Dashboard-style cards for Tasks
+  const execTaskStats = useMemo(() => {
     const total = filtered.length;
     const completed = filtered.filter(t => t.status === "Completed" || t.status === "Closed").length;
-    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + Number(t.kpi_achievement), 0) / total) : 0;
+    const inProgress = filtered.filter(t => t.status === "In Progress").length;
+    const pending = filtered.filter(t => ["Created", "Assigned", "Pending"].includes(t.status)).length;
     const overdue = filtered.filter(t => {
       if (t.status === "Completed" || t.status === "Closed") return false;
       if (!t.due_date) return false;
       return new Date(t.due_date) < new Date();
     }).length;
-    return [
-      { label: "Total Tasks", value: total },
-      { label: "Completion Rate", value: completionRate, suffix: "%" },
-      { label: "Avg KPI Score", value: avgKpi },
-      { label: "Overdue Tasks", value: overdue },
-    ];
+    const underReview = filtered.filter(t => t.status === "Under Review").length;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
+    const dueThisWeek = filtered.filter(t => {
+      if (!t.due_date || t.status === "Completed" || t.status === "Closed") return false;
+      const due = new Date(t.due_date); due.setHours(0, 0, 0, 0);
+      return due >= today && due <= weekEnd;
+    }).length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, inProgress, pending, overdue, underReview, dueThisWeek, completionRate };
   }, [filtered]);
 
-  // KPI summary - Sub-tasks
-  const subTaskKpiData = useMemo(() => {
-    const allSubs = filtered.flatMap(t => (t.sub_tasks || []).map(st => ({ ...st, parentKpiTarget: Number(t.kpi_target_percent) || 100 })));
+  // Executive Summary - Dashboard-style cards for Sub-Tasks
+  const execSubTaskStats = useMemo(() => {
+    const allSubs = filtered.flatMap(t => (t.sub_tasks || []));
     const total = allSubs.length;
     const completed = allSubs.filter(st => st.status === "Completed" || st.status === "Closed").length;
-    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const avgKpi = total > 0 ? Math.round(allSubs.reduce((s, st) => {
-      const kpi = st.parentKpiTarget > 0 ? Math.min((Number(st.progress) / st.parentKpiTarget) * 100, 100) : 0;
-      return s + kpi;
-    }, 0) / total) : 0;
     const overdue = allSubs.filter(st => {
       if (st.status === "Completed" || st.status === "Closed") return false;
       if (!st.due_date) return false;
       return new Date(st.due_date) < new Date();
     }).length;
-    return [
-      { label: "Total Sub-Tasks", value: total },
-      { label: "Completion Rate", value: completionRate, suffix: "%" },
-      { label: "Avg KPI Score", value: avgKpi },
-      { label: "Overdue Sub-Tasks", value: overdue },
-    ];
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, overdue, completionRate };
   }, [filtered]);
 
   const statusDist = useMemo(() => {
@@ -418,29 +414,51 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
         {/* ===== TAB 1: Executive Summary ===== */}
         <TabsContent value="executive-summary" className="space-y-6 mt-4">
-          {/* Task KPI Cards */}
+          {/* Tasks Overview Cards - Dashboard Style */}
           <div>
-            <h2 className="text-sm font-semibold text-card-foreground mb-2">Tasks</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {kpiData.map(d => (
-                <div key={d.label} className="bg-card rounded-lg border p-4">
-                  <span className="text-xs text-muted-foreground">{d.label}</span>
-                  <p className="text-2xl font-bold text-foreground mt-1">{d.value}{(d as any).suffix || ""}</p>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tasks Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+              {[
+                { label: "Total Tasks", value: execTaskStats.total, icon: ListChecks, color: "text-foreground", bg: "bg-card" },
+                { label: "Completed", value: execTaskStats.completed, icon: CheckCircle2, color: "text-emerald-700", bg: "bg-emerald-50" },
+                { label: "In Progress", value: execTaskStats.inProgress, icon: TrendingUp, color: "text-amber-700", bg: "bg-amber-50" },
+                { label: "Pending", value: execTaskStats.pending, icon: Clock, color: "text-blue-700", bg: "bg-blue-50" },
+                { label: "Overdue", value: execTaskStats.overdue, icon: AlertTriangle, color: "text-red-700", bg: "bg-red-50" },
+                { label: "Under Review", value: execTaskStats.underReview, icon: Users, color: "text-purple-700", bg: "bg-purple-50" },
+                { label: "Due This Week", value: execTaskStats.dueThisWeek, icon: Calendar, color: "text-orange-700", bg: "bg-orange-50" },
+                { label: "Completion %", value: `${execTaskStats.completionRate}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/5" },
+              ].map(card => (
+                <div key={card.label} className={`${card.bg} rounded-lg border p-3 flex flex-col`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{card.label}</span>
+                    <card.icon size={14} className="text-muted-foreground" />
+                  </div>
+                  <span className={`text-2xl font-bold ${card.color}`}>{card.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Sub-Task KPI Cards */}
+          {/* Sub-Tasks Overview Cards - Dashboard Style */}
           <div>
-            <h2 className="text-sm font-semibold text-card-foreground mb-2">Sub-Tasks</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {subTaskKpiData.map(d => (
-                <div key={d.label} className="bg-card rounded-lg border p-4">
-                  <span className="text-xs text-muted-foreground">{d.label}</span>
-                  <p className="text-2xl font-bold text-foreground mt-1">{d.value}{(d as any).suffix || ""}</p>
-                </div>
-              ))}
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Sub-Tasks Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-card rounded-lg border p-3 flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total Sub-Tasks</span>
+                <span className="text-2xl font-bold text-foreground mt-1">{execSubTaskStats.total}</span>
+              </div>
+              <div className="bg-emerald-50 rounded-lg border p-3 flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Completed</span>
+                <span className="text-2xl font-bold text-emerald-700 mt-1">{execSubTaskStats.completed}</span>
+              </div>
+              <div className="bg-red-50 rounded-lg border p-3 flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Overdue</span>
+                <span className="text-2xl font-bold text-red-700 mt-1">{execSubTaskStats.overdue}</span>
+              </div>
+              <div className="bg-primary/5 rounded-lg border p-3 flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Completion %</span>
+                <span className="text-2xl font-bold text-primary mt-1">{execSubTaskStats.completionRate}%</span>
+              </div>
             </div>
           </div>
 
