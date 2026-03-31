@@ -472,8 +472,8 @@ export default function Reports({ selectedSector }: ReportsProps) {
                       <td className="px-2 py-2 text-card-foreground font-medium">{d.name}</td>
                       <td className="px-2 py-2 text-center">{d.totalTasks}</td>
                       <td className="px-2 py-2 text-center">{d.totalSubTasks}</td>
-                      <td className="px-2 py-2 text-center text-emerald-700">{d.completed}</td>
-                      <td className="px-2 py-2 text-center text-red-600">{d.overdue}</td>
+                      <td className="px-2 py-2 text-center text-emerald-400">{d.completed}</td>
+                      <td className="px-2 py-2 text-center text-red-400">{d.overdue}</td>
                       <td className="px-2 py-2 text-center">{d.taskPerf}%</td>
                       <td className="px-2 py-2 text-center">{d.subPerf}%</td>
                       <td className="px-2 py-2 text-center">
