@@ -340,6 +340,11 @@ function TaskRow({ task, subs, completedSubs, progress, assignee, isOverdue, isE
             <td className="p-2 text-center">
               <Badge variant="outline" className="text-[9px] px-1 py-0">{st.status}</Badge>
             </td>
+            <td className="p-2 text-center">
+              {stProgress >= 100
+                ? <CheckCircle2 className="h-4 w-4 text-success mx-auto" />
+                : <Circle className="h-4 w-4 text-muted-foreground/40 mx-auto" />}
+            </td>
           </tr>
         );
       })}
