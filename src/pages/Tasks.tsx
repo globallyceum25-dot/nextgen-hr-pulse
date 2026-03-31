@@ -1163,7 +1163,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
 
           {/* Deadline Alert */}
           {dl.showAlert && (
-            <div className={`flex items-center gap-2 p-2 rounded-md text-sm font-medium ${dl.isOverdue ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}>
+            <div className={`flex items-center gap-2 p-2 rounded-md text-sm font-medium ${dl.isOverdue ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}>
               <AlertTriangle size={16} />
               {dl.label}
             </div>

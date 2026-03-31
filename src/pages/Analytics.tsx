@@ -604,7 +604,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                   <p className="text-sm text-muted-foreground text-center py-8">No overdue tasks</p>
                 ) : (
                   overdueTasksList.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100">
+                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                       <div>
                         <p className="text-sm font-medium text-foreground">{t.title}</p>
                         <p className="text-xs text-muted-foreground">Due: {t.dueDate}</p>
