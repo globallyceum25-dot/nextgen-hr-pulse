@@ -16,9 +16,8 @@ interface AppSidebarProps {
 }
 
 const allNavItems: { label: string; icon: typeof LayoutDashboard; path: string; module: Module }[] = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/", module: "dashboard" },
   { label: "Tasks", icon: ListTodo, path: "/tasks", module: "tasks" },
-  { label: "Task Analysis", icon: BarChart3, path: "/analytics", module: "analytics" },
+  { label: "Task Analysis", icon: BarChart3, path: "/", module: "analytics" },
   { label: "Employees", icon: Users, path: "/employees", module: "employees" },
   { label: "Reports", icon: FileText, path: "/reports", module: "reports" },
   { label: "Administration", icon: Settings, path: "/admin", module: "admin" },

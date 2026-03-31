@@ -11,7 +11,7 @@
 
 export type AppRole = "super_admin" | "sector_hr_admin" | "responsible_person" | "viewer";
 
-export type Module = "dashboard" | "tasks" | "analytics" | "employees" | "reports" | "admin";
+export type Module = "tasks" | "analytics" | "employees" | "reports" | "admin";
 
 export type Action = "view" | "create" | "edit" | "delete" | "export";
 
@@ -28,7 +28,6 @@ const READ_ONLY: Action[] = ["view"];
 
 export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   super_admin: {
-    dashboard: { allowed: true, actions: FULL_ACTIONS },
     tasks:     { allowed: true, actions: FULL_ACTIONS },
     analytics: { allowed: true, actions: FULL_ACTIONS },
     employees: { allowed: true, actions: FULL_ACTIONS },
@@ -36,7 +35,6 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     admin:     { allowed: true, actions: FULL_ACTIONS },
   },
   sector_hr_admin: {
-    dashboard: { allowed: true, actions: FULL_ACTIONS },
     tasks:     { allowed: true, actions: FULL_ACTIONS },
     analytics: { allowed: true, actions: FULL_ACTIONS },
     employees: { allowed: true, actions: FULL_ACTIONS },
@@ -44,7 +42,6 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     admin:     { allowed: false, actions: [] },
   },
   responsible_person: {
-    dashboard: { allowed: true, actions: READ_ONLY },
     tasks:     { allowed: true, actions: READ_WRITE },
     analytics: { allowed: true, actions: READ_ONLY },
     employees: { allowed: true, actions: READ_ONLY },
@@ -52,7 +49,6 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     admin:     { allowed: false, actions: [] },
   },
   viewer: {
-    dashboard: { allowed: true, actions: READ_ONLY },
     tasks:     { allowed: true, actions: READ_ONLY },
     analytics: { allowed: true, actions: READ_ONLY },
     employees: { allowed: false, actions: [] },
@@ -63,7 +59,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
 
 /** Route path → module mapping */
 export const ROUTE_MODULE_MAP: Record<string, Module> = {
-  "/":          "dashboard",
+  "/":          "analytics",
   "/tasks":     "tasks",
   "/analytics": "analytics",
   "/employees": "employees",
