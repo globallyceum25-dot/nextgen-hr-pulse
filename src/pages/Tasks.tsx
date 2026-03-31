@@ -401,12 +401,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
           { label: "Total Tasks", value: summary.total, color: "text-foreground", bg: "bg-card" },
-          { label: "Completed", value: summary.completed, color: "text-emerald-700", bg: "bg-emerald-50" },
-          { label: "In Progress", value: summary.inProgress, color: "text-amber-700", bg: "bg-amber-50" },
-          { label: "Pending", value: summary.pending, color: "text-blue-700", bg: "bg-blue-50" },
-          { label: "Overdue", value: summary.overdue, color: "text-red-700", bg: "bg-red-50" },
-          { label: "On Hold", value: summary.onHold, color: "text-yellow-700", bg: "bg-yellow-50" },
-          { label: "Completion %", value: `${summary.completionRate}%`, color: "text-primary", bg: "bg-primary/5" },
+          { label: "Completed", value: summary.completed, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+          { label: "In Progress", value: summary.inProgress, color: "text-amber-400", bg: "bg-amber-500/10" },
+          { label: "Pending", value: summary.pending, color: "text-blue-400", bg: "bg-blue-500/10" },
+          { label: "Overdue", value: summary.overdue, color: "text-red-400", bg: "bg-red-500/10" },
+          { label: "On Hold", value: summary.onHold, color: "text-yellow-400", bg: "bg-yellow-500/10" },
+          { label: "Completion %", value: `${summary.completionRate}%`, color: "text-primary", bg: "bg-primary/10" },
         ].map(card => (
           <div key={card.label} className={`${card.bg} rounded-lg border p-3 flex flex-col`}>
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{card.label}</span>
