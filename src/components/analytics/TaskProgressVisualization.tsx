@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ChevronDown, ChevronRight, Search, Calendar, User, ArrowUpDown } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, Calendar, User, ArrowUpDown, CheckCircle2, Circle } from "lucide-react";
 import { format } from "date-fns";
 
 interface Props {
