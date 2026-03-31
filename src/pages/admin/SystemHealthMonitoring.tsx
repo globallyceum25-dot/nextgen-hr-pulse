@@ -481,8 +481,8 @@ export default function SystemHealthMonitoring() {
         <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Performance Metrics</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <MetricCard icon={Zap} title="Avg Page Load" value="< 1s" trend="up" tooltip="Estimated client-side load time" />
-          <MetricCard icon={Server} title="API Response" value="< 200ms" trend="up" tooltip="Estimated API response time" />
-          <MetricCard icon={BarChart3} title="Error Rate" value={`${errorRate.toFixed(1)}%`} trend={errorRate < 10 ? "up" : "down"} tooltip="Based on overdue/failed task ratio" />
+          <MetricCard icon={Server} title="API Response" value={`${apiLatency}ms`} trend={apiLatency < 500 ? "up" : "down"} tooltip="Measured API round-trip time" />
+          <MetricCard icon={BarChart3} title="System Errors" value={systemErrorCount} trend={systemErrorCount === 0 ? "up" : "down"} tooltip="Active system connectivity errors" />
           <MetricCard icon={HardDrive} title="DB Operations" value={activityLogs.length} subtitle="Recent logged ops" tooltip="Operations recorded in activity log" />
         </div>
       </div>
