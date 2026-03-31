@@ -63,15 +63,17 @@ const App = () => (
           <AuthGate>
             <AppLayout>
               {({ selectedSector }) => (
-                <Routes>
-                  <Route path="/" element={<Dashboard selectedSector={selectedSector} />} />
-                  <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
-                  <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
-                  <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
-                  <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
-                  <Route path="/admin" element={<Administration />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <RouteGuard>
+                  <Routes>
+                    <Route path="/" element={<Dashboard selectedSector={selectedSector} />} />
+                    <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
+                    <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
+                    <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
+                    <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
+                    <Route path="/admin" element={<Administration />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </RouteGuard>
               )}
             </AppLayout>
           </AuthGate>
