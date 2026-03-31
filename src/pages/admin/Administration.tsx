@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Server, ShieldCheck, Users } from "lucide-react";
+import { Server, ShieldCheck, Users, Activity } from "lucide-react";
 import AdminBackend from "./AdminBackend";
 import AdminRolesManager from "./AdminRolesManager";
 import AdminUsersManager from "./AdminUsersManager";
+import SystemHealthMonitoring from "./SystemHealthMonitoring";
 import { useSearchParams } from "react-router-dom";
 
 export default function Administration() {
