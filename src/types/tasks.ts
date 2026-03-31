@@ -161,25 +161,25 @@ export function getProgressFromStatus(status: TaskWorkflowStatus): number {
 
 export function getStatusColor(status: TaskWorkflowStatus): string {
   switch (status) {
-    case "Created": return "bg-slate-100 text-slate-700 border-slate-200";
-    case "Assigned": return "bg-blue-50 text-blue-700 border-blue-200";
-    case "In Progress": return "bg-amber-50 text-amber-700 border-amber-200";
-    case "Pending": return "bg-orange-50 text-orange-700 border-orange-200";
-    case "Under Review": return "bg-purple-50 text-purple-700 border-purple-200";
-    case "Completed": return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "Closed": return "bg-gray-100 text-gray-600 border-gray-200";
-    case "On Hold": return "bg-yellow-50 text-yellow-700 border-yellow-200";
-    case "Cancelled": return "bg-red-50 text-red-500 border-red-200";
-    case "Overdue": return "bg-red-100 text-red-700 border-red-300";
+    case "Created": return "bg-muted text-muted-foreground border-border";
+    case "Assigned": return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    case "In Progress": return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    case "Pending": return "bg-orange-500/10 text-orange-400 border-orange-500/20";
+    case "Under Review": return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+    case "Completed": return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    case "Closed": return "bg-muted text-muted-foreground border-border";
+    case "On Hold": return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+    case "Cancelled": return "bg-red-500/10 text-red-400 border-red-500/20";
+    case "Overdue": return "bg-red-500/15 text-red-400 border-red-500/30";
     default: return "bg-muted text-muted-foreground";
   }
 }
 
 export function getPriorityColor(priority: TaskPriority): string {
   switch (priority) {
-    case "High": return "bg-orange-50 text-orange-700 border-orange-200";
-    case "Medium": return "bg-blue-50 text-blue-700 border-blue-200";
-    case "Low": return "bg-slate-50 text-slate-600 border-slate-200";
+    case "High": return "bg-orange-500/10 text-orange-400 border-orange-500/20";
+    case "Medium": return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    case "Low": return "bg-muted text-muted-foreground border-border";
     default: return "bg-muted text-muted-foreground";
   }
 }
