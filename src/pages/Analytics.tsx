@@ -409,9 +409,10 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       </div>
 
       <Tabs defaultValue="executive-summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="executive-summary">Executive Summary</TabsTrigger>
           <TabsTrigger value="task-kpi">Task KPI Monitoring</TabsTrigger>
+          <TabsTrigger value="task-progress">Task Progress</TabsTrigger>
           <TabsTrigger value="employee-performance">Employee Performance</TabsTrigger>
         </TabsList>
 
