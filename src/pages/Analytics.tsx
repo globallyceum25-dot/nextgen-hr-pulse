@@ -489,15 +489,15 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total Sub-Tasks</span>
                 <span className="text-2xl font-bold text-foreground mt-1">{execSubTaskStats.total}</span>
               </div>
-              <div className="bg-emerald-50 rounded-lg border p-3 flex flex-col">
+              <div className="bg-emerald-500/10 rounded-lg border p-3 flex flex-col">
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Completed</span>
-                <span className="text-2xl font-bold text-emerald-700 mt-1">{execSubTaskStats.completed}</span>
+                <span className="text-2xl font-bold text-emerald-400 mt-1">{execSubTaskStats.completed}</span>
               </div>
-              <div className="bg-red-50 rounded-lg border p-3 flex flex-col">
+              <div className="bg-red-500/10 rounded-lg border p-3 flex flex-col">
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Overdue</span>
-                <span className="text-2xl font-bold text-red-700 mt-1">{execSubTaskStats.overdue}</span>
+                <span className="text-2xl font-bold text-red-400 mt-1">{execSubTaskStats.overdue}</span>
               </div>
-              <div className="bg-primary/5 rounded-lg border p-3 flex flex-col">
+              <div className="bg-primary/10 rounded-lg border p-3 flex flex-col">
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Completion %</span>
                 <span className="text-2xl font-bold text-primary mt-1">{execSubTaskStats.completionRate}%</span>
               </div>
