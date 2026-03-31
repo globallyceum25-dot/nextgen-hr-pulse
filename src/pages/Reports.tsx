@@ -423,12 +423,12 @@ export default function Reports({ selectedSector }: ReportsProps) {
                           <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                           <td className="px-3 py-2 text-card-foreground font-medium max-w-[200px] truncate">{name}</td>
                           <td className="px-3 py-2 text-center">{d.total}</td>
-                          <td className="px-3 py-2 text-center text-emerald-700">{d.completed}</td>
-                          <td className="px-3 py-2 text-center text-red-600">{d.overdue}</td>
+                          <td className="px-3 py-2 text-center text-emerald-400">{d.completed}</td>
+                          <td className="px-3 py-2 text-center text-red-400">{d.overdue}</td>
                           <td className="px-3 py-2 text-center">{d.total > 0 ? Math.round(d.progressSum / d.total) : 0}%</td>
                           <td className="px-3 py-2 text-center">{d.total > 0 ? Math.round(d.kpiSum / d.total) : 0}%</td>
                           <td className="px-3 py-2 text-center">
-                            <span className={`font-bold ${perf >= 70 ? "text-emerald-700" : perf >= 50 ? "text-blue-700" : perf >= 30 ? "text-amber-700" : "text-red-700"}`}>{perf}%</span>
+                            <span className={`font-bold ${perf >= 70 ? "text-emerald-400" : perf >= 50 ? "text-blue-400" : perf >= 30 ? "text-amber-400" : "text-red-400"}`}>{perf}%</span>
                           </td>
                         </tr>
                       );
