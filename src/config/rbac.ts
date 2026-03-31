@@ -11,7 +11,7 @@
 
 export type AppRole = "super_admin" | "sector_hr_admin" | "responsible_person" | "viewer";
 
-export type Module = "dashboard" | "tasks" | "analytics" | "employees" | "reports" | "admin";
+export type Module = "tasks" | "analytics" | "employees" | "reports" | "admin";
 
 export type Action = "view" | "create" | "edit" | "delete" | "export";
 
