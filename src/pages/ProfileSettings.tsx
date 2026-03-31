@@ -282,6 +282,16 @@ export default function ProfileSettings() {
           <CardDescription>Update your account password</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <Input
+              id="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
@@ -307,7 +317,7 @@ export default function ProfileSettings() {
           <div className="flex justify-end">
             <Button
               onClick={handleChangePassword}
-              disabled={changingPassword || !newPassword || !confirmPassword}
+              disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
               variant="outline"
             >
               {changingPassword ? "Updating..." : "Change Password"}
