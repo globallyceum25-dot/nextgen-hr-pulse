@@ -48,7 +48,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
   return (
     <aside
       className={cn(
-        "h-screen bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border transition-snappy sticky top-0",
+        "h-screen gradient-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border transition-snappy sticky top-0",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -78,7 +78,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded text-sm transition-snappy",
                 location.pathname === item.path
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  ? "gradient-primary text-sidebar-primary-foreground shadow-md shadow-primary/20"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >
@@ -143,7 +143,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
       {!collapsed && (
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-sidebar-primary flex items-center justify-center text-[11px] font-semibold text-sidebar-primary-foreground">
+            <div className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center text-[11px] font-semibold text-sidebar-primary-foreground shadow-md shadow-primary/20">
               {userEmail ? userEmail.charAt(0).toUpperCase() : "U"}
             </div>
             <div className="flex-1 min-w-0">

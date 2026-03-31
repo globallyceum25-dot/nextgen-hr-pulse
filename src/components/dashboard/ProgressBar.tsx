@@ -7,7 +7,7 @@ export default function ProgressBar({ value, size = "md" }: { value: number; siz
         <div
           className={cn(
             "h-full rounded-full transition-snappy",
-            value >= 80 ? "bg-success" : value >= 50 ? "bg-primary" : value >= 30 ? "bg-warning" : "bg-destructive"
+            value >= 80 ? "gradient-success" : value >= 50 ? "gradient-primary" : value >= 30 ? "gradient-warning" : "gradient-destructive"
           )}
           style={{ width: `${value}%` }}
         />
