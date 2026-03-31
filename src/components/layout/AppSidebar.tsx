@@ -78,7 +78,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded text-sm transition-snappy",
                 location.pathname === item.path
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  ? "gradient-primary text-sidebar-primary-foreground shadow-md shadow-primary/20"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >

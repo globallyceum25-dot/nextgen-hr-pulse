@@ -34,8 +34,9 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--gradient-page)' }}>
+      <div className="absolute inset-0 gradient-glow pointer-events-none" />
+      <Card className="w-full max-w-md card-gradient relative z-10">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
           <CardDescription>Enter your email and password to access the system</CardDescription>
