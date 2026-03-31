@@ -477,16 +477,16 @@ export default function Reports({ selectedSector }: ReportsProps) {
                       <td className="px-2 py-2 text-center">{d.taskPerf}%</td>
                       <td className="px-2 py-2 text-center">{d.subPerf}%</td>
                       <td className="px-2 py-2 text-center">
-                        <span className={`font-bold ${d.overall >= 70 ? "text-emerald-700" : d.overall >= 50 ? "text-blue-700" : d.overall >= 30 ? "text-amber-700" : "text-red-700"}`}>{d.overall}%</span>
+                        <span className={`font-bold ${d.overall >= 70 ? "text-emerald-400" : d.overall >= 50 ? "text-blue-400" : d.overall >= 30 ? "text-amber-400" : "text-red-400"}`}>{d.overall}%</span>
                       </td>
                       <td className="px-2 py-2 text-center">{d.avgKpi}%</td>
                       <td className="px-2 py-2 text-center">
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
-                          d.kpiStatus.startsWith("5") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                          d.kpiStatus.startsWith("4") ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          d.kpiStatus.startsWith("3") ? "bg-amber-50 text-amber-700 border-amber-200" :
-                          d.kpiStatus.startsWith("2") ? "bg-orange-50 text-orange-700 border-orange-200" :
-                          "bg-red-50 text-red-700 border-red-200"
+                          d.kpiStatus.startsWith("5") ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                          d.kpiStatus.startsWith("4") ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                          d.kpiStatus.startsWith("3") ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                          d.kpiStatus.startsWith("2") ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
+                          "bg-red-500/10 text-red-400 border-red-500/20"
                         }`}>{d.kpiStatus}</span>
                       </td>
                     </tr>
