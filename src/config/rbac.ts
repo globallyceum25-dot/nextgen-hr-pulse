@@ -59,7 +59,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
 
 /** Route path → module mapping */
 export const ROUTE_MODULE_MAP: Record<string, Module> = {
-  "/":          "dashboard",
+  "/":          "analytics",
   "/tasks":     "tasks",
   "/analytics": "analytics",
   "/employees": "employees",

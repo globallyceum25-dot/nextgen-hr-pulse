@@ -65,7 +65,7 @@ const App = () => (
               {({ selectedSector }) => (
                 <RouteGuard>
                   <Routes>
-                    <Route path="/" element={<Dashboard selectedSector={selectedSector} />} />
+                    <Route path="/" element={<Analytics selectedSector={selectedSector} />} />
                     <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
                     <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
                     <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
