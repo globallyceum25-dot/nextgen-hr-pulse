@@ -183,11 +183,11 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
   // KPI Achievement Distribution for donut chart
   const KPI_RATING_COLORS = [
-    "hsl(270, 35%, 50%)",   // 1 - Unsatisfactory (purple)
-    "hsl(215, 50%, 42%)",   // 2 - Needs Improvement (blue)
-    "hsl(35, 65%, 50%)",    // 3 - Meets Expectations (amber)
-    "hsl(160, 40%, 45%)",   // 4 - Very Good (green)
-    "hsl(45, 70%, 50%)",    // 5 - Exceeds Expectations (gold)
+    "hsl(270, 40%, 35%)",   // 1 - Unsatisfactory (deep purple)
+    "hsl(250, 45%, 40%)",   // 2 - Needs Improvement (indigo)
+    "hsl(35, 60%, 45%)",    // 3 - Meets Expectations (amber)
+    "hsl(160, 40%, 40%)",   // 4 - Very Good (green)
+    "hsl(45, 65%, 48%)",    // 5 - Exceeds Expectations (gold)
   ];
 
   const kpiAchievementDist = useMemo(() => {
