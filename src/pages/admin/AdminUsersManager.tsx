@@ -143,13 +143,16 @@ export default function AdminUsersManager() {
         }
       );
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (!response.ok || data?.error) {
-        const msg = data?.error || "Failed to create user";
+        const msg = data?.error || data?.message || "Failed to create user";
         toast({ title: "Error", description: msg, variant: "destructive" });
       } else {
-        toast({ title: "User created & role assigned successfully" });
+        toast({
+          title: data?.role_assigned === false ? "Notice" : "Success",
+          description: data?.message || "User created & role assigned successfully",
+        });
         setDialogOpen(false);
         setNewEmail("");
         setNewPassword("");
