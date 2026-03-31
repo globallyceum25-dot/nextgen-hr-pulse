@@ -4,6 +4,7 @@ import type { DbTask } from "@/types/tasks";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import TaskProgressVisualization from "@/components/analytics/TaskProgressVisualization";
 
 interface AnalyticsProps {
   selectedSector: number | null;
@@ -408,9 +409,10 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       </div>
 
       <Tabs defaultValue="executive-summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="executive-summary">Executive Summary</TabsTrigger>
           <TabsTrigger value="task-kpi">Task KPI Monitoring</TabsTrigger>
+          <TabsTrigger value="task-progress">Task Progress</TabsTrigger>
           <TabsTrigger value="employee-performance">Employee Performance</TabsTrigger>
         </TabsList>
 
@@ -705,7 +707,12 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
           </div>
         </TabsContent>
 
-        {/* ===== TAB 3: Employee Performance ===== */}
+        {/* ===== TAB 3: Task Progress Visualization ===== */}
+        <TabsContent value="task-progress" className="space-y-6 mt-4">
+          <TaskProgressVisualization tasks={filtered} />
+        </TabsContent>
+
+        {/* ===== TAB 4: Employee Performance ===== */}
         <TabsContent value="employee-performance" className="space-y-6 mt-4">
           {/* Employee Performance Chart - Overall Weighted Performance */}
           <div className="bg-card rounded-lg border p-5">
