@@ -134,9 +134,44 @@ export default function SystemHealthMonitoring() {
   const subTaskCompletionRate = subTasks.length > 0 ? (completedSubTasks / subTasks.length) * 100 : 0;
   const totalDbRecords = tasks.length + subTasks.length + profiles.length + notifications.length + activityLogs.length;
 
-  // System status
-  const errorRate = totalTasks > 0 ? (overdueTasks / totalTasks) * 100 : 0;
-  const systemStatus = errorRate > 20 ? "Critical" : errorRate > 10 ? "Warning" : "Healthy";
+  // System health check — based on actual system errors, not task data
+  const [systemErrors, setSystemErrors] = useState<{ dbErrors: number; authErrors: number; edgeErrors: number; lastChecked: Date | null }>({
+    dbErrors: 0, authErrors: 0, edgeErrors: 0, lastChecked: null,
+  });
+
+  // Check actual system connectivity & health
+  const { data: healthCheck } = useQuery({
+    queryKey: ["system-health-check", refreshKey],
+    queryFn: async () => {
+      const results = { dbOk: false, authOk: false, apiLatency: 0, errors: [] as string[] };
+      const start = performance.now();
+      try {
+        const { error } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+        results.dbOk = !error;
+        if (error) results.errors.push(`Database: ${error.message}`);
+      } catch (e: any) {
+        results.errors.push(`Database: ${e.message}`);
+      }
+      try {
+        const { error } = await supabase.auth.getSession();
+        results.authOk = !error;
+        if (error) results.errors.push(`Auth: ${error.message}`);
+      } catch (e: any) {
+        results.errors.push(`Auth: ${e.message}`);
+      }
+      results.apiLatency = Math.round(performance.now() - start);
+      return results;
+    },
+    refetchInterval: 60000, // re-check every 60s
+  });
+
+  const dbHealthy = healthCheck?.dbOk ?? true;
+  const authHealthy = healthCheck?.authOk ?? true;
+  const apiLatency = healthCheck?.apiLatency ?? 0;
+  const systemErrorsList = healthCheck?.errors ?? [];
+  const systemErrorCount = systemErrorsList.length;
+
+  const systemStatus = systemErrorCount > 1 ? "Critical" : systemErrorCount === 1 ? "Warning" : "Healthy";
   const statusColor = systemStatus === "Healthy" ? "bg-emerald-500" : systemStatus === "Warning" ? "bg-amber-500" : "bg-red-500";
   const statusTextColor = systemStatus === "Healthy" ? "text-emerald-500" : systemStatus === "Warning" ? "text-amber-500" : "text-red-500";
 
