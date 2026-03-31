@@ -16,6 +16,7 @@ import Reports from "@/pages/Reports";
 import NotFound from "@/pages/NotFound";
 import Administration from "@/pages/admin/Administration";
 import Login from "@/pages/Login";
+import ProfileSettings from "@/pages/ProfileSettings";
 import RouteGuard from "@/components/layout/RouteGuard";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,7 @@ const App = () => (
                     <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
                     <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
                     <Route path="/admin" element={<Administration />} />
+                    <Route path="/profile" element={<ProfileSettings />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </RouteGuard>

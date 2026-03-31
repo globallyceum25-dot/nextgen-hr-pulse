@@ -11,10 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   User,
-  Settings,
   ClipboardList,
   HelpCircle,
   LogOut,
@@ -26,11 +25,12 @@ interface UserInfo {
   email: string;
   fullName: string;
   initials: string;
+  avatarUrl: string | null;
 }
 
 export default function UserAccountDropdown() {
-  const [user, setUser] = useState<UserInfo>({ email: "", fullName: "", initials: "?" });
-  const { role, isAdmin, can } = useUserRole();
+  const [user, setUser] = useState<UserInfo>({ email: "", fullName: "", initials: "?", avatarUrl: null });
+  const { role, can } = useUserRole();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,21 +40,22 @@ export default function UserAccountDropdown() {
 
       const email = authUser.email || "";
       let fullName = authUser.user_metadata?.full_name || "";
+      let avatarUrl: string | null = null;
 
-      // Try profile table
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, email")
+        .select("full_name, email, avatar_url")
         .eq("user_id", authUser.id)
         .maybeSingle();
 
       if (profile?.full_name) fullName = profile.full_name;
+      if (profile?.avatar_url) avatarUrl = profile.avatar_url;
 
       const initials = fullName
         ? fullName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
         : email.slice(0, 2).toUpperCase();
 
-      setUser({ email, fullName: fullName || email.split("@")[0], initials });
+      setUser({ email, fullName: fullName || email.split("@")[0], initials, avatarUrl });
     }
     load();
   }, []);
@@ -76,6 +77,7 @@ export default function UserAccountDropdown() {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <Avatar className="h-8 w-8 border border-primary/30">
+            {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={user.fullName} /> : null}
             <AvatarFallback className="bg-gradient-to-br from-primary/60 to-accent/60 text-primary-foreground text-xs font-bold">
               {user.initials}
             </AvatarFallback>
@@ -92,10 +94,10 @@ export default function UserAccountDropdown() {
         align="end"
         sideOffset={8}
       >
-        {/* User info header */}
         <DropdownMenuLabel className="px-3 py-3">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border border-primary/30">
+              {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={user.fullName} /> : null}
               <AvatarFallback className="bg-gradient-to-br from-primary/60 to-accent/60 text-primary-foreground text-sm font-bold">
                 {user.initials}
               </AvatarFallback>
@@ -111,6 +113,14 @@ export default function UserAccountDropdown() {
         <DropdownMenuSeparator className="bg-white/10" />
 
         <DropdownMenuGroup>
+          <DropdownMenuItem
+            className="gap-2 cursor-pointer hover:bg-white/5 focus:bg-white/5"
+            onClick={() => navigate("/profile")}
+          >
+            <User size={15} className="text-muted-foreground" />
+            <span>My Profile</span>
+          </DropdownMenuItem>
+
           <DropdownMenuItem
             className="gap-2 cursor-pointer hover:bg-white/5 focus:bg-white/5"
             onClick={() => navigate("/tasks")}
@@ -141,7 +151,7 @@ export default function UserAccountDropdown() {
         <DropdownMenuSeparator className="bg-white/10" />
 
         <DropdownMenuItem
-          className="gap-2 cursor-pointer text-red-400 hover:bg-red-500/10 focus:bg-red-500/10 focus:text-red-400"
+          className="gap-2 cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive"
           onClick={handleLogout}
         >
           <LogOut size={15} />
