@@ -117,29 +117,37 @@ export default function AdminUsersManager() {
     setAssigning(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke("create-user", {
-        body: {
-          email: newEmail.trim(),
-          password: newPassword,
-          full_name: newFullName.trim() || newEmail.trim(),
-          role: newRole,
-        },
-      });
+      const accessToken = session?.access_token;
 
-      if (error) {
-        // Parse error message from the response
-        let msg = "Failed to create user";
-        try {
-          if (error.message) msg = error.message;
-          if (error.context?.body) {
-            const text = await new Response(error.context.body).text();
-            const parsed = JSON.parse(text);
-            if (parsed.error) msg = parsed.error;
-          }
-        } catch {}
+      if (!accessToken) {
+        toast({ title: "Error", description: "No active session. Please sign in again.", variant: "destructive" });
+        setAssigning(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            email: newEmail.trim(),
+            password: newPassword,
+            full_name: newFullName.trim() || newEmail.trim(),
+            role: newRole,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || data?.error) {
+        const msg = data?.error || "Failed to create user";
         toast({ title: "Error", description: msg, variant: "destructive" });
-      } else if (data?.error) {
-        toast({ title: "Error", description: data.error, variant: "destructive" });
       } else {
         toast({ title: "User created & role assigned successfully" });
         setDialogOpen(false);
