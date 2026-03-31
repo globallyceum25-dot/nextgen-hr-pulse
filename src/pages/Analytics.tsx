@@ -62,46 +62,41 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
   const filtered = useMemo(() => tasks, [tasks]);
 
-  // KPI summary - Tasks
-  const kpiData = useMemo(() => {
+  // Executive Summary - Dashboard-style cards for Tasks
+  const execTaskStats = useMemo(() => {
     const total = filtered.length;
     const completed = filtered.filter(t => t.status === "Completed" || t.status === "Closed").length;
-    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const avgKpi = total > 0 ? Math.round(filtered.reduce((s, t) => s + Number(t.kpi_achievement), 0) / total) : 0;
+    const inProgress = filtered.filter(t => t.status === "In Progress").length;
+    const pending = filtered.filter(t => ["Created", "Assigned", "Pending"].includes(t.status)).length;
     const overdue = filtered.filter(t => {
       if (t.status === "Completed" || t.status === "Closed") return false;
       if (!t.due_date) return false;
       return new Date(t.due_date) < new Date();
     }).length;
-    return [
-      { label: "Total Tasks", value: total },
-      { label: "Completion Rate", value: completionRate, suffix: "%" },
-      { label: "Avg KPI Score", value: avgKpi },
-      { label: "Overdue Tasks", value: overdue },
-    ];
+    const underReview = filtered.filter(t => t.status === "Under Review").length;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
+    const dueThisWeek = filtered.filter(t => {
+      if (!t.due_date || t.status === "Completed" || t.status === "Closed") return false;
+      const due = new Date(t.due_date); due.setHours(0, 0, 0, 0);
+      return due >= today && due <= weekEnd;
+    }).length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, inProgress, pending, overdue, underReview, dueThisWeek, completionRate };
   }, [filtered]);
 
-  // KPI summary - Sub-tasks
-  const subTaskKpiData = useMemo(() => {
-    const allSubs = filtered.flatMap(t => (t.sub_tasks || []).map(st => ({ ...st, parentKpiTarget: Number(t.kpi_target_percent) || 100 })));
+  // Executive Summary - Dashboard-style cards for Sub-Tasks
+  const execSubTaskStats = useMemo(() => {
+    const allSubs = filtered.flatMap(t => (t.sub_tasks || []));
     const total = allSubs.length;
     const completed = allSubs.filter(st => st.status === "Completed" || st.status === "Closed").length;
-    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const avgKpi = total > 0 ? Math.round(allSubs.reduce((s, st) => {
-      const kpi = st.parentKpiTarget > 0 ? Math.min((Number(st.progress) / st.parentKpiTarget) * 100, 100) : 0;
-      return s + kpi;
-    }, 0) / total) : 0;
     const overdue = allSubs.filter(st => {
       if (st.status === "Completed" || st.status === "Closed") return false;
       if (!st.due_date) return false;
       return new Date(st.due_date) < new Date();
     }).length;
-    return [
-      { label: "Total Sub-Tasks", value: total },
-      { label: "Completion Rate", value: completionRate, suffix: "%" },
-      { label: "Avg KPI Score", value: avgKpi },
-      { label: "Overdue Sub-Tasks", value: overdue },
-    ];
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, overdue, completionRate };
   }, [filtered]);
 
   const statusDist = useMemo(() => {
