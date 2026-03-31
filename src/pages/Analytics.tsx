@@ -100,6 +100,21 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     return { total, completed, overdue, completionRate };
   }, [filtered]);
 
+  // Monthly Task Trend (6 months)
+  const monthlyTrend = useMemo(() => {
+    const trend: { month: string; created: number; completed: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const monthLabel = d.toLocaleString("default", { month: "short", year: "2-digit" });
+      const created = filtered.filter(t => t.created_at.startsWith(monthKey)).length;
+      const comp = filtered.filter(t => t.completed_date && t.completed_date.startsWith(monthKey)).length;
+      trend.push({ month: monthLabel, created, completed: comp });
+    }
+    return trend;
+  }, [filtered]);
+
   const statusDist = useMemo(() => {
     const counts: Record<string, number> = {};
     filtered.forEach(t => { counts[t.status] = (counts[t.status] ?? 0) + 1; });
