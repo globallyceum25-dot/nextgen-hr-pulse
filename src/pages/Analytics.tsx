@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import type { DbTask } from "@/types/tasks";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList, AreaChart, Area } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import TaskProgressVisualization from "@/components/analytics/TaskProgressVisualization";
@@ -98,6 +98,21 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     }).length;
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { total, completed, overdue, completionRate };
+  }, [filtered]);
+
+  // Monthly Task Trend (6 months)
+  const monthlyTrend = useMemo(() => {
+    const trend: { month: string; created: number; completed: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const monthLabel = d.toLocaleString("default", { month: "short", year: "2-digit" });
+      const created = filtered.filter(t => t.created_at.startsWith(monthKey)).length;
+      const comp = filtered.filter(t => t.completed_date && t.completed_date.startsWith(monthKey)).length;
+      trend.push({ month: monthLabel, created, completed: comp });
+    }
+    return trend;
   }, [filtered]);
 
   const statusDist = useMemo(() => {
@@ -516,6 +531,22 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Monthly Task Trend */}
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Monthly Task Trend (6 Months)</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={monthlyTrend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} />
+                <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} allowDecimals={false} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
+                <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }} />
+                <Area type="monotone" dataKey="created" name="Created" stroke={CHART_COLORS.primary} fill={CHART_COLORS.primary} fillOpacity={0.15} strokeWidth={2} dot={{ r: 3 }} />
+                <Area type="monotone" dataKey="completed" name="Completed" stroke="hsl(152, 45%, 40%)" fill="hsl(152, 45%, 40%)" fillOpacity={0.15} strokeWidth={2} dot={{ r: 3 }} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </TabsContent>
 
