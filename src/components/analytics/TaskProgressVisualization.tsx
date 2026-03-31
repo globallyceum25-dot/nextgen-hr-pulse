@@ -145,7 +145,7 @@ export default function TaskProgressVisualization({ tasks }: Props) {
       case "due-date": result.sort((a, b) => {
         if (!a.task.due_date) return 1;
         if (!b.task.due_date) return -1;
-        return new Date(a.task.due_date).getTime() - new Date(b.task.due_date).getTime());
+        return new Date(a.task.due_date).getTime() - new Date(b.task.due_date).getTime();
       }); break;
       case "name": result.sort((a, b) => a.task.title.localeCompare(b.task.title)); break;
     }
