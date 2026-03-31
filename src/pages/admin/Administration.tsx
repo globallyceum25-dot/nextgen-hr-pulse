@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Server, ShieldCheck, Users } from "lucide-react";
+import { Server, ShieldCheck, Users, Activity } from "lucide-react";
 import AdminBackend from "./AdminBackend";
 import AdminRolesManager from "./AdminRolesManager";
 import AdminUsersManager from "./AdminUsersManager";
+import SystemHealthMonitoring from "./SystemHealthMonitoring";
 import { useSearchParams } from "react-router-dom";
 
 export default function Administration() {
@@ -46,6 +47,13 @@ export default function Administration() {
               <Users className="mr-2 h-4 w-4" />
               Users
             </TabsTrigger>
+            <TabsTrigger
+              value="health"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 pt-3"
+            >
+              <Activity className="mr-2 h-4 w-4" />
+              System Health
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -57,6 +65,9 @@ export default function Administration() {
         </TabsContent>
         <TabsContent value="users" className="mt-0">
           <AdminUsersManager />
+        </TabsContent>
+        <TabsContent value="health" className="mt-0">
+          <SystemHealthMonitoring />
         </TabsContent>
       </Tabs>
     </div>
