@@ -13,30 +13,30 @@ interface AnalyticsProps {
 
 // Formal corporate color palette for donut/pie charts - high contrast & distinguishable
 const COLORS = [
-  "hsl(152, 45%, 40%)",   // Forest green (Completed)
-  "hsl(215, 50%, 42%)",   // Deep navy blue
-  "hsl(35, 65%, 50%)",    // Warm amber (In Progress)
-  "hsl(0, 50%, 48%)",     // Muted crimson
-  "hsl(270, 35%, 50%)",   // Plum purple (Pending)
-  "hsl(195, 40%, 48%)",   // Teal
-  "hsl(220, 15%, 55%)",   // Cool grey
-  "hsl(45, 70%, 50%)",    // Gold
-  "hsl(330, 40%, 50%)",   // Rose
-  "hsl(160, 40%, 45%)",   // Sage
+  "hsl(300, 70%, 55%)",   // Magenta/Pink (primary)
+  "hsl(270, 60%, 55%)",   // Purple
+  "hsl(200, 70%, 55%)",   // Bright blue
+  "hsl(160, 60%, 45%)",   // Teal green
+  "hsl(340, 65%, 55%)",   // Rose pink
+  "hsl(45, 80%, 55%)",    // Warm amber
+  "hsl(220, 50%, 60%)",   // Steel blue
+  "hsl(0, 60%, 55%)",     // Soft red
+  "hsl(280, 50%, 60%)",   // Lavender
+  "hsl(180, 50%, 50%)",   // Cyan
 ];
 
-// Chart-specific formal colors
+// Chart-specific colors for dark theme
 const CHART_COLORS = {
-  primary: "hsl(215, 50%, 35%)",
-  secondary: "hsl(200, 30%, 65%)",
-  accent: "hsl(210, 40%, 52%)",
-  target: "hsl(215, 50%, 35%)",
-  achievement: "hsl(200, 30%, 65%)",
-  workload: "hsl(215, 50%, 35%)",
-  output: "hsl(195, 35%, 55%)",
-  referenceLine: "hsl(0, 45%, 45%)",
-  grid: "hsl(214, 20%, 88%)",
-  axisText: "hsl(215, 16%, 47%)",
+  primary: "hsl(300, 70%, 55%)",
+  secondary: "hsl(270, 50%, 60%)",
+  accent: "hsl(200, 70%, 55%)",
+  target: "hsl(300, 70%, 55%)",
+  achievement: "hsl(270, 50%, 60%)",
+  workload: "hsl(300, 70%, 55%)",
+  output: "hsl(200, 60%, 55%)",
+  referenceLine: "hsl(0, 60%, 55%)",
+  grid: "hsl(260, 15%, 22%)",
+  axisText: "hsl(260, 10%, 55%)",
 };
 
 const RADIAN = Math.PI / 180;
@@ -51,8 +51,8 @@ function renderPieLabel(total: number) {
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     return (
       <g>
-        <rect x={x - 16} y={y - 8} width={32} height={16} rx={3} fill="white" fillOpacity={0.85} />
-        <text x={x} y={y} fill="#000000" textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={700}>{pct}%</text>
+        <rect x={x - 16} y={y - 8} width={32} height={16} rx={3} fill="hsl(260, 18%, 14%)" fillOpacity={0.9} />
+        <text x={x} y={y} fill="hsl(260, 10%, 90%)" textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={700}>{pct}%</text>
       </g>
     );
   };
@@ -462,13 +462,13 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               {[
                 { label: "Total Tasks", value: execTaskStats.total, icon: ListChecks, color: "text-foreground", bg: "bg-card" },
-                { label: "Completed", value: execTaskStats.completed, icon: CheckCircle2, color: "text-emerald-700", bg: "bg-emerald-50" },
-                { label: "In Progress", value: execTaskStats.inProgress, icon: TrendingUp, color: "text-amber-700", bg: "bg-amber-50" },
-                { label: "Pending", value: execTaskStats.pending, icon: Clock, color: "text-blue-700", bg: "bg-blue-50" },
-                { label: "Overdue", value: execTaskStats.overdue, icon: AlertTriangle, color: "text-red-700", bg: "bg-red-50" },
-                { label: "Under Review", value: execTaskStats.underReview, icon: Users, color: "text-purple-700", bg: "bg-purple-50" },
-                { label: "Due This Week", value: execTaskStats.dueThisWeek, icon: Calendar, color: "text-orange-700", bg: "bg-orange-50" },
-                { label: "Completion %", value: `${execTaskStats.completionRate}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/5" },
+                { label: "Completed", value: execTaskStats.completed, icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+                { label: "In Progress", value: execTaskStats.inProgress, icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-500/10" },
+                { label: "Pending", value: execTaskStats.pending, icon: Clock, color: "text-blue-400", bg: "bg-blue-500/10" },
+                { label: "Overdue", value: execTaskStats.overdue, icon: AlertTriangle, color: "text-red-400", bg: "bg-red-500/10" },
+                { label: "Under Review", value: execTaskStats.underReview, icon: Users, color: "text-purple-400", bg: "bg-purple-500/10" },
+                { label: "Due This Week", value: execTaskStats.dueThisWeek, icon: Calendar, color: "text-orange-400", bg: "bg-orange-500/10" },
+                { label: "Completion %", value: `${execTaskStats.completionRate}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
               ].map(card => (
                 <div key={card.label} className={`${card.bg} rounded-lg border p-3 flex flex-col`}>
                   <div className="flex items-center justify-between mb-1">
@@ -489,15 +489,15 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total Sub-Tasks</span>
                 <span className="text-2xl font-bold text-foreground mt-1">{execSubTaskStats.total}</span>
               </div>
-              <div className="bg-emerald-50 rounded-lg border p-3 flex flex-col">
+              <div className="bg-emerald-500/10 rounded-lg border p-3 flex flex-col">
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Completed</span>
-                <span className="text-2xl font-bold text-emerald-700 mt-1">{execSubTaskStats.completed}</span>
+                <span className="text-2xl font-bold text-emerald-400 mt-1">{execSubTaskStats.completed}</span>
               </div>
-              <div className="bg-red-50 rounded-lg border p-3 flex flex-col">
+              <div className="bg-red-500/10 rounded-lg border p-3 flex flex-col">
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Overdue</span>
-                <span className="text-2xl font-bold text-red-700 mt-1">{execSubTaskStats.overdue}</span>
+                <span className="text-2xl font-bold text-red-400 mt-1">{execSubTaskStats.overdue}</span>
               </div>
-              <div className="bg-primary/5 rounded-lg border p-3 flex flex-col">
+              <div className="bg-primary/10 rounded-lg border p-3 flex flex-col">
                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Completion %</span>
                 <span className="text-2xl font-bold text-primary mt-1">{execSubTaskStats.completionRate}%</span>
               </div>
@@ -604,7 +604,7 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                   <p className="text-sm text-muted-foreground text-center py-8">No overdue tasks</p>
                 ) : (
                   overdueTasksList.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100">
+                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                       <div>
                         <p className="text-sm font-medium text-foreground">{t.title}</p>
                         <p className="text-xs text-muted-foreground">Due: {t.dueDate}</p>

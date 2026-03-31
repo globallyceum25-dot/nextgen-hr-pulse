@@ -401,12 +401,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
           { label: "Total Tasks", value: summary.total, color: "text-foreground", bg: "bg-card" },
-          { label: "Completed", value: summary.completed, color: "text-emerald-700", bg: "bg-emerald-50" },
-          { label: "In Progress", value: summary.inProgress, color: "text-amber-700", bg: "bg-amber-50" },
-          { label: "Pending", value: summary.pending, color: "text-blue-700", bg: "bg-blue-50" },
-          { label: "Overdue", value: summary.overdue, color: "text-red-700", bg: "bg-red-50" },
-          { label: "On Hold", value: summary.onHold, color: "text-yellow-700", bg: "bg-yellow-50" },
-          { label: "Completion %", value: `${summary.completionRate}%`, color: "text-primary", bg: "bg-primary/5" },
+          { label: "Completed", value: summary.completed, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+          { label: "In Progress", value: summary.inProgress, color: "text-amber-400", bg: "bg-amber-500/10" },
+          { label: "Pending", value: summary.pending, color: "text-blue-400", bg: "bg-blue-500/10" },
+          { label: "Overdue", value: summary.overdue, color: "text-red-400", bg: "bg-red-500/10" },
+          { label: "On Hold", value: summary.onHold, color: "text-yellow-400", bg: "bg-yellow-500/10" },
+          { label: "Completion %", value: `${summary.completionRate}%`, color: "text-primary", bg: "bg-primary/10" },
         ].map(card => (
           <div key={card.label} className={`${card.bg} rounded-lg border p-3 flex flex-col`}>
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{card.label}</span>
@@ -1163,7 +1163,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
 
           {/* Deadline Alert */}
           {dl.showAlert && (
-            <div className={`flex items-center gap-2 p-2 rounded-md text-sm font-medium ${dl.isOverdue ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}>
+            <div className={`flex items-center gap-2 p-2 rounded-md text-sm font-medium ${dl.isOverdue ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}>
               <AlertTriangle size={16} />
               {dl.label}
             </div>
@@ -1192,7 +1192,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
               <div className="space-y-1">
                 {subTasks.map(st => (
                   <div key={st.id} className="flex items-center gap-2 text-xs p-1.5 rounded hover:bg-muted/50">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${st.status === "Completed" ? "bg-emerald-500" : st.status === "In Progress" ? "bg-amber-500" : "bg-slate-300"}`} />
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${st.status === "Completed" ? "bg-emerald-500" : st.status === "In Progress" ? "bg-amber-500" : "bg-muted-foreground/30"}`} />
                     <span className="flex-1 truncate">{st.title}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${getStatusColor(st.status)}`}>{st.status}</span>
                   </div>

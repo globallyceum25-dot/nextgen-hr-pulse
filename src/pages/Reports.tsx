@@ -237,9 +237,9 @@ export default function Reports({ selectedSector }: ReportsProps) {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { label: "Total Tasks", value: stats.total, color: "text-foreground" },
-          { label: "Completed", value: stats.completed, color: "text-emerald-700" },
-          { label: "In Progress", value: stats.inProgress, color: "text-amber-700" },
-          { label: "Overdue", value: stats.overdue, color: "text-red-700" },
+          { label: "Completed", value: stats.completed, color: "text-emerald-400" },
+          { label: "In Progress", value: stats.inProgress, color: "text-amber-400" },
+          { label: "Overdue", value: stats.overdue, color: "text-red-400" },
           { label: "Completion Rate", value: `${stats.rate}%`, color: "text-primary" },
         ].map(c => (
           <div key={c.label} className="bg-card rounded-lg border p-3">
@@ -315,8 +315,8 @@ export default function Reports({ selectedSector }: ReportsProps) {
                       <td className="px-2 py-2 text-muted-foreground">{t.task_number}</td>
                       <td className="px-2 py-2 text-card-foreground font-medium max-w-[200px] truncate">{t.title}</td>
                       <td className="px-2 py-2 text-muted-foreground">{t.department?.department_name || "—"}</td>
-                      <td className="px-2 py-2"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.priority === "High" ? "bg-orange-50 text-orange-700 border-orange-200" : t.priority === "Medium" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-600 border-slate-200"}`}>{t.priority}</span></td>
-                      <td className="px-2 py-2"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.status === "Completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : t.status === "Overdue" ? "bg-red-100 text-red-700 border-red-300" : "bg-slate-100 text-slate-700 border-slate-200"}`}>{t.status}</span></td>
+                      <td className="px-2 py-2"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.priority === "High" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : t.priority === "Medium" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-muted text-muted-foreground border-border"}`}>{t.priority}</span></td>
+                      <td className="px-2 py-2"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.status === "Completed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : t.status === "Overdue" ? "bg-red-500/10 text-red-400 border-red-500/20" : "bg-muted text-muted-foreground border-border"}`}>{t.status}</span></td>
                       <td className="px-2 py-2 text-muted-foreground">{t.due_date || "—"}</td>
                       <td className="px-2 py-2 text-center">{Number(t.progress).toFixed(0)}%</td>
                       <td className="px-2 py-2 text-center">{Number(t.kpi_achievement).toFixed(1)}%</td>
@@ -365,8 +365,8 @@ export default function Reports({ selectedSector }: ReportsProps) {
                         <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                         <td className="px-3 py-2 text-card-foreground font-medium">{dept}</td>
                         <td className="px-3 py-2 text-center">{d.total}</td>
-                        <td className="px-3 py-2 text-center text-emerald-700">{d.completed}</td>
-                        <td className="px-3 py-2 text-center text-red-600">{d.overdue}</td>
+                        <td className="px-3 py-2 text-center text-emerald-400">{d.completed}</td>
+                        <td className="px-3 py-2 text-center text-red-400">{d.overdue}</td>
                         <td className="px-3 py-2 text-center font-semibold">{d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0}%</td>
                         <td className="px-3 py-2 text-center">{d.total > 0 ? Math.round(d.progressSum / d.total) : 0}%</td>
                       </tr>
@@ -423,12 +423,12 @@ export default function Reports({ selectedSector }: ReportsProps) {
                           <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                           <td className="px-3 py-2 text-card-foreground font-medium max-w-[200px] truncate">{name}</td>
                           <td className="px-3 py-2 text-center">{d.total}</td>
-                          <td className="px-3 py-2 text-center text-emerald-700">{d.completed}</td>
-                          <td className="px-3 py-2 text-center text-red-600">{d.overdue}</td>
+                          <td className="px-3 py-2 text-center text-emerald-400">{d.completed}</td>
+                          <td className="px-3 py-2 text-center text-red-400">{d.overdue}</td>
                           <td className="px-3 py-2 text-center">{d.total > 0 ? Math.round(d.progressSum / d.total) : 0}%</td>
                           <td className="px-3 py-2 text-center">{d.total > 0 ? Math.round(d.kpiSum / d.total) : 0}%</td>
                           <td className="px-3 py-2 text-center">
-                            <span className={`font-bold ${perf >= 70 ? "text-emerald-700" : perf >= 50 ? "text-blue-700" : perf >= 30 ? "text-amber-700" : "text-red-700"}`}>{perf}%</span>
+                            <span className={`font-bold ${perf >= 70 ? "text-emerald-400" : perf >= 50 ? "text-blue-400" : perf >= 30 ? "text-amber-400" : "text-red-400"}`}>{perf}%</span>
                           </td>
                         </tr>
                       );
@@ -472,21 +472,21 @@ export default function Reports({ selectedSector }: ReportsProps) {
                       <td className="px-2 py-2 text-card-foreground font-medium">{d.name}</td>
                       <td className="px-2 py-2 text-center">{d.totalTasks}</td>
                       <td className="px-2 py-2 text-center">{d.totalSubTasks}</td>
-                      <td className="px-2 py-2 text-center text-emerald-700">{d.completed}</td>
-                      <td className="px-2 py-2 text-center text-red-600">{d.overdue}</td>
+                      <td className="px-2 py-2 text-center text-emerald-400">{d.completed}</td>
+                      <td className="px-2 py-2 text-center text-red-400">{d.overdue}</td>
                       <td className="px-2 py-2 text-center">{d.taskPerf}%</td>
                       <td className="px-2 py-2 text-center">{d.subPerf}%</td>
                       <td className="px-2 py-2 text-center">
-                        <span className={`font-bold ${d.overall >= 70 ? "text-emerald-700" : d.overall >= 50 ? "text-blue-700" : d.overall >= 30 ? "text-amber-700" : "text-red-700"}`}>{d.overall}%</span>
+                        <span className={`font-bold ${d.overall >= 70 ? "text-emerald-400" : d.overall >= 50 ? "text-blue-400" : d.overall >= 30 ? "text-amber-400" : "text-red-400"}`}>{d.overall}%</span>
                       </td>
                       <td className="px-2 py-2 text-center">{d.avgKpi}%</td>
                       <td className="px-2 py-2 text-center">
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
-                          d.kpiStatus.startsWith("5") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                          d.kpiStatus.startsWith("4") ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          d.kpiStatus.startsWith("3") ? "bg-amber-50 text-amber-700 border-amber-200" :
-                          d.kpiStatus.startsWith("2") ? "bg-orange-50 text-orange-700 border-orange-200" :
-                          "bg-red-50 text-red-700 border-red-200"
+                          d.kpiStatus.startsWith("5") ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                          d.kpiStatus.startsWith("4") ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                          d.kpiStatus.startsWith("3") ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                          d.kpiStatus.startsWith("2") ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
+                          "bg-red-500/10 text-red-400 border-red-500/20"
                         }`}>{d.kpiStatus}</span>
                       </td>
                     </tr>
@@ -526,14 +526,14 @@ export default function Reports({ selectedSector }: ReportsProps) {
                   {filtered.filter(t => getDeadlineInfo(t.due_date, t.status).isOverdue).map((t, i) => {
                     const dl = getDeadlineInfo(t.due_date, t.status);
                     return (
-                      <tr key={t.id} className="border-b last:border-0 hover:bg-muted/50 bg-red-50/30">
+                      <tr key={t.id} className="border-b last:border-0 hover:bg-muted/50 bg-red-500/5">
                         <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                         <td className="px-3 py-2 text-card-foreground font-medium max-w-[200px] truncate">{t.title}</td>
                         <td className="px-3 py-2 text-muted-foreground">{t.department?.department_name || "—"}</td>
                         <td className="px-3 py-2 text-muted-foreground">{t.company?.company_name || "—"}</td>
-                        <td className="px-3 py-2 text-center"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.priority === "High" ? "bg-orange-50 text-orange-700 border-orange-200" : t.priority === "Medium" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-600 border-slate-200"}`}>{t.priority}</span></td>
+                        <td className="px-3 py-2 text-center"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.priority === "High" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : t.priority === "Medium" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-muted text-muted-foreground border-border"}`}>{t.priority}</span></td>
                         <td className="px-3 py-2 text-muted-foreground">{t.due_date}</td>
-                        <td className="px-3 py-2 text-red-600 font-semibold">{dl.label}</td>
+                        <td className="px-3 py-2 text-red-400 font-semibold">{dl.label}</td>
                         <td className="px-3 py-2 text-center">{Number(t.progress).toFixed(0)}%</td>
                       </tr>
                     );
