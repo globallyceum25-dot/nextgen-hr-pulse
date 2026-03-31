@@ -526,14 +526,14 @@ export default function Reports({ selectedSector }: ReportsProps) {
                   {filtered.filter(t => getDeadlineInfo(t.due_date, t.status).isOverdue).map((t, i) => {
                     const dl = getDeadlineInfo(t.due_date, t.status);
                     return (
-                      <tr key={t.id} className="border-b last:border-0 hover:bg-muted/50 bg-red-50/30">
+                      <tr key={t.id} className="border-b last:border-0 hover:bg-muted/50 bg-red-500/5">
                         <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                         <td className="px-3 py-2 text-card-foreground font-medium max-w-[200px] truncate">{t.title}</td>
                         <td className="px-3 py-2 text-muted-foreground">{t.department?.department_name || "—"}</td>
                         <td className="px-3 py-2 text-muted-foreground">{t.company?.company_name || "—"}</td>
-                        <td className="px-3 py-2 text-center"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.priority === "High" ? "bg-orange-50 text-orange-700 border-orange-200" : t.priority === "Medium" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-600 border-slate-200"}`}>{t.priority}</span></td>
+                        <td className="px-3 py-2 text-center"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.priority === "High" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : t.priority === "Medium" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-muted text-muted-foreground border-border"}`}>{t.priority}</span></td>
                         <td className="px-3 py-2 text-muted-foreground">{t.due_date}</td>
-                        <td className="px-3 py-2 text-red-600 font-semibold">{dl.label}</td>
+                        <td className="px-3 py-2 text-red-400 font-semibold">{dl.label}</td>
                         <td className="px-3 py-2 text-center">{Number(t.progress).toFixed(0)}%</td>
                       </tr>
                     );
