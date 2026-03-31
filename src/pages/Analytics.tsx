@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import type { DbTask } from "@/types/tasks";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList, AreaChart, Area } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import TaskProgressVisualization from "@/components/analytics/TaskProgressVisualization";
