@@ -707,7 +707,12 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
           </div>
         </TabsContent>
 
-        {/* ===== TAB 3: Employee Performance ===== */}
+        {/* ===== TAB 3: Task Progress Visualization ===== */}
+        <TabsContent value="task-progress" className="space-y-6 mt-4">
+          <TaskProgressVisualization tasks={filtered} />
+        </TabsContent>
+
+        {/* ===== TAB 4: Employee Performance ===== */}
         <TabsContent value="employee-performance" className="space-y-6 mt-4">
           {/* Employee Performance Chart - Overall Weighted Performance */}
           <div className="bg-card rounded-lg border p-5">
