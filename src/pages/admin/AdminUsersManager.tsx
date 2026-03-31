@@ -117,7 +117,7 @@ export default function AdminUsersManager() {
     setAssigning(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await supabase.functions.invoke("create-user", {
+      const { data, error } = await supabase.functions.invoke("create-user", {
         body: {
           email: newEmail.trim(),
           password: newPassword,
@@ -126,9 +126,20 @@ export default function AdminUsersManager() {
         },
       });
 
-      if (res.error || res.data?.error) {
-        const msg = res.data?.error || res.error?.message || "Failed to create user";
+      if (error) {
+        // Parse error message from the response
+        let msg = "Failed to create user";
+        try {
+          if (error.message) msg = error.message;
+          if (error.context?.body) {
+            const text = await new Response(error.context.body).text();
+            const parsed = JSON.parse(text);
+            if (parsed.error) msg = parsed.error;
+          }
+        } catch {}
         toast({ title: "Error", description: msg, variant: "destructive" });
+      } else if (data?.error) {
+        toast({ title: "Error", description: data.error, variant: "destructive" });
       } else {
         toast({ title: "User created & role assigned successfully" });
         setDialogOpen(false);
