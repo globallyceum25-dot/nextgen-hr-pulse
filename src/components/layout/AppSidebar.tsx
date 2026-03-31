@@ -48,7 +48,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
   return (
     <aside
       className={cn(
-        "h-screen bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border transition-snappy sticky top-0",
+        "h-screen gradient-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border transition-snappy sticky top-0",
         collapsed ? "w-16" : "w-64"
       )}
     >
