@@ -229,6 +229,7 @@ export default function TaskProgressVisualization({ tasks }: Props) {
                 <th className="p-2 text-center font-semibold text-muted-foreground">Status</th>
                 <th className="p-2 text-center font-semibold text-muted-foreground">Details</th>
                 <th className="p-2 text-center font-semibold text-muted-foreground w-10">✓</th>
+              </tr>
             </thead>
             <tbody>
               {paginatedTasks.map(({ task, subs, completedSubs, progress, assignee, isOverdue }) => {
