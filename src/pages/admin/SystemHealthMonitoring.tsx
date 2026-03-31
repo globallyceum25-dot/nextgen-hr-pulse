@@ -134,9 +134,44 @@ export default function SystemHealthMonitoring() {
   const subTaskCompletionRate = subTasks.length > 0 ? (completedSubTasks / subTasks.length) * 100 : 0;
   const totalDbRecords = tasks.length + subTasks.length + profiles.length + notifications.length + activityLogs.length;
 
-  // System status
-  const errorRate = totalTasks > 0 ? (overdueTasks / totalTasks) * 100 : 0;
-  const systemStatus = errorRate > 20 ? "Critical" : errorRate > 10 ? "Warning" : "Healthy";
+  // System health check — based on actual system errors, not task data
+  const [systemErrors, setSystemErrors] = useState<{ dbErrors: number; authErrors: number; edgeErrors: number; lastChecked: Date | null }>({
+    dbErrors: 0, authErrors: 0, edgeErrors: 0, lastChecked: null,
+  });
+
+  // Check actual system connectivity & health
+  const { data: healthCheck } = useQuery({
+    queryKey: ["system-health-check", refreshKey],
+    queryFn: async () => {
+      const results = { dbOk: false, authOk: false, apiLatency: 0, errors: [] as string[] };
+      const start = performance.now();
+      try {
+        const { error } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+        results.dbOk = !error;
+        if (error) results.errors.push(`Database: ${error.message}`);
+      } catch (e: any) {
+        results.errors.push(`Database: ${e.message}`);
+      }
+      try {
+        const { error } = await supabase.auth.getSession();
+        results.authOk = !error;
+        if (error) results.errors.push(`Auth: ${error.message}`);
+      } catch (e: any) {
+        results.errors.push(`Auth: ${e.message}`);
+      }
+      results.apiLatency = Math.round(performance.now() - start);
+      return results;
+    },
+    refetchInterval: 60000, // re-check every 60s
+  });
+
+  const dbHealthy = healthCheck?.dbOk ?? true;
+  const authHealthy = healthCheck?.authOk ?? true;
+  const apiLatency = healthCheck?.apiLatency ?? 0;
+  const systemErrorsList = healthCheck?.errors ?? [];
+  const systemErrorCount = systemErrorsList.length;
+
+  const systemStatus = systemErrorCount > 1 ? "Critical" : systemErrorCount === 1 ? "Warning" : "Healthy";
   const statusColor = systemStatus === "Healthy" ? "bg-emerald-500" : systemStatus === "Warning" ? "bg-amber-500" : "bg-red-500";
   const statusTextColor = systemStatus === "Healthy" ? "text-emerald-500" : systemStatus === "Warning" ? "text-amber-500" : "text-red-500";
 
@@ -199,7 +234,7 @@ export default function SystemHealthMonitoring() {
           <div>
             <h2 className={`text-lg font-bold ${statusTextColor}`}>System Status: {systemStatus}</h2>
             <p className="text-xs text-muted-foreground">
-              Based on error rate ({errorRate.toFixed(1)}%), overdue tasks, and data quality
+              Based on database connectivity, authentication, and API response ({apiLatency}ms)
             </p>
           </div>
         </div>
@@ -446,8 +481,8 @@ export default function SystemHealthMonitoring() {
         <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Performance Metrics</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <MetricCard icon={Zap} title="Avg Page Load" value="< 1s" trend="up" tooltip="Estimated client-side load time" />
-          <MetricCard icon={Server} title="API Response" value="< 200ms" trend="up" tooltip="Estimated API response time" />
-          <MetricCard icon={BarChart3} title="Error Rate" value={`${errorRate.toFixed(1)}%`} trend={errorRate < 10 ? "up" : "down"} tooltip="Based on overdue/failed task ratio" />
+          <MetricCard icon={Server} title="API Response" value={`${apiLatency}ms`} trend={apiLatency < 500 ? "up" : "down"} tooltip="Measured API round-trip time" />
+          <MetricCard icon={BarChart3} title="System Errors" value={systemErrorCount} trend={systemErrorCount === 0 ? "up" : "down"} tooltip="Active system connectivity errors" />
           <MetricCard icon={HardDrive} title="DB Operations" value={activityLogs.length} subtitle="Recent logged ops" tooltip="Operations recorded in activity log" />
         </div>
       </div>
