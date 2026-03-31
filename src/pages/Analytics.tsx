@@ -414,29 +414,51 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
         {/* ===== TAB 1: Executive Summary ===== */}
         <TabsContent value="executive-summary" className="space-y-6 mt-4">
-          {/* Task KPI Cards */}
+          {/* Tasks Overview Cards - Dashboard Style */}
           <div>
-            <h2 className="text-sm font-semibold text-card-foreground mb-2">Tasks</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {kpiData.map(d => (
-                <div key={d.label} className="bg-card rounded-lg border p-4">
-                  <span className="text-xs text-muted-foreground">{d.label}</span>
-                  <p className="text-2xl font-bold text-foreground mt-1">{d.value}{(d as any).suffix || ""}</p>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tasks Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+              {[
+                { label: "Total Tasks", value: execTaskStats.total, icon: ListChecks, color: "text-foreground", bg: "bg-card" },
+                { label: "Completed", value: execTaskStats.completed, icon: CheckCircle2, color: "text-emerald-700", bg: "bg-emerald-50" },
+                { label: "In Progress", value: execTaskStats.inProgress, icon: TrendingUp, color: "text-amber-700", bg: "bg-amber-50" },
+                { label: "Pending", value: execTaskStats.pending, icon: Clock, color: "text-blue-700", bg: "bg-blue-50" },
+                { label: "Overdue", value: execTaskStats.overdue, icon: AlertTriangle, color: "text-red-700", bg: "bg-red-50" },
+                { label: "Under Review", value: execTaskStats.underReview, icon: Users, color: "text-purple-700", bg: "bg-purple-50" },
+                { label: "Due This Week", value: execTaskStats.dueThisWeek, icon: Calendar, color: "text-orange-700", bg: "bg-orange-50" },
+                { label: "Completion %", value: `${execTaskStats.completionRate}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/5" },
+              ].map(card => (
+                <div key={card.label} className={`${card.bg} rounded-lg border p-3 flex flex-col`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{card.label}</span>
+                    <card.icon size={14} className="text-muted-foreground" />
+                  </div>
+                  <span className={`text-2xl font-bold ${card.color}`}>{card.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Sub-Task KPI Cards */}
+          {/* Sub-Tasks Overview Cards - Dashboard Style */}
           <div>
-            <h2 className="text-sm font-semibold text-card-foreground mb-2">Sub-Tasks</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {subTaskKpiData.map(d => (
-                <div key={d.label} className="bg-card rounded-lg border p-4">
-                  <span className="text-xs text-muted-foreground">{d.label}</span>
-                  <p className="text-2xl font-bold text-foreground mt-1">{d.value}{(d as any).suffix || ""}</p>
-                </div>
-              ))}
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Sub-Tasks Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-card rounded-lg border p-3 flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total Sub-Tasks</span>
+                <span className="text-2xl font-bold text-foreground mt-1">{execSubTaskStats.total}</span>
+              </div>
+              <div className="bg-emerald-50 rounded-lg border p-3 flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Completed</span>
+                <span className="text-2xl font-bold text-emerald-700 mt-1">{execSubTaskStats.completed}</span>
+              </div>
+              <div className="bg-red-50 rounded-lg border p-3 flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Overdue</span>
+                <span className="text-2xl font-bold text-red-700 mt-1">{execSubTaskStats.overdue}</span>
+              </div>
+              <div className="bg-primary/5 rounded-lg border p-3 flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Completion %</span>
+                <span className="text-2xl font-bold text-primary mt-1">{execSubTaskStats.completionRate}%</span>
+              </div>
             </div>
           </div>
 
