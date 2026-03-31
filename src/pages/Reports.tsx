@@ -315,8 +315,8 @@ export default function Reports({ selectedSector }: ReportsProps) {
                       <td className="px-2 py-2 text-muted-foreground">{t.task_number}</td>
                       <td className="px-2 py-2 text-card-foreground font-medium max-w-[200px] truncate">{t.title}</td>
                       <td className="px-2 py-2 text-muted-foreground">{t.department?.department_name || "—"}</td>
-                      <td className="px-2 py-2"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.priority === "High" ? "bg-orange-50 text-orange-700 border-orange-200" : t.priority === "Medium" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-600 border-slate-200"}`}>{t.priority}</span></td>
-                      <td className="px-2 py-2"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.status === "Completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : t.status === "Overdue" ? "bg-red-100 text-red-700 border-red-300" : "bg-slate-100 text-slate-700 border-slate-200"}`}>{t.status}</span></td>
+                      <td className="px-2 py-2"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.priority === "High" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : t.priority === "Medium" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-muted text-muted-foreground border-border"}`}>{t.priority}</span></td>
+                      <td className="px-2 py-2"><span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${t.status === "Completed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : t.status === "Overdue" ? "bg-red-500/10 text-red-400 border-red-500/20" : "bg-muted text-muted-foreground border-border"}`}>{t.status}</span></td>
                       <td className="px-2 py-2 text-muted-foreground">{t.due_date || "—"}</td>
                       <td className="px-2 py-2 text-center">{Number(t.progress).toFixed(0)}%</td>
                       <td className="px-2 py-2 text-center">{Number(t.kpi_achievement).toFixed(1)}%</td>
