@@ -13,30 +13,30 @@ interface AnalyticsProps {
 
 // Formal corporate color palette for donut/pie charts - high contrast & distinguishable
 const COLORS = [
-  "hsl(152, 45%, 40%)",   // Forest green (Completed)
-  "hsl(215, 50%, 42%)",   // Deep navy blue
-  "hsl(35, 65%, 50%)",    // Warm amber (In Progress)
-  "hsl(0, 50%, 48%)",     // Muted crimson
-  "hsl(270, 35%, 50%)",   // Plum purple (Pending)
-  "hsl(195, 40%, 48%)",   // Teal
-  "hsl(220, 15%, 55%)",   // Cool grey
-  "hsl(45, 70%, 50%)",    // Gold
-  "hsl(330, 40%, 50%)",   // Rose
-  "hsl(160, 40%, 45%)",   // Sage
+  "hsl(300, 70%, 55%)",   // Magenta/Pink (primary)
+  "hsl(270, 60%, 55%)",   // Purple
+  "hsl(200, 70%, 55%)",   // Bright blue
+  "hsl(160, 60%, 45%)",   // Teal green
+  "hsl(340, 65%, 55%)",   // Rose pink
+  "hsl(45, 80%, 55%)",    // Warm amber
+  "hsl(220, 50%, 60%)",   // Steel blue
+  "hsl(0, 60%, 55%)",     // Soft red
+  "hsl(280, 50%, 60%)",   // Lavender
+  "hsl(180, 50%, 50%)",   // Cyan
 ];
 
-// Chart-specific formal colors
+// Chart-specific colors for dark theme
 const CHART_COLORS = {
-  primary: "hsl(215, 50%, 35%)",
-  secondary: "hsl(200, 30%, 65%)",
-  accent: "hsl(210, 40%, 52%)",
-  target: "hsl(215, 50%, 35%)",
-  achievement: "hsl(200, 30%, 65%)",
-  workload: "hsl(215, 50%, 35%)",
-  output: "hsl(195, 35%, 55%)",
-  referenceLine: "hsl(0, 45%, 45%)",
-  grid: "hsl(214, 20%, 88%)",
-  axisText: "hsl(215, 16%, 47%)",
+  primary: "hsl(300, 70%, 55%)",
+  secondary: "hsl(270, 50%, 60%)",
+  accent: "hsl(200, 70%, 55%)",
+  target: "hsl(300, 70%, 55%)",
+  achievement: "hsl(270, 50%, 60%)",
+  workload: "hsl(300, 70%, 55%)",
+  output: "hsl(200, 60%, 55%)",
+  referenceLine: "hsl(0, 60%, 55%)",
+  grid: "hsl(260, 15%, 22%)",
+  axisText: "hsl(260, 10%, 55%)",
 };
 
 const RADIAN = Math.PI / 180;
