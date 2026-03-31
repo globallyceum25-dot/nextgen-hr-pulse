@@ -134,6 +134,7 @@
     border: 1px solid hsl(260 15% 22%);
     position: relative;
     overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .card-gradient::before {
@@ -144,5 +145,92 @@
     right: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, hsl(300 70% 55% / 0.3), transparent);
+    transition: opacity 0.4s ease;
+  }
+
+  .card-gradient:hover {
+    border-color: hsl(300 70% 55% / 0.3);
+    box-shadow: 0 8px 32px hsl(300 70% 55% / 0.1), 0 0 0 1px hsl(300 70% 55% / 0.05);
+    transform: translateY(-2px);
+  }
+
+  .card-gradient:hover::before {
+    opacity: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, hsl(300 70% 55% / 0.6), hsl(320 80% 55% / 0.4), transparent);
+  }
+
+  /* Animated gradient shimmer on hover */
+  .card-shimmer {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      transparent 30%,
+      hsl(300 70% 55% / 0.06) 50%,
+      transparent 70%
+    );
+    opacity: 0;
+    transform: translateX(-100%);
+    transition: opacity 0.3s ease;
+  }
+
+  .card-shimmer:hover::after {
+    opacity: 1;
+    transform: translateX(100%);
+    transition: opacity 0.3s ease, transform 0.8s ease;
+  }
+
+  .card-shimmer:hover {
+    border-color: hsl(300 70% 55% / 0.25);
+    box-shadow: 0 4px 20px hsl(300 70% 55% / 0.08);
+  }
+
+  /* Gradient border glow on hover */
+  .hover-glow {
+    transition: all 0.3s ease;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px hsl(300 70% 55% / 0.15), 0 0 40px hsl(280 60% 50% / 0.05);
+  }
+
+  /* Interactive button/element pulse */
+  .hover-gradient-shift {
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    transition: background-position 0.5s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-gradient-shift:hover {
+    background-position: 100% 50%;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px hsl(300 70% 55% / 0.25);
+  }
+
+  /* Table row hover */
+  .row-hover {
+    transition: background 0.2s ease;
+  }
+
+  .row-hover:hover {
+    background: linear-gradient(90deg, hsl(280 30% 18% / 0.5), hsl(300 25% 16% / 0.3)) !important;
+  }
+
+  /* Badge/chip hover */
+  .badge-hover {
+    transition: all 0.2s ease;
+  }
+
+  .badge-hover:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px hsl(300 70% 55% / 0.2);
   }
 }
