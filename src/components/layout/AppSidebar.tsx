@@ -3,21 +3,33 @@ import { cn } from "@/lib/utils";
 import { SECTORS } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
-  ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut, FileText,
+  ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut, FileText, Shield,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
+import { Module } from "@/config/rbac";
 
 interface AppSidebarProps {
   selectedSector: number | null;
   onSectorChange: (id: number | null) => void;
 }
 
+const allNavItems: { label: string; icon: typeof LayoutDashboard; path: string; module: Module }[] = [
+  { label: "Dashboard", icon: LayoutDashboard, path: "/", module: "dashboard" },
+  { label: "Tasks", icon: ListTodo, path: "/tasks", module: "tasks" },
+  { label: "Task Analysis", icon: BarChart3, path: "/analytics", module: "analytics" },
+  { label: "Employees", icon: Users, path: "/employees", module: "employees" },
+  { label: "Reports", icon: FileText, path: "/reports", module: "reports" },
+  { label: "Administration", icon: Settings, path: "/admin", module: "admin" },
+];
+
 export default function AppSidebar({ selectedSector, onSectorChange }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [sectorsOpen, setSectorsOpen] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
+  const { role, can, loading } = useUserRole();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -25,14 +37,14 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
     });
   }, []);
 
-  const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-    { label: "Tasks", icon: ListTodo, path: "/tasks" },
-    { label: "Task Analysis", icon: BarChart3, path: "/analytics" },
-    { label: "Employees", icon: Users, path: "/employees" },
-    { label: "Reports", icon: FileText, path: "/reports" },
-    { label: "Administration", icon: Settings, path: "/admin" },
-  ];
+  const navItems = allNavItems.filter(item => can(item.module));
+
+  const roleBadge: Record<string, string> = {
+    super_admin: "Super Admin",
+    sector_hr_admin: "HR Admin",
+    responsible_person: "Responsible",
+    viewer: "Viewer",
+  };
 
   return (
     <aside
@@ -137,6 +149,12 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-sidebar-foreground truncate">{userEmail || "User"}</p>
+              {!loading && (
+                <p className="text-[10px] text-sidebar-foreground/50 flex items-center gap-1">
+                  <Shield size={10} />
+                  {roleBadge[role] || role}
+                </p>
+              )}
             </div>
             <button
               onClick={() => supabase.auth.signOut()}
