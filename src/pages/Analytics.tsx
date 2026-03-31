@@ -630,11 +630,11 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Completed", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
                 <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
                 <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
-                <Bar dataKey="completed" name="Completed" fill="hsl(215, 50%, 55%)" radius={[3, 3, 0, 0]} barSize={40}>
-                  <LabelList dataKey="completed" position="top" fontSize={11} fontWeight={700} fill="hsl(215, 50%, 55%)" />
+                <Bar dataKey="completed" name="Completed" fill="hsl(270, 50%, 40%)" radius={[3, 3, 0, 0]} barSize={40}>
+                  <LabelList dataKey="completed" position="top" fontSize={11} fontWeight={700} fill="hsl(270, 50%, 40%)" />
                 </Bar>
-                <Bar dataKey="pending" name="Pending" fill="hsl(130, 45%, 50%)" radius={[3, 3, 0, 0]} barSize={40}>
-                  <LabelList dataKey="pending" position="top" fontSize={11} fontWeight={700} fill="hsl(130, 45%, 50%)" />
+                <Bar dataKey="pending" name="Pending" fill="hsl(285, 40%, 50%)" radius={[3, 3, 0, 0]} barSize={40}>
+                  <LabelList dataKey="pending" position="top" fontSize={11} fontWeight={700} fill="hsl(285, 40%, 50%)" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
