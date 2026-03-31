@@ -16,6 +16,7 @@ import Reports from "@/pages/Reports";
 import NotFound from "@/pages/NotFound";
 import Administration from "@/pages/admin/Administration";
 import Login from "@/pages/Login";
+import RouteGuard from "@/components/layout/RouteGuard";
 
 const queryClient = new QueryClient();
 
