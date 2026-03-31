@@ -6,7 +6,7 @@ export default function KPICard({ data }: { data: KPIData }) {
   const isPercent = data.label.includes("Rate") || data.label.includes("KPI");
 
   return (
-    <div className="card-gradient rounded-lg p-5 transition-snappy hover:shadow-lg hover:shadow-primary/5">
+    <div className="card-gradient card-shimmer rounded-lg p-5">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{data.label}</p>
       <div className="flex items-end justify-between mt-2">
         <p className="text-2xl font-bold text-card-foreground">
