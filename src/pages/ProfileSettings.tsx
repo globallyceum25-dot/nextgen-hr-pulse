@@ -132,8 +132,12 @@ export default function ProfileSettings() {
   }
 
   async function handleChangePassword() {
+    if (!currentPassword) {
+      toast.error("Please enter your current password");
+      return;
+    }
     if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error("New password must be at least 6 characters");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -143,6 +147,16 @@ export default function ProfileSettings() {
 
     setChangingPassword(true);
     try {
+      // Verify old password by re-authenticating
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (signInError) {
+        toast.error("Current password is incorrect");
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       toast.success("Password changed successfully");
@@ -268,6 +282,16 @@ export default function ProfileSettings() {
           <CardDescription>Update your account password</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <Input
+              id="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
@@ -293,7 +317,7 @@ export default function ProfileSettings() {
           <div className="flex justify-end">
             <Button
               onClick={handleChangePassword}
-              disabled={changingPassword || !newPassword || !confirmPassword}
+              disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
               variant="outline"
             >
               {changingPassword ? "Updating..." : "Change Password"}
