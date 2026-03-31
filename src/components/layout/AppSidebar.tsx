@@ -143,7 +143,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
       {!collapsed && (
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-sidebar-primary flex items-center justify-center text-[11px] font-semibold text-sidebar-primary-foreground">
+            <div className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center text-[11px] font-semibold text-sidebar-primary-foreground shadow-md shadow-primary/20">
               {userEmail ? userEmail.charAt(0).toUpperCase() : "U"}
             </div>
             <div className="flex-1 min-w-0">
