@@ -115,6 +115,33 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     return trend;
   }, [filtered]);
 
+  // Tasks by Department
+  const deptDist = useMemo(() => {
+    return Object.entries(
+      filtered.reduce((acc, t) => {
+        const dept = (t as any).department?.department_name || "Unassigned";
+        acc[dept] = (acc[dept] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    ).map(([name, value]) => ({ name: name.length > 12 ? name.slice(0, 12) + "…" : name, fullName: name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [filtered]);
+
+  // Overdue Tasks list
+  const overdueTasksList = useMemo(() => {
+    const today = new Date();
+    return filtered.filter(t => {
+      if (t.status === "Completed" || t.status === "Closed") return false;
+      if (!t.due_date) return false;
+      return new Date(t.due_date) < today;
+    }).map(t => {
+      const dueDate = new Date(t.due_date!);
+      const diffDays = Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+      return { id: t.id, title: t.title, dueDate: t.due_date!, overdueDays: diffDays };
+    });
+  }, [filtered]);
+
   const statusDist = useMemo(() => {
     const counts: Record<string, number> = {};
     filtered.forEach(t => { counts[t.status] = (counts[t.status] ?? 0) + 1; });
@@ -547,6 +574,47 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 <Area type="monotone" dataKey="completed" name="Completed" stroke="hsl(152, 45%, 40%)" fill="hsl(152, 45%, 40%)" fillOpacity={0.15} strokeWidth={2} dot={{ r: 3 }} />
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Tasks by Department */}
+            <div className="bg-card rounded-lg border p-5">
+              <h2 className="text-sm font-semibold text-card-foreground mb-4">Tasks by Department</h2>
+              <ResponsiveContainer width="100%" height={Math.max(200, deptDist.length * 50)}>
+                <BarChart data={deptDist} layout="vertical" margin={{ left: 10, right: 30 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} width={80} />
+                  <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
+                  <Bar dataKey="value" name="Tasks" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} barSize={24}>
+                    <LabelList dataKey="value" position="right" fontSize={11} fontWeight={700} fill={CHART_COLORS.primary} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Overdue Tasks */}
+            <div className="bg-card rounded-lg border p-5">
+              <h2 className="text-sm font-semibold text-card-foreground mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                Overdue Tasks ({overdueTasksList.length})
+              </h2>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {overdueTasksList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">No overdue tasks</p>
+                ) : (
+                  overdueTasksList.map(t => (
+                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{t.title}</p>
+                        <p className="text-xs text-muted-foreground">Due: {t.dueDate}</p>
+                      </div>
+                      <span className="text-xs font-medium text-red-600 whitespace-nowrap">Overdue by {t.overdueDays} days</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </TabsContent>
 
