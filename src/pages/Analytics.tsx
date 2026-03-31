@@ -462,13 +462,13 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               {[
                 { label: "Total Tasks", value: execTaskStats.total, icon: ListChecks, color: "text-foreground", bg: "bg-card" },
-                { label: "Completed", value: execTaskStats.completed, icon: CheckCircle2, color: "text-emerald-700", bg: "bg-emerald-50" },
-                { label: "In Progress", value: execTaskStats.inProgress, icon: TrendingUp, color: "text-amber-700", bg: "bg-amber-50" },
-                { label: "Pending", value: execTaskStats.pending, icon: Clock, color: "text-blue-700", bg: "bg-blue-50" },
-                { label: "Overdue", value: execTaskStats.overdue, icon: AlertTriangle, color: "text-red-700", bg: "bg-red-50" },
-                { label: "Under Review", value: execTaskStats.underReview, icon: Users, color: "text-purple-700", bg: "bg-purple-50" },
-                { label: "Due This Week", value: execTaskStats.dueThisWeek, icon: Calendar, color: "text-orange-700", bg: "bg-orange-50" },
-                { label: "Completion %", value: `${execTaskStats.completionRate}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/5" },
+                { label: "Completed", value: execTaskStats.completed, icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+                { label: "In Progress", value: execTaskStats.inProgress, icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-500/10" },
+                { label: "Pending", value: execTaskStats.pending, icon: Clock, color: "text-blue-400", bg: "bg-blue-500/10" },
+                { label: "Overdue", value: execTaskStats.overdue, icon: AlertTriangle, color: "text-red-400", bg: "bg-red-500/10" },
+                { label: "Under Review", value: execTaskStats.underReview, icon: Users, color: "text-purple-400", bg: "bg-purple-500/10" },
+                { label: "Due This Week", value: execTaskStats.dueThisWeek, icon: Calendar, color: "text-orange-400", bg: "bg-orange-500/10" },
+                { label: "Completion %", value: `${execTaskStats.completionRate}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
               ].map(card => (
                 <div key={card.label} className={`${card.bg} rounded-lg border p-3 flex flex-col`}>
                   <div className="flex items-center justify-between mb-1">
