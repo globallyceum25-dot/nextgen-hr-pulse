@@ -51,8 +51,8 @@ function renderPieLabel(total: number) {
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     return (
       <g>
-        <rect x={x - 16} y={y - 8} width={32} height={16} rx={3} fill="white" fillOpacity={0.85} />
-        <text x={x} y={y} fill="#000000" textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={700}>{pct}%</text>
+        <rect x={x - 16} y={y - 8} width={32} height={16} rx={3} fill="hsl(260, 18%, 14%)" fillOpacity={0.9} />
+        <text x={x} y={y} fill="hsl(260, 10%, 90%)" textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={700}>{pct}%</text>
       </g>
     );
   };
