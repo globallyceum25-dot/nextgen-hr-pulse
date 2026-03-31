@@ -115,6 +115,33 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
     return trend;
   }, [filtered]);
 
+  // Tasks by Department
+  const deptDist = useMemo(() => {
+    return Object.entries(
+      filtered.reduce((acc, t) => {
+        const dept = (t as any).department?.department_name || "Unassigned";
+        acc[dept] = (acc[dept] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    ).map(([name, value]) => ({ name: name.length > 12 ? name.slice(0, 12) + "…" : name, fullName: name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [filtered]);
+
+  // Overdue Tasks list
+  const overdueTasksList = useMemo(() => {
+    const today = new Date();
+    return filtered.filter(t => {
+      if (t.status === "Completed" || t.status === "Closed") return false;
+      if (!t.due_date) return false;
+      return new Date(t.due_date) < today;
+    }).map(t => {
+      const dueDate = new Date(t.due_date!);
+      const diffDays = Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+      return { id: t.id, title: t.title, dueDate: t.due_date!, overdueDays: diffDays };
+    });
+  }, [filtered]);
+
   const statusDist = useMemo(() => {
     const counts: Record<string, number> = {};
     filtered.forEach(t => { counts[t.status] = (counts[t.status] ?? 0) + 1; });
