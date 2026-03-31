@@ -313,6 +313,7 @@ function TaskRow({ task, subs, completedSubs, progress, assignee, isOverdue, isE
         <td className="p-2 text-center">
           <button onClick={onViewDetails} className="text-[10px] text-primary hover:underline font-medium">View</button>
         </td>
+        <td className="p-2"></td>
       </tr>
       {/* Expanded subtask rows */}
       {isExpanded && subs.map(st => {
