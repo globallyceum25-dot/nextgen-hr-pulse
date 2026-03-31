@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import TaskProgressVisualization from "@/components/analytics/TaskProgressVisualization";
+import { ListChecks, CheckCircle2, TrendingUp, Clock, AlertTriangle, Users, Calendar } from "lucide-react";
 
 interface AnalyticsProps {
   selectedSector: number | null;
