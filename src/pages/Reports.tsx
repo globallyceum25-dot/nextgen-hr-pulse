@@ -365,8 +365,8 @@ export default function Reports({ selectedSector }: ReportsProps) {
                         <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                         <td className="px-3 py-2 text-card-foreground font-medium">{dept}</td>
                         <td className="px-3 py-2 text-center">{d.total}</td>
-                        <td className="px-3 py-2 text-center text-emerald-700">{d.completed}</td>
-                        <td className="px-3 py-2 text-center text-red-600">{d.overdue}</td>
+                        <td className="px-3 py-2 text-center text-emerald-400">{d.completed}</td>
+                        <td className="px-3 py-2 text-center text-red-400">{d.overdue}</td>
                         <td className="px-3 py-2 text-center font-semibold">{d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0}%</td>
                         <td className="px-3 py-2 text-center">{d.total > 0 ? Math.round(d.progressSum / d.total) : 0}%</td>
                       </tr>
