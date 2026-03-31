@@ -11,32 +11,32 @@ interface AnalyticsProps {
   selectedSector: number | null;
 }
 
-// Formal corporate color palette for donut/pie charts - high contrast & distinguishable
+// Formal corporate color palette for donut/pie charts - deep purple tones
 const COLORS = [
-  "hsl(300, 70%, 55%)",   // Magenta/Pink (primary)
-  "hsl(270, 60%, 55%)",   // Purple
-  "hsl(200, 70%, 55%)",   // Bright blue
-  "hsl(160, 60%, 45%)",   // Teal green
-  "hsl(340, 65%, 55%)",   // Rose pink
-  "hsl(45, 80%, 55%)",    // Warm amber
-  "hsl(220, 50%, 60%)",   // Steel blue
-  "hsl(0, 60%, 55%)",     // Soft red
-  "hsl(280, 50%, 60%)",   // Lavender
-  "hsl(180, 50%, 50%)",   // Cyan
+  "hsl(270, 55%, 38%)",   // Deep purple (primary)
+  "hsl(285, 50%, 42%)",   // Rich violet
+  "hsl(250, 50%, 45%)",   // Indigo purple
+  "hsl(160, 60%, 40%)",   // Teal green
+  "hsl(310, 45%, 40%)",   // Deep magenta
+  "hsl(45, 75%, 50%)",    // Warm amber
+  "hsl(230, 45%, 48%)",   // Deep blue
+  "hsl(0, 55%, 48%)",     // Deep red
+  "hsl(265, 45%, 50%)",   // Medium purple
+  "hsl(180, 45%, 42%)",   // Deep cyan
 ];
 
-// Chart-specific colors for dark theme
+// Chart-specific colors for dark theme - deeper purple palette
 const CHART_COLORS = {
-  primary: "hsl(300, 70%, 55%)",
-  secondary: "hsl(270, 50%, 60%)",
-  accent: "hsl(200, 70%, 55%)",
-  target: "hsl(300, 70%, 55%)",
-  achievement: "hsl(270, 50%, 60%)",
-  workload: "hsl(300, 70%, 55%)",
-  output: "hsl(200, 60%, 55%)",
-  referenceLine: "hsl(0, 60%, 55%)",
-  grid: "hsl(260, 15%, 22%)",
-  axisText: "hsl(260, 10%, 55%)",
+  primary: "hsl(270, 55%, 38%)",
+  secondary: "hsl(285, 45%, 42%)",
+  accent: "hsl(250, 50%, 45%)",
+  target: "hsl(270, 55%, 38%)",
+  achievement: "hsl(285, 45%, 42%)",
+  workload: "hsl(270, 55%, 38%)",
+  output: "hsl(250, 45%, 45%)",
+  referenceLine: "hsl(0, 55%, 48%)",
+  grid: "hsl(260, 15%, 20%)",
+  axisText: "hsl(260, 10%, 50%)",
 };
 
 const RADIAN = Math.PI / 180;
@@ -183,11 +183,11 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
 
   // KPI Achievement Distribution for donut chart
   const KPI_RATING_COLORS = [
-    "hsl(270, 35%, 50%)",   // 1 - Unsatisfactory (purple)
-    "hsl(215, 50%, 42%)",   // 2 - Needs Improvement (blue)
-    "hsl(35, 65%, 50%)",    // 3 - Meets Expectations (amber)
-    "hsl(160, 40%, 45%)",   // 4 - Very Good (green)
-    "hsl(45, 70%, 50%)",    // 5 - Exceeds Expectations (gold)
+    "hsl(270, 40%, 35%)",   // 1 - Unsatisfactory (deep purple)
+    "hsl(250, 45%, 40%)",   // 2 - Needs Improvement (indigo)
+    "hsl(35, 60%, 45%)",    // 3 - Meets Expectations (amber)
+    "hsl(160, 40%, 40%)",   // 4 - Very Good (green)
+    "hsl(45, 65%, 48%)",    // 5 - Exceeds Expectations (gold)
   ];
 
   const kpiAchievementDist = useMemo(() => {
@@ -630,11 +630,11 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
                 <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} label={{ value: "Completed", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: CHART_COLORS.axisText }} />
                 <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
                 <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
-                <Bar dataKey="completed" name="Completed" fill="hsl(215, 50%, 55%)" radius={[3, 3, 0, 0]} barSize={40}>
-                  <LabelList dataKey="completed" position="top" fontSize={11} fontWeight={700} fill="hsl(215, 50%, 55%)" />
+                <Bar dataKey="completed" name="Completed" fill="hsl(270, 50%, 40%)" radius={[3, 3, 0, 0]} barSize={40}>
+                  <LabelList dataKey="completed" position="top" fontSize={11} fontWeight={700} fill="hsl(270, 50%, 40%)" />
                 </Bar>
-                <Bar dataKey="pending" name="Pending" fill="hsl(130, 45%, 50%)" radius={[3, 3, 0, 0]} barSize={40}>
-                  <LabelList dataKey="pending" position="top" fontSize={11} fontWeight={700} fill="hsl(130, 45%, 50%)" />
+                <Bar dataKey="pending" name="Pending" fill="hsl(285, 40%, 50%)" radius={[3, 3, 0, 0]} barSize={40}>
+                  <LabelList dataKey="pending" position="top" fontSize={11} fontWeight={700} fill="hsl(285, 40%, 50%)" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
