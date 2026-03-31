@@ -1192,7 +1192,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
               <div className="space-y-1">
                 {subTasks.map(st => (
                   <div key={st.id} className="flex items-center gap-2 text-xs p-1.5 rounded hover:bg-muted/50">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${st.status === "Completed" ? "bg-emerald-500" : st.status === "In Progress" ? "bg-amber-500" : "bg-slate-300"}`} />
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${st.status === "Completed" ? "bg-emerald-500" : st.status === "In Progress" ? "bg-amber-500" : "bg-muted-foreground/30"}`} />
                     <span className="flex-1 truncate">{st.title}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${getStatusColor(st.status)}`}>{st.status}</span>
                   </div>

@@ -237,9 +237,9 @@ export default function Reports({ selectedSector }: ReportsProps) {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { label: "Total Tasks", value: stats.total, color: "text-foreground" },
-          { label: "Completed", value: stats.completed, color: "text-emerald-700" },
-          { label: "In Progress", value: stats.inProgress, color: "text-amber-700" },
-          { label: "Overdue", value: stats.overdue, color: "text-red-700" },
+          { label: "Completed", value: stats.completed, color: "text-emerald-400" },
+          { label: "In Progress", value: stats.inProgress, color: "text-amber-400" },
+          { label: "Overdue", value: stats.overdue, color: "text-red-400" },
           { label: "Completion Rate", value: `${stats.rate}%`, color: "text-primary" },
         ].map(c => (
           <div key={c.label} className="bg-card rounded-lg border p-3">
