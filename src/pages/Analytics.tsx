@@ -532,6 +532,22 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
               </div>
             </div>
           </div>
+
+          {/* Monthly Task Trend */}
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="text-sm font-semibold text-card-foreground mb-4">Monthly Task Trend (6 Months)</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={monthlyTrend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} />
+                <YAxis tick={{ fontSize: 11, fill: CHART_COLORS.axisText }} allowDecimals={false} />
+                <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "6px", border: `1px solid ${CHART_COLORS.grid}` }} />
+                <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }} />
+                <Area type="monotone" dataKey="created" name="Created" stroke={CHART_COLORS.primary} fill={CHART_COLORS.primary} fillOpacity={0.15} strokeWidth={2} dot={{ r: 3 }} />
+                <Area type="monotone" dataKey="completed" name="Completed" stroke="hsl(152, 45%, 40%)" fill="hsl(152, 45%, 40%)" fillOpacity={0.15} strokeWidth={2} dot={{ r: 3 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </TabsContent>
 
         {/* ===== TAB 2: Task KPI Monitoring ===== */}
