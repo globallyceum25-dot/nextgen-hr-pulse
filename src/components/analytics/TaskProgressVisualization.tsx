@@ -250,7 +250,7 @@ export default function TaskProgressVisualization({ tasks }: Props) {
                 );
               })}
               {paginatedTasks.length === 0 && (
-                <tr><td colSpan={9} className="text-center py-8 text-muted-foreground">No tasks match the selected filters.</td></tr>
+                <tr><td colSpan={10} className="text-center py-8 text-muted-foreground">No tasks match the selected filters.</td></tr>
               )}
             </tbody>
           </table>
