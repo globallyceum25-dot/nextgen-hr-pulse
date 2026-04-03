@@ -65,16 +65,18 @@ const App = () => (
             <AppLayout>
               {({ selectedSector }) => (
                 <RouteGuard>
-                  <Routes>
-                    <Route path="/" element={<Analytics selectedSector={selectedSector} />} />
-                    <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
-                    <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
-                    <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
-                    <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
-                    <Route path="/admin" element={<Administration />} />
-                    <Route path="/profile" element={<ProfileSettings />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                  <Suspense fallback={<div className="flex items-center justify-center h-full"><p className="text-muted-foreground">Loading...</p></div>}>
+                    <Routes>
+                      <Route path="/" element={<Analytics selectedSector={selectedSector} />} />
+                      <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
+                      <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
+                      <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
+                      <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
+                      <Route path="/admin" element={<Administration />} />
+                      <Route path="/profile" element={<ProfileSettings />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
                 </RouteGuard>
               )}
             </AppLayout>
