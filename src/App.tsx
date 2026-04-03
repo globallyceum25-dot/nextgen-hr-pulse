@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,16 +8,16 @@ import { ActivityLogProvider } from "@/contexts/ActivityLogContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import AppLayout from "@/components/layout/AppLayout";
-
-import Tasks from "@/pages/Tasks";
-import Analytics from "@/pages/Analytics";
-import Employees from "@/pages/Employees";
-import Reports from "@/pages/Reports";
-import NotFound from "@/pages/NotFound";
-import Administration from "@/pages/admin/Administration";
-import Login from "@/pages/Login";
-import ProfileSettings from "@/pages/ProfileSettings";
 import RouteGuard from "@/components/layout/RouteGuard";
+
+const Tasks = lazy(() => import("@/pages/Tasks"));
+const Analytics = lazy(() => import("@/pages/Analytics"));
+const Employees = lazy(() => import("@/pages/Employees"));
+const Reports = lazy(() => import("@/pages/Reports"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Administration = lazy(() => import("@/pages/admin/Administration"));
+const Login = lazy(() => import("@/pages/Login"));
+const ProfileSettings = lazy(() => import("@/pages/ProfileSettings"));
 
 const queryClient = new QueryClient();
 
