@@ -1,4 +1,6 @@
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateSubTask, useDeleteSubTask, useTaskComments, useAddComment } from "@/hooks/useTasks";
 import { useTaskCategories, useTaskTypes, useSectors } from "@/hooks/useTaskMasterData";
 import { useEmployees } from "@/hooks/useEmployees";
@@ -46,6 +48,8 @@ const SLA_OPTIONS = [
 const SUB_TASK_STATUSES: TaskWorkflowStatus[] = ["Created", "Assigned", "In Progress", "Under Review", "Completed"];
 
 export default function Tasks({ selectedSector }: TasksProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const myTasksMode = searchParams.get("myTasks") === "true";
   const { isAdmin } = useIsAdmin();
   const { data: employeesList = [] } = useEmployees();
   const { data: categories = [] } = useTaskCategories();
@@ -54,6 +58,20 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const { data: companies = [] } = useCompanies();
   const { data: departments = [] } = useDepartments();
   const { data: locations = [] } = useLocations();
+
+  // Current user's employee name (matched via email)
+  const [currentUserEmployeeName, setCurrentUserEmployeeName] = useState<string | null>(null);
+  useEffect(() => {
+    async function matchEmployee() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) return;
+      const matched = employeesList.find(
+        e => e.email?.toLowerCase() === user.email?.toLowerCase()
+      );
+      setCurrentUserEmployeeName(matched?.employee_name || null);
+    }
+    if (employeesList.length > 0) matchEmployee();
+  }, [employeesList]);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -333,6 +351,15 @@ export default function Tasks({ selectedSector }: TasksProps) {
     weekEnd.setDate(weekEnd.getDate() + 7);
 
     return tasks.filter(t => {
+      // My Tasks filter: show tasks where user is assignee or assigned_by, or has subtasks assigned
+      if (myTasksMode && currentUserEmployeeName) {
+        const isAssignee = (t as any).assignee_name?.toLowerCase() === currentUserEmployeeName.toLowerCase();
+        const hasSubTaskAssigned = (t.sub_tasks || []).some(
+          (st: any) => st.assignee_name?.toLowerCase() === currentUserEmployeeName.toLowerCase()
+        );
+        if (!isAssignee && !hasSubTaskAssigned) return false;
+      }
+
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (departmentFilter !== "All" && t.department_id !== departmentFilter) return false;
@@ -361,7 +388,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter]);
+  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName]);
 
   // KPI summary cards
   const summary = useMemo(() => {
@@ -417,9 +444,22 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       {/* Header + Quick Filters */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Task Management</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} tasks</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">
+              {myTasksMode ? "My Tasks" : "Task Management"}
+            </h1>
+            <p className="text-sm text-muted-foreground">{filtered.length} tasks</p>
+          </div>
+          {myTasksMode && (
+            <Badge
+              variant="secondary"
+              className="cursor-pointer gap-1 hover:bg-destructive/20"
+              onClick={() => setSearchParams({})}
+            >
+              <X size={12} /> Clear My Tasks Filter
+            </Badge>
+          )}
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
