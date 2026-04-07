@@ -338,9 +338,12 @@ export function useUpdateTask() {
         } as any;
       }
 
+      // Strip relation properties before update
+      const { assigned_by_profile, assignee_profile, category, company, department, location, sector, sub_tasks, type, ...cleanUpdates } = finalUpdates as any;
+
       const { data, error } = await supabase
         .from("tasks")
-        .update(finalUpdates)
+        .update(cleanUpdates)
         .eq("id", id)
         .select()
         .single();
@@ -404,9 +407,12 @@ export function useUpdateSubTask() {
         }
       }
 
+      // Strip relation properties before update
+      const { assignee_profile, ...cleanSubUpdates } = finalUpdates as any;
+
       const { data, error } = await supabase
         .from("sub_tasks")
-        .update(finalUpdates)
+        .update(cleanSubUpdates)
         .eq("id", id)
         .select()
         .single();

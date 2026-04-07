@@ -314,6 +314,7 @@ function EmployeeMasterTab() {
     reporting_manager: "" as string | null,
     employment_status: "Active",
     date_joined: "" as string | null,
+    email: "" as string | null,
   };
 
   const [form, setForm] = useState(emptyForm);
@@ -338,6 +339,7 @@ function EmployeeMasterTab() {
         reporting_manager: String(row["Reporting Manager"] || row["reporting_manager"] || "").trim() || null,
         employment_status: String(row["Employment Status"] || row["employment_status"] || "Active").trim(),
         date_joined: row["Date Joined"] || row["date_joined"] ? String(row["Date Joined"] || row["date_joined"]).trim() : null,
+        email: String(row["Email"] || row["email"] || "").trim() || null,
       })).filter(r => r.employee_name);
       setBulkData(parsed);
     };
@@ -360,8 +362,8 @@ function EmployeeMasterTab() {
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ["Employee Name", "Company Name", "Location", "Designation", "Reporting Manager", "Employment Status", "Date Joined"],
-      ["John Doe", "NextGen Human Capital Solutions", "Colombo", "HR Executive", "", "Active", "2026-01-15"],
+      ["Employee Name", "Company Name", "Location", "Designation", "Reporting Manager", "Employment Status", "Date Joined", "Email"],
+      ["John Doe", "NextGen Human Capital Solutions", "Colombo", "HR Executive", "", "Active", "2026-01-15", "john@example.com"],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Employees");
@@ -378,7 +380,7 @@ function EmployeeMasterTab() {
     e.preventDefault();
     if (!form.employee_name) { toast({ title: "Validation Error", description: "Employee name is required.", variant: "destructive" }); return; }
     try {
-      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
+      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null, email: form.email || null });
       toast({ title: "Employee Added", description: `${form.employee_name} has been added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -386,7 +388,7 @@ function EmployeeMasterTab() {
 
   const openEdit = (emp: Employee) => {
     setEditingEmployee(emp);
-    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, department: emp.department, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined });
+    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, department: emp.department, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined, email: emp.email });
     setEditDialogOpen(true);
   };
 
@@ -394,7 +396,7 @@ function EmployeeMasterTab() {
     e.preventDefault();
     if (!editingEmployee) return;
     try {
-      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
+      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null, email: form.email || null });
       toast({ title: "Employee Updated", description: `${form.employee_name} has been updated.` });
       resetForm(); setEditDialogOpen(false); setEditingEmployee(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -455,6 +457,7 @@ function EmployeeMasterTab() {
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
+        <div><label className={labelClass}>Email</label><input type="email" className={inputClass} placeholder="employee@example.com" value={form.email || ""} onChange={e => setForm(p => ({ ...p, email: e.target.value || null }))} /></div>
         <div><label className={labelClass}>Date Joined</label><input type="date" className={inputClass} value={form.date_joined || ""} onChange={e => setForm(p => ({ ...p, date_joined: e.target.value || null }))} /></div>
       </div>
       <div className="flex justify-end gap-2 pt-2"><Button type="submit" disabled={addEmployee.isPending || updateEmployee.isPending}>{submitLabel}</Button></div>
@@ -533,10 +536,10 @@ function EmployeeMasterTab() {
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Department</TableHead><TableHead>Designation</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Department</TableHead><TableHead>Designation</TableHead><TableHead>Email</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No employees found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">No employees found</TableCell></TableRow> :
                 filtered.map(emp => (
                   <TableRow key={emp.id}>
                     <TableCell className="font-mono text-xs font-semibold">{emp.employee_id}</TableCell>
@@ -545,6 +548,7 @@ function EmployeeMasterTab() {
                     <TableCell className="text-sm">{emp.location || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.department || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.designation || "—"}</TableCell>
+                    <TableCell className="text-sm">{emp.email || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.reporting_manager || "—"}</TableCell>
                     <TableCell><Badge variant={emp.employment_status === "Active" ? "default" : "secondary"}>{emp.employment_status}</Badge></TableCell>
                     <TableCell className="text-sm">{emp.date_joined || "—"}</TableCell>
