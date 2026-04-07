@@ -59,18 +59,22 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const { data: departments = [] } = useDepartments();
   const { data: locations = [] } = useLocations();
 
-  // Current user's employee name (matched via email)
+  // Current user identity for My Tasks filtering
   const [currentUserEmployeeName, setCurrentUserEmployeeName] = useState<string | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   useEffect(() => {
     async function matchEmployee() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) return;
+      if (!user) return;
+      setCurrentUserId(user.id);
+      setCurrentUserEmail(user.email?.toLowerCase() || null);
       const matched = employeesList.find(
         e => e.email?.toLowerCase() === user.email?.toLowerCase()
       );
       setCurrentUserEmployeeName(matched?.employee_name || null);
     }
-    if (employeesList.length > 0) matchEmployee();
+    matchEmployee();
   }, [employeesList]);
 
   // Filters
@@ -352,12 +356,27 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
     return tasks.filter(t => {
       // My Tasks filter: show tasks where user is assignee or assigned_by, or has subtasks assigned
-      if (myTasksMode && currentUserEmployeeName) {
-        const isAssignee = (t as any).assignee_name?.toLowerCase() === currentUserEmployeeName.toLowerCase();
-        const hasSubTaskAssigned = (t.sub_tasks || []).some(
-          (st: any) => st.assignee_name?.toLowerCase() === currentUserEmployeeName.toLowerCase()
+      if (myTasksMode && (currentUserEmployeeName || currentUserId)) {
+        const nameLower = currentUserEmployeeName?.toLowerCase();
+        // Check if user is the assignee (by name, id, or email)
+        const isAssignee = !!(
+          (nameLower && (t as any).assignee_name?.toLowerCase() === nameLower) ||
+          (currentUserId && t.assignee_id === currentUserId)
         );
-        if (!isAssignee && !hasSubTaskAssigned) return false;
+        // Check if user assigned the task (assigned_by)
+        const isAssigner = !!(currentUserId && t.assigned_by === currentUserId);
+        // Check if user created the task
+        const isCreator = !!(currentUserId && t.created_by === currentUserId);
+        // Check sub-tasks: assigned to user or created by user
+        const hasRelatedSubTask = (t.sub_tasks || []).some((st: any) => {
+          const stAssignee = !!(
+            (nameLower && st.assignee_name?.toLowerCase() === nameLower) ||
+            (currentUserId && st.assignee_id === currentUserId)
+          );
+          const stCreator = !!(currentUserId && st.created_by === currentUserId);
+          return stAssignee || stCreator;
+        });
+        if (!isAssignee && !isAssigner && !isCreator && !hasRelatedSubTask) return false;
       }
 
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
@@ -388,7 +407,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName]);
+  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName, currentUserId]);
 
   // KPI summary cards
   const summary = useMemo(() => {
