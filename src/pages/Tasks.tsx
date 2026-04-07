@@ -444,9 +444,22 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       {/* Header + Quick Filters */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Task Management</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} tasks</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">
+              {myTasksMode ? "My Tasks" : "Task Management"}
+            </h1>
+            <p className="text-sm text-muted-foreground">{filtered.length} tasks</p>
+          </div>
+          {myTasksMode && (
+            <Badge
+              variant="secondary"
+              className="cursor-pointer gap-1 hover:bg-destructive/20"
+              onClick={() => setSearchParams({})}
+            >
+              <X size={12} /> Clear My Tasks Filter
+            </Badge>
+          )}
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
