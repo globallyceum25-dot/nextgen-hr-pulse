@@ -457,6 +457,7 @@ function EmployeeMasterTab() {
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
+        <div><label className={labelClass}>Email</label><input type="email" className={inputClass} placeholder="employee@example.com" value={form.email || ""} onChange={e => setForm(p => ({ ...p, email: e.target.value || null }))} /></div>
         <div><label className={labelClass}>Date Joined</label><input type="date" className={inputClass} value={form.date_joined || ""} onChange={e => setForm(p => ({ ...p, date_joined: e.target.value || null }))} /></div>
       </div>
       <div className="flex justify-end gap-2 pt-2"><Button type="submit" disabled={addEmployee.isPending || updateEmployee.isPending}>{submitLabel}</Button></div>
@@ -535,10 +536,10 @@ function EmployeeMasterTab() {
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Department</TableHead><TableHead>Designation</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">Emp ID</TableHead><TableHead>Employee Name</TableHead><TableHead>Company Name</TableHead><TableHead>Location</TableHead><TableHead>Department</TableHead><TableHead>Designation</TableHead><TableHead>Email</TableHead><TableHead>Reporting Manager</TableHead><TableHead>Status</TableHead><TableHead>Date Joined</TableHead><TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No employees found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">No employees found</TableCell></TableRow> :
                 filtered.map(emp => (
                   <TableRow key={emp.id}>
                     <TableCell className="font-mono text-xs font-semibold">{emp.employee_id}</TableCell>
@@ -547,6 +548,7 @@ function EmployeeMasterTab() {
                     <TableCell className="text-sm">{emp.location || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.department || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.designation || "—"}</TableCell>
+                    <TableCell className="text-sm">{emp.email || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.reporting_manager || "—"}</TableCell>
                     <TableCell><Badge variant={emp.employment_status === "Active" ? "default" : "secondary"}>{emp.employment_status}</Badge></TableCell>
                     <TableCell className="text-sm">{emp.date_joined || "—"}</TableCell>
