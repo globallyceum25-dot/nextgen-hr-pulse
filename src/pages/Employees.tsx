@@ -314,6 +314,7 @@ function EmployeeMasterTab() {
     reporting_manager: "" as string | null,
     employment_status: "Active",
     date_joined: "" as string | null,
+    email: "" as string | null,
   };
 
   const [form, setForm] = useState(emptyForm);
@@ -338,6 +339,7 @@ function EmployeeMasterTab() {
         reporting_manager: String(row["Reporting Manager"] || row["reporting_manager"] || "").trim() || null,
         employment_status: String(row["Employment Status"] || row["employment_status"] || "Active").trim(),
         date_joined: row["Date Joined"] || row["date_joined"] ? String(row["Date Joined"] || row["date_joined"]).trim() : null,
+        email: String(row["Email"] || row["email"] || "").trim() || null,
       })).filter(r => r.employee_name);
       setBulkData(parsed);
     };
@@ -378,7 +380,7 @@ function EmployeeMasterTab() {
     e.preventDefault();
     if (!form.employee_name) { toast({ title: "Validation Error", description: "Employee name is required.", variant: "destructive" }); return; }
     try {
-      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
+      await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null, email: form.email || null });
       toast({ title: "Employee Added", description: `${form.employee_name} has been added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -386,7 +388,7 @@ function EmployeeMasterTab() {
 
   const openEdit = (emp: Employee) => {
     setEditingEmployee(emp);
-    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, department: emp.department, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined });
+    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, department: emp.department, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined, email: emp.email });
     setEditDialogOpen(true);
   };
 
@@ -394,7 +396,7 @@ function EmployeeMasterTab() {
     e.preventDefault();
     if (!editingEmployee) return;
     try {
-      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null });
+      await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null, email: form.email || null });
       toast({ title: "Employee Updated", description: `${form.employee_name} has been updated.` });
       resetForm(); setEditDialogOpen(false); setEditingEmployee(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
