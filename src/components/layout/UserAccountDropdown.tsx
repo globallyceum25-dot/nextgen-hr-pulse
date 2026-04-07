@@ -123,7 +123,7 @@ export default function UserAccountDropdown() {
 
           <DropdownMenuItem
             className="gap-2 cursor-pointer hover:bg-white/5 focus:bg-white/5"
-            onClick={() => navigate("/tasks")}
+            onClick={() => navigate("/tasks?myTasks=true")}
           >
             <ClipboardList size={15} className="text-muted-foreground" />
             <span>My Tasks</span>
