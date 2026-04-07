@@ -59,18 +59,22 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const { data: departments = [] } = useDepartments();
   const { data: locations = [] } = useLocations();
 
-  // Current user's employee name (matched via email)
+  // Current user identity for My Tasks filtering
   const [currentUserEmployeeName, setCurrentUserEmployeeName] = useState<string | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   useEffect(() => {
     async function matchEmployee() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) return;
+      if (!user) return;
+      setCurrentUserId(user.id);
+      setCurrentUserEmail(user.email?.toLowerCase() || null);
       const matched = employeesList.find(
         e => e.email?.toLowerCase() === user.email?.toLowerCase()
       );
       setCurrentUserEmployeeName(matched?.employee_name || null);
     }
-    if (employeesList.length > 0) matchEmployee();
+    matchEmployee();
   }, [employeesList]);
 
   // Filters
