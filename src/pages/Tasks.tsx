@@ -48,6 +48,8 @@ const SLA_OPTIONS = [
 const SUB_TASK_STATUSES: TaskWorkflowStatus[] = ["Created", "Assigned", "In Progress", "Under Review", "Completed"];
 
 export default function Tasks({ selectedSector }: TasksProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const myTasksMode = searchParams.get("myTasks") === "true";
   const { isAdmin } = useIsAdmin();
   const { data: employeesList = [] } = useEmployees();
   const { data: categories = [] } = useTaskCategories();
@@ -56,6 +58,20 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const { data: companies = [] } = useCompanies();
   const { data: departments = [] } = useDepartments();
   const { data: locations = [] } = useLocations();
+
+  // Current user's employee name (matched via email)
+  const [currentUserEmployeeName, setCurrentUserEmployeeName] = useState<string | null>(null);
+  useEffect(() => {
+    async function matchEmployee() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) return;
+      const matched = employeesList.find(
+        e => e.email?.toLowerCase() === user.email?.toLowerCase()
+      );
+      setCurrentUserEmployeeName(matched?.employee_name || null);
+    }
+    if (employeesList.length > 0) matchEmployee();
+  }, [employeesList]);
 
   // Filters
   const [search, setSearch] = useState("");
