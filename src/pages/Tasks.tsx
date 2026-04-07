@@ -351,6 +351,15 @@ export default function Tasks({ selectedSector }: TasksProps) {
     weekEnd.setDate(weekEnd.getDate() + 7);
 
     return tasks.filter(t => {
+      // My Tasks filter: show tasks where user is assignee or assigned_by, or has subtasks assigned
+      if (myTasksMode && currentUserEmployeeName) {
+        const isAssignee = (t as any).assignee_name?.toLowerCase() === currentUserEmployeeName.toLowerCase();
+        const hasSubTaskAssigned = (t.sub_tasks || []).some(
+          (st: any) => st.assignee_name?.toLowerCase() === currentUserEmployeeName.toLowerCase()
+        );
+        if (!isAssignee && !hasSubTaskAssigned) return false;
+      }
+
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (departmentFilter !== "All" && t.department_id !== departmentFilter) return false;
