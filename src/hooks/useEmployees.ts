@@ -12,6 +12,7 @@ export interface Employee {
   reporting_manager: string | null;
   employment_status: string;
   date_joined: string | null;
+  email: string | null;
   created_at: string;
   updated_at: string;
 }
