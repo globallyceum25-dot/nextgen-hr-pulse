@@ -84,8 +84,9 @@ const App = () => (
             </AppLayout>
           </AuthGate>
         </BrowserRouter>
-      </ActivityLogProvider>
-    </TooltipProvider>
+        </ActivityLogProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
