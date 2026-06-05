@@ -57,8 +57,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <ActivityLogProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <ActivityLogProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
