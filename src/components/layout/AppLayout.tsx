@@ -2,6 +2,7 @@ import { useState } from "react";
 import AppSidebar from "./AppSidebar";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import UserAccountDropdown from "@/components/layout/UserAccountDropdown";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 
 interface AppLayoutProps {
   children: (props: { selectedSector: number | null }) => React.ReactNode;
