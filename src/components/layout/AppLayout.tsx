@@ -16,6 +16,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <AppSidebar selectedSector={selectedSector} onSectorChange={setSelectedSector} />
       <div className="flex-1 flex flex-col overflow-auto">
         <header className="sticky top-0 z-30 flex items-center justify-end gap-3 px-6 py-2 border-b gradient-header backdrop-blur">
+          <ThemeToggle />
           <NotificationBell />
           <UserAccountDropdown />
         </header>
