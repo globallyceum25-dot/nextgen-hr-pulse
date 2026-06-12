@@ -22,6 +22,7 @@ import { toast } from "@/hooks/use-toast";
 import ProgressBar from "@/components/dashboard/ProgressBar";
 import { Can } from "@/components/rbac/Can";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useScope } from "@/contexts/ScopeContext";
 
 interface TasksProps {
   selectedSector: number | null;
@@ -92,6 +93,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [sectorFilter, setSectorFilter] = useState<string>("All");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const { companyId: scopeCompanyId, departmentId: scopeDepartmentId } = useScope();
 
   // UI state
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
@@ -387,6 +389,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (departmentFilter !== "All" && t.department_id !== departmentFilter) return false;
       if (companyFilter !== "All" && t.company_id !== companyFilter) return false;
+      // Header scope filter (global) — applies on top of page-local filters
+      if (scopeCompanyId && t.company_id !== scopeCompanyId) return false;
+      if (scopeDepartmentId && t.department_id !== scopeDepartmentId) return false;
       if (locationFilter !== "All" && t.location_id !== locationFilter) return false;
       if (sectorFilter !== "All" && t.sector_id !== sectorFilter) return false;
       if (dateFrom && t.due_date && t.due_date < dateFrom) return false;
@@ -411,7 +416,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName, currentUserId]);
+  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName, currentUserId, scopeCompanyId, scopeDepartmentId]);
 
   // KPI summary cards
   const summary = useMemo(() => {

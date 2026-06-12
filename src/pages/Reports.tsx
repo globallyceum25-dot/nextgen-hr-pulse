@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as XLSX from "xlsx";
 import { Can } from "@/components/rbac/Can";
+import { useScope } from "@/contexts/ScopeContext";
 
 interface ReportsProps {
   selectedSector: number | null;
@@ -31,17 +32,21 @@ export default function Reports({ selectedSector }: ReportsProps) {
   const [departmentFilter, setDepartmentFilter] = useState("All");
   const [companyFilter, setCompanyFilter] = useState("All");
 
+  const { companyId: scopeCompanyId, departmentId: scopeDepartmentId } = useScope();
+
   const filtered = useMemo(() => {
     return tasks.filter(t => {
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
       if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
       if (departmentFilter !== "All" && t.department_id !== departmentFilter) return false;
       if (companyFilter !== "All" && t.company_id !== companyFilter) return false;
+      if (scopeCompanyId && t.company_id !== scopeCompanyId) return false;
+      if (scopeDepartmentId && t.department_id !== scopeDepartmentId) return false;
       if (dateFrom && t.due_date && t.due_date < dateFrom) return false;
       if (dateTo && t.due_date && t.due_date > dateTo) return false;
       return true;
     });
-  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, dateFrom, dateTo]);
+  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, dateFrom, dateTo, scopeCompanyId, scopeDepartmentId]);
 
   const exportToExcel = (data: any[], filename: string) => {
     const ws = XLSX.utils.json_to_sheet(data);
