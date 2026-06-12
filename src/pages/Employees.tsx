@@ -15,6 +15,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Can } from "@/components/rbac/Can";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useScope } from "@/contexts/ScopeContext";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 
