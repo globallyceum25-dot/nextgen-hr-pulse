@@ -1,8 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Server, ShieldCheck, Users, Activity } from "lucide-react";
+import { Server, Activity } from "lucide-react";
 import AdminBackend from "./AdminBackend";
-import AdminRolesManager from "./AdminRolesManager";
-import AdminUsersManager from "./AdminUsersManager";
 import SystemHealthMonitoring from "./SystemHealthMonitoring";
 import { useSearchParams } from "react-router-dom";
 
@@ -34,20 +32,6 @@ export default function Administration() {
               Backend
             </TabsTrigger>
             <TabsTrigger
-              value="roles"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 pt-3"
-            >
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              User Roles
-            </TabsTrigger>
-            <TabsTrigger
-              value="users"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 pt-3"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger
               value="health"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 pt-3"
             >
@@ -59,12 +43,6 @@ export default function Administration() {
 
         <TabsContent value="backend" className="mt-0">
           <AdminBackend />
-        </TabsContent>
-        <TabsContent value="roles" className="mt-0">
-          <AdminRolesManager />
-        </TabsContent>
-        <TabsContent value="users" className="mt-0">
-          <AdminUsersManager />
         </TabsContent>
         <TabsContent value="health" className="mt-0">
           <SystemHealthMonitoring />
