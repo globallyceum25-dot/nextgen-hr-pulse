@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
-import { Shield, KeyRound, Grid3x3, UsersRound, EyeOff, History, Inbox } from "lucide-react";
+import { Shield, KeyRound, Grid3x3, UsersRound, EyeOff, History, Inbox, ShieldCheck, Users } from "lucide-react";
 import RbacRoleMaster from "./RbacRoleMaster";
 import RbacPermissionMaster from "./RbacPermissionMaster";
 import RbacModulePermissionMatrix from "./RbacModulePermissionMatrix";
@@ -8,8 +8,12 @@ import RbacUserScopeMapping from "./RbacUserScopeMapping";
 import RbacFieldPermissions from "./RbacFieldPermissions";
 import RbacAccessRequests from "./RbacAccessRequests";
 import RbacAuditLog from "./RbacAuditLog";
+import AdminRolesManager from "../AdminRolesManager";
+import AdminUsersManager from "../AdminUsersManager";
 
 const tabs = [
+  { value: "user-roles", label: "User Roles", icon: ShieldCheck, Comp: AdminRolesManager },
+  { value: "users", label: "Users", icon: Users, Comp: AdminUsersManager },
   { value: "roles", label: "Roles", icon: Shield, Comp: RbacRoleMaster },
   { value: "permissions", label: "Permissions", icon: KeyRound, Comp: RbacPermissionMaster },
   { value: "matrix", label: "Permission Matrix", icon: Grid3x3, Comp: RbacModulePermissionMatrix },
@@ -21,7 +25,7 @@ const tabs = [
 
 export default function AccessControl() {
   const [params, setParams] = useSearchParams();
-  const tab = params.get("tab") ?? "roles";
+  const tab = params.get("tab") ?? "user-roles";
 
   return (
     <div className="min-h-screen">
