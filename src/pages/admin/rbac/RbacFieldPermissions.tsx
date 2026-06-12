@@ -104,22 +104,20 @@ export default function RbacFieldPermissions() {
               <TableHead className="text-center">Can View</TableHead><TableHead className="text-center">Can Edit</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {Object.entries(grouped).map(([cat, items]) => (
-                <>
-                  <TableRow key={`h-${cat}`}><TableCell colSpan={4} className="bg-muted/50 text-xs uppercase font-semibold">{cat}</TableCell></TableRow>
-                  {items.map(r => (
-                    <TableRow key={r.id}>
-                      <TableCell>
-                        <div className="font-medium">{r.field_label ?? r.field_key}</div>
-                        <div className="text-[10px] text-muted-foreground font-mono">{r.field_key}</div>
-                      </TableCell>
-                      <TableCell><Badge variant="outline">{r.category}</Badge></TableCell>
-                      <TableCell className="text-center"><Switch checked={r.can_view} onCheckedChange={() => toggle(r.id, "can_view")} /></TableCell>
-                      <TableCell className="text-center"><Switch checked={r.can_edit} onCheckedChange={() => toggle(r.id, "can_edit")} /></TableCell>
-                    </TableRow>
-                  ))}
-                </>
-              ))}
+              {Object.entries(grouped).flatMap(([cat, items]) => ([
+                <TableRow key={`h-${cat}`}><TableCell colSpan={4} className="bg-muted/50 text-xs uppercase font-semibold">{cat}</TableCell></TableRow>,
+                ...items.map(r => (
+                  <TableRow key={r.id}>
+                    <TableCell>
+                      <div className="font-medium">{r.field_label ?? r.field_key}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">{r.field_key}</div>
+                    </TableCell>
+                    <TableCell><Badge variant="outline">{r.category}</Badge></TableCell>
+                    <TableCell className="text-center"><Switch checked={r.can_view} onCheckedChange={() => toggle(r.id, "can_view")} /></TableCell>
+                    <TableCell className="text-center"><Switch checked={r.can_edit} onCheckedChange={() => toggle(r.id, "can_edit")} /></TableCell>
+                  </TableRow>
+                ))
+              ]))}
               {rows.length === 0 && (
                 <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No field rules for this role + module yet. Add one below.</TableCell></TableRow>
               )}
