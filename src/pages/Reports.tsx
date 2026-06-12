@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as XLSX from "xlsx";
 import { Can } from "@/components/rbac/Can";
+import { useScope } from "@/contexts/ScopeContext";
 
 interface ReportsProps {
   selectedSector: number | null;
