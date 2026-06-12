@@ -322,14 +322,16 @@ export default function AdminUsersManager() {
                       {new Date(u.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDeleteRole(u.role_id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Can module="user_management" action="delete">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDeleteRole(u.role_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </Can>
                     </TableCell>
                   </TableRow>
                 ))}
