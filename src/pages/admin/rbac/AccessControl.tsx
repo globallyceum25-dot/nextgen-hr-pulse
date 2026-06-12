@@ -1,11 +1,12 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
-import { Shield, KeyRound, Grid3x3, UsersRound, EyeOff, History } from "lucide-react";
+import { Shield, KeyRound, Grid3x3, UsersRound, EyeOff, History, Inbox } from "lucide-react";
 import RbacRoleMaster from "./RbacRoleMaster";
 import RbacPermissionMaster from "./RbacPermissionMaster";
 import RbacModulePermissionMatrix from "./RbacModulePermissionMatrix";
 import RbacUserScopeMapping from "./RbacUserScopeMapping";
 import RbacFieldPermissions from "./RbacFieldPermissions";
+import RbacAccessRequests from "./RbacAccessRequests";
 import RbacAuditLog from "./RbacAuditLog";
 
 const tabs = [
@@ -14,6 +15,7 @@ const tabs = [
   { value: "matrix", label: "Permission Matrix", icon: Grid3x3, Comp: RbacModulePermissionMatrix },
   { value: "scopes", label: "User Scopes", icon: UsersRound, Comp: RbacUserScopeMapping },
   { value: "fields", label: "Field Access", icon: EyeOff, Comp: RbacFieldPermissions },
+  { value: "requests", label: "Access Requests", icon: Inbox, Comp: RbacAccessRequests },
   { value: "audit", label: "Audit Logs", icon: History, Comp: RbacAuditLog },
 ];
 
