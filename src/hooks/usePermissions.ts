@@ -139,8 +139,8 @@ export function usePermissions() {
     if (state.legacyAdmin) return true;
     if (state.scope?.role_key === "super_admin") return true;
     if (!state.scope) {
-      // No RBAC scope assigned → allow view for everything (read-only baseline), block writes
-      return action === "view";
+      // No RBAC scope assigned → deny by default (secure-by-default)
+      return false;
     }
     const key = aliasModule(moduleKey);
     return state.matrix.some(r => r.module_key === key && r.permission_key === action);
