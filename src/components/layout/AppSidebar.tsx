@@ -21,6 +21,7 @@ const allNavItems: { label: string; icon: typeof LayoutDashboard; path: string; 
   { label: "Master Sheets", icon: Users, path: "/employees", module: "employees" },
   { label: "Reports", icon: FileText, path: "/reports", module: "reports" },
   { label: "Administration", icon: Settings, path: "/admin", module: "admin" },
+  { label: "Access Control", icon: Shield, path: "/admin/rbac", module: "admin" },
 ];
 
 export default function AppSidebar({ selectedSector, onSectorChange }: AppSidebarProps) {
