@@ -416,7 +416,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName, currentUserId]);
+  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName, currentUserId, scopeCompanyId, scopeDepartmentId]);
 
   // KPI summary cards
   const summary = useMemo(() => {
