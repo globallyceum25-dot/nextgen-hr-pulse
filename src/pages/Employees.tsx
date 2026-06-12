@@ -13,6 +13,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Can } from "@/components/rbac/Can";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 
@@ -105,10 +107,12 @@ function CompanyMasterTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} compan{filtered.length !== 1 ? "ies" : "y"}</p>
-        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Company</Button></DialogTrigger>
-          <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Company</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Company")}</DialogContent>
-        </Dialog>
+        <Can module="companies" action="create">
+          <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Company</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Company</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Company")}</DialogContent>
+          </Dialog>
+        </Can>
       </div>
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -133,10 +137,14 @@ function CompanyMasterTab() {
                     <TableCell><Badge variant={c.status === "Active" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Company</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {c.company_name}?</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(c)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        <Can module="companies" action="edit">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        </Can>
+                        <Can module="companies" action="delete">
+                          <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Company</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {c.company_name}?</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(c)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        </Can>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -234,10 +242,12 @@ function LocationMasterTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} location{filtered.length !== 1 ? "s" : ""}</p>
-        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Location</Button></DialogTrigger>
-          <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Location</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Location")}</DialogContent>
-        </Dialog>
+        <Can module="locations" action="create">
+          <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Location</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Location</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Location")}</DialogContent>
+          </Dialog>
+        </Can>
       </div>
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -261,10 +271,14 @@ function LocationMasterTab() {
                     <TableCell><Badge variant={l.status === "Active" ? "default" : "secondary"}>{l.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Location</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {l.location_name}?</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(l)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        <Can module="locations" action="edit">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        </Can>
+                        <Can module="locations" action="delete">
+                          <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Location</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {l.location_name}?</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(l)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        </Can>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -370,9 +384,17 @@ function EmployeeMasterTab() {
     XLSX.writeFile(wb, "employee_template.xlsx");
   };
 
+  const { canAccessByName } = usePermissions();
+  const scopeLookups = {
+    companies: new Map(companies.map(c => [c.company_name.trim().toLowerCase(), c.id])),
+    departments: new Map(departments.map(d => [d.department_name.trim().toLowerCase(), d.id])),
+    locations: new Map(locations.map(l => [l.location_name.trim().toLowerCase(), l.id])),
+  };
+
   const filtered = employees.filter(e => {
     if (statusFilter !== "All" && e.employment_status !== statusFilter) return false;
     if (search && !e.employee_name.toLowerCase().includes(search.toLowerCase()) && !e.employee_id.includes(search)) return false;
+    if (!canAccessByName(e.company_name, e.department, e.location, scopeLookups)) return false;
     return true;
   });
 
@@ -468,57 +490,61 @@ function EmployeeMasterTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} employee{filtered.length !== 1 ? "s" : ""}</p>
-        <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Employee</Button></DialogTrigger>
-          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Add New Employee</DialogTitle></DialogHeader>
-            <div className="flex gap-2 mt-1">
-              <Button variant={addMode === "single" ? "default" : "outline"} size="sm" onClick={() => setAddMode("single")} className="gap-1.5"><Plus size={14} /> Single Entry</Button>
-              <Button variant={addMode === "bulk" ? "default" : "outline"} size="sm" onClick={() => setAddMode("bulk")} className="gap-1.5"><FileSpreadsheet size={14} /> Bulk Upload</Button>
-            </div>
-            {addMode === "single" ? renderForm(handleAdd, "Add Employee") : (
-              <div className="space-y-4 mt-2">
-                <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3 bg-muted/30">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <div><p className="text-sm font-medium text-foreground">Upload Excel File (.xlsx, .xls, .csv)</p><p className="text-xs text-muted-foreground mt-1">File should have columns: Employee Name, Company Name, Location, Designation, etc.</p></div>
-                  <div className="flex gap-2 justify-center">
-                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1.5"><Upload size={14} /> Choose File</Button>
-                    <Button variant="ghost" size="sm" onClick={downloadTemplate} className="gap-1.5"><FileSpreadsheet size={14} /> Download Template</Button>
-                  </div>
-                  <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
-                  {bulkFileName && <p className="text-xs text-primary font-medium">📎 {bulkFileName}</p>}
-                </div>
-                {bulkData.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> Preview — {bulkData.length} employee{bulkData.length !== 1 ? "s" : ""}</p>
-                      <Button variant="ghost" size="sm" onClick={() => { setBulkData([]); setBulkFileName(""); }}><X size={14} className="mr-1" /> Clear</Button>
-                    </div>
-                    <div className="max-h-60 overflow-auto border rounded-md">
-                      <Table>
-                        <TableHeader><TableRow><TableHead className="w-8">#</TableHead><TableHead>Name</TableHead><TableHead>Company</TableHead><TableHead>Location</TableHead><TableHead>Designation</TableHead><TableHead>Status</TableHead><TableHead className="w-10"></TableHead></TableRow></TableHeader>
-                        <TableBody>
-                          {bulkData.map((row, i) => (
-                            <TableRow key={i}>
-                              <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
-                              <TableCell className="text-sm font-medium">{row.employee_name}</TableCell>
-                              <TableCell className="text-xs">{row.company_name}</TableCell>
-                              <TableCell className="text-xs">{row.location || "—"}</TableCell>
-                              <TableCell className="text-xs">{row.designation || "—"}</TableCell>
-                              <TableCell><Badge variant={row.employment_status === "Active" ? "default" : "secondary"} className="text-[10px]">{row.employment_status}</Badge></TableCell>
-                              <TableCell><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeBulkRow(i)}><X size={12} /></Button></TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    <div className="flex justify-end pt-2"><Button onClick={handleBulkAdd} disabled={isBulkAdding} className="gap-1.5">{isBulkAdding ? "Adding..." : `Add ${bulkData.length} Employees`}</Button></div>
-                  </div>
-                )}
+        <Can module="employees" action="create">
+          <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Employee</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle>Add New Employee</DialogTitle></DialogHeader>
+              <div className="flex gap-2 mt-1">
+                <Button variant={addMode === "single" ? "default" : "outline"} size="sm" onClick={() => setAddMode("single")} className="gap-1.5"><Plus size={14} /> Single Entry</Button>
+                <Can module="employees" action="upload">
+                  <Button variant={addMode === "bulk" ? "default" : "outline"} size="sm" onClick={() => setAddMode("bulk")} className="gap-1.5"><FileSpreadsheet size={14} /> Bulk Upload</Button>
+                </Can>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+              {addMode === "single" ? renderForm(handleAdd, "Add Employee") : (
+                <div className="space-y-4 mt-2">
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3 bg-muted/30">
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <div><p className="text-sm font-medium text-foreground">Upload Excel File (.xlsx, .xls, .csv)</p><p className="text-xs text-muted-foreground mt-1">File should have columns: Employee Name, Company Name, Location, Designation, etc.</p></div>
+                    <div className="flex gap-2 justify-center">
+                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1.5"><Upload size={14} /> Choose File</Button>
+                      <Button variant="ghost" size="sm" onClick={downloadTemplate} className="gap-1.5"><FileSpreadsheet size={14} /> Download Template</Button>
+                    </div>
+                    <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
+                    {bulkFileName && <p className="text-xs text-primary font-medium">📎 {bulkFileName}</p>}
+                  </div>
+                  {bulkData.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> Preview — {bulkData.length} employee{bulkData.length !== 1 ? "s" : ""}</p>
+                        <Button variant="ghost" size="sm" onClick={() => { setBulkData([]); setBulkFileName(""); }}><X size={14} className="mr-1" /> Clear</Button>
+                      </div>
+                      <div className="max-h-60 overflow-auto border rounded-md">
+                        <Table>
+                          <TableHeader><TableRow><TableHead className="w-8">#</TableHead><TableHead>Name</TableHead><TableHead>Company</TableHead><TableHead>Location</TableHead><TableHead>Designation</TableHead><TableHead>Status</TableHead><TableHead className="w-10"></TableHead></TableRow></TableHeader>
+                          <TableBody>
+                            {bulkData.map((row, i) => (
+                              <TableRow key={i}>
+                                <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
+                                <TableCell className="text-sm font-medium">{row.employee_name}</TableCell>
+                                <TableCell className="text-xs">{row.company_name}</TableCell>
+                                <TableCell className="text-xs">{row.location || "—"}</TableCell>
+                                <TableCell className="text-xs">{row.designation || "—"}</TableCell>
+                                <TableCell><Badge variant={row.employment_status === "Active" ? "default" : "secondary"} className="text-[10px]">{row.employment_status}</Badge></TableCell>
+                                <TableCell><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeBulkRow(i)}><X size={12} /></Button></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      <div className="flex justify-end pt-2"><Button onClick={handleBulkAdd} disabled={isBulkAdding} className="gap-1.5">{isBulkAdding ? "Adding..." : `Add ${bulkData.length} Employees`}</Button></div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </Can>
       </div>
 
       <div className="flex gap-3 items-center">
@@ -554,10 +580,14 @@ function EmployeeMasterTab() {
                     <TableCell className="text-sm">{emp.date_joined || "—"}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(emp)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Employee</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {emp.employee_name}?</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(emp)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        <Can module="employees" action="edit">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(emp)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        </Can>
+                        <Can module="employees" action="delete">
+                          <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Employee</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {emp.employee_name}?</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(emp)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        </Can>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -654,10 +684,12 @@ function DepartmentMasterTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} department{filtered.length !== 1 ? "s" : ""}</p>
-        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Department</Button></DialogTrigger>
-          <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Department")}</DialogContent>
-        </Dialog>
+        <Can module="departments" action="create">
+          <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Department</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Department")}</DialogContent>
+          </Dialog>
+        </Can>
       </div>
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -679,10 +711,14 @@ function DepartmentMasterTab() {
                     <TableCell><Badge variant={d.status === "Active" ? "default" : "secondary"}>{d.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Department</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {d.department_name}?</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(d)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        <Can module="departments" action="edit">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        </Can>
+                        <Can module="departments" action="delete">
+                          <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Department</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {d.department_name}?</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(d)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        </Can>
                       </div>
                     </TableCell>
                   </TableRow>
