@@ -242,10 +242,12 @@ function LocationMasterTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} location{filtered.length !== 1 ? "s" : ""}</p>
-        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Location</Button></DialogTrigger>
-          <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Location</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Location")}</DialogContent>
-        </Dialog>
+        <Can module="locations" action="create">
+          <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Location</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Location</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Location")}</DialogContent>
+          </Dialog>
+        </Can>
       </div>
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -269,10 +271,14 @@ function LocationMasterTab() {
                     <TableCell><Badge variant={l.status === "Active" ? "default" : "secondary"}>{l.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Location</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {l.location_name}?</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(l)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        <Can module="locations" action="edit">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        </Can>
+                        <Can module="locations" action="delete">
+                          <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Location</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {l.location_name}?</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(l)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        </Can>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -378,9 +384,17 @@ function EmployeeMasterTab() {
     XLSX.writeFile(wb, "employee_template.xlsx");
   };
 
+  const { canAccessByName } = usePermissions();
+  const scopeLookups = {
+    companies: new Map(companies.map(c => [c.company_name.trim().toLowerCase(), c.id])),
+    departments: new Map(departments.map(d => [d.department_name.trim().toLowerCase(), d.id])),
+    locations: new Map(locations.map(l => [l.location_name.trim().toLowerCase(), l.id])),
+  };
+
   const filtered = employees.filter(e => {
     if (statusFilter !== "All" && e.employment_status !== statusFilter) return false;
     if (search && !e.employee_name.toLowerCase().includes(search.toLowerCase()) && !e.employee_id.includes(search)) return false;
+    if (!canAccessByName(e.company_name, e.department, e.location, scopeLookups)) return false;
     return true;
   });
 
