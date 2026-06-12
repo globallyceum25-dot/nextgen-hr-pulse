@@ -1,131 +1,91 @@
+# RBAC Module — Implementation Plan
 
+A comprehensive Role-Based Access Control system layered on top of the existing platform. Existing modules (Tasks, Master Sheets, Analytics, Reports, Administration) stay intact; RBAC adds a new control layer on top.
 
-# Complete Documentation Generation Plan (DOCX + PDF, 100+ Pages)
+Given the scope (8+ new DB tables, 6 new admin screens, enforcement across every existing module, approval workflow, audit logs, field-level masking), I'll deliver this in **5 sequential phases**. You approve each phase before I move to the next so we can verify behavior incrementally and avoid a single 50-file commit.
 
-## What We Are Building
-A comprehensive technical documentation package for the NextGen HCS platform, delivered as both DOCX and PDF files, minimum 100 pages. The documentation will cover every module, feature, process, database schema, API endpoint, security model, and architecture with Mermaid diagrams rendered as images.
+---
 
-## Deliverables
-- `/mnt/documents/NextGen_HCS_Documentation.docx` -- Full documentation (100+ pages)
-- `/mnt/documents/NextGen_HCS_Documentation.pdf` -- PDF version
+## Phase 1 — Database Foundation (Migration)
 
-## Phased Approach
+New tables in `public` schema, all with RLS + GRANTs:
 
-### Phase 1: Document Generation Script
-Build a Node.js script using `docx-js` to generate a professionally formatted DOCX with:
-- Cover page with platform name, version, date
-- Table of Contents
-- Consistent heading styles, page numbers, headers/footers
+1. **`rbac_roles`** — id, role_name, description, is_system (locked default roles), status, timestamps. Seeded with the 8 default roles.
+2. **`rbac_permissions`** — id, permission_name (view, create, edit, delete, deactivate, approve, export, upload, assign_access), description, status. Seeded.
+3. **`rbac_modules`** — id, module_key (dashboard, tasks, employees, companies, departments, locations, user_management, reports, documents, audit_logs), label, status. Seeded.
+4. **`rbac_role_permissions`** — role_id, module_id, permission_id (matrix join). Seeded with the default permission matrix from your spec.
+5. **`rbac_user_scopes`** — user_id, employee_id, role_id, company_ids[] (uuid[]), department_ids[], location_ids[], all_companies, all_departments, all_locations, effective_from, effective_to, status.
+6. **`rbac_field_permissions`** — role_id, module_id, field_key, can_view, can_edit. Seeded with sensitive-field defaults.
+7. **`rbac_access_requests`** — change_type, target_user_id, payload (jsonb), status (draft/submitted/pending/approved/rejected), requested_by, approved_by, timestamps.
+8. **`rbac_audit_log`** — user_id, employee_id, action, module, record_id, old_value (jsonb), new_value (jsonb), ip_address, created_at.
 
-### Phase 2: Content Sections (100+ pages across 15 chapters)
+**Security definer functions** (avoid RLS recursion):
+- `rbac_has_permission(user_id, module_key, permission_key) → boolean`
+- `rbac_user_company_scope(user_id) → uuid[]`
+- `rbac_user_department_scope(user_id) → uuid[]`
+- `rbac_user_location_scope(user_id) → uuid[]`
+- `rbac_can_access_record(user_id, company_id, department_id, location_id) → boolean`
 
-**Chapter 1 -- Executive Summary** (~3 pages)
-- Platform overview, technology stack, design philosophy
-- Standards compliance (NIST SP 800-162, ISO/IEC 27001)
+**Update RLS on existing tables** (`employees`, `companies`, `departments`, `locations`, `tasks`, `sub_tasks`) so reads/writes are filtered by the scope functions — keeps existing super_admin override.
 
-**Chapter 2 -- System Architecture** (~8 pages)
-- Frontend architecture (React 18, Vite 5, Tailwind CSS, TypeScript 5)
-- Backend architecture (PostgreSQL, GoTrue Auth, Edge Functions, Storage)
-- Mermaid diagram: High-level system architecture (rendered as PNG)
-- Component tree, lazy loading strategy, state management (React Query)
+---
 
-**Chapter 3 -- Authentication & Session Management** (~8 pages)
-- Login flow with email/password
-- AuthGate component, session lifecycle
-- Password visibility toggle, error handling
-- Mermaid diagram: Authentication sequence flow
+## Phase 2 — RBAC Admin Screens
 
-**Chapter 4 -- Role-Based Access Control (RBAC)** (~10 pages)
-- 4-tier role hierarchy: super_admin, sector_hr_admin, responsible_person, viewer
-- Permission matrix: 5 modules x 5 actions (view, create, edit, delete, export)
-- Frontend enforcement: RouteGuard, sidebar filtering, useUserRole hook
-- Backend enforcement: `has_role()` SECURITY DEFINER function, RLS policies
-- Mermaid diagram: RBAC model
+New section in the sidebar: **Access Control** (visible only with `admin` permission), containing:
 
-**Chapter 5 -- Task Management Module** (~12 pages)
-- CRUD operations, 10-status workflow, sub-task system
-- Task form: Organization, Operations, Recurrence sections
-- My Tasks filtering (email + name + user_id matching)
-- Quick filters, SLA frequency options, comments, activity logging
-- KPI weighted scoring (High: 1.0, Medium: 0.6, Low: 0.2)
-- Mermaid diagram: Task lifecycle state machine
+- **Role Master** (`/admin/rbac/roles`) — table + create/edit dialog. System roles non-deletable; only Super Admin can hard delete.
+- **Permission Master** (`/admin/rbac/permissions`) — table view, edit description/status.
+- **Module Permission Mapping** (`/admin/rbac/matrix`) — pick a role → matrix of modules × permissions with toggle switches. Bulk save.
+- **User Access Scope Mapping** (`/admin/rbac/user-scopes`) — list users, edit dialog with role select, multi-select dropdowns for companies/departments/locations, "All access" toggles, effective dates. Department dropdown filtered by selected companies.
+- **Field-Level Access Mapping** (`/admin/rbac/fields`) — role + module → grid of fields with View/Edit toggles. Sensitive fields pre-grouped.
+- **RBAC Audit Logs** (`/admin/rbac/audit`) — searchable timeline/table with filters (user, action, module, date range). Visible to Super/Group Admin only.
 
-**Chapter 6 -- Task Analytics Module** (~8 pages)
-- Executive Summary KPIs (8 cards + 4 sub-task cards)
-- Monthly trend charts, department distribution, overdue list
-- Task Progress Visualization with donut charts
-- Employee performance scoring formula
-- Color palette configuration
+All screens use existing shadcn UI components, search bar, status badges, filters, confirmation modals.
 
-**Chapter 7 -- Employee Master Module** (~8 pages)
-- 4 sub-tabs: Employees, Companies, Locations, Departments
-- CRUD with email field, bulk upload via Excel
-- Auto-generated codes (EMP001, COM001, LOC001, DEP001)
-- Employee-to-login email linkage for My Tasks
+---
 
-**Chapter 8 -- Reports Module** (~6 pages)
-- Filterable task reports (status, priority, department, company, date range)
-- Excel export functionality
-- Report views and data aggregation
+## Phase 3 — Permission Enforcement Layer (Frontend)
 
-**Chapter 9 -- Administration Module** (~8 pages)
-- Backend tab, User Roles tab, Users tab, System Health Monitoring
-- User creation via create-user edge function
-- Role assignment management
+- **Rewrite `src/config/rbac.ts` + `src/hooks/useUserRole.ts`** → new `usePermissions()` hook that loads from the new DB tables (role + module + permission + scopes + field perms), cached via React Query.
+- New helper `<Can module="employees" action="create">` component to conditionally render buttons.
+- New `<FieldGuard field="salary" mode="view|edit">` wrapper for sensitive fields (hide or show masked `••••`).
+- Update `RouteGuard` to use new hook; expand `ROUTE_MODULE_MAP` to cover new admin sub-routes.
+- Add **scope filters** to existing data hooks (`useEmployees`, `useTasks`, `useCompanies`, `useDepartments`, `useLocations`) so the client sends scope-aware queries.
+- Update existing UI buttons (Add / Edit / Delete / Export / Upload across Master Sheets, Tasks, Admin) to wrap in `<Can>`.
 
-**Chapter 10 -- Profile & Settings** (~4 pages)
-- Profile editing, avatar upload to storage
-- Password change with visibility toggles
-- My Tasks navigation
+---
 
-**Chapter 11 -- Database Schema Reference** (~12 pages)
-- All 14 tables with column definitions, types, defaults, constraints
-- Foreign key relationships
-- Auto-generation triggers (company_code, employee_id, department_code, location_code)
-- handle_new_user trigger, update_updated_at_column trigger
-- Mermaid diagram: Entity Relationship Diagram
+## Phase 4 — Approval Workflow + Own Profile Rule
 
-**Chapter 12 -- API & Edge Functions Reference** (~8 pages)
-- REST API endpoints for all tables (Row, Insert, Update schemas)
-- create-user edge function: request/response schemas, Zod validation
-- Database functions: has_role, generate_*_code, handle_new_user
-- Enums: app_role, task_priority, task_workflow_status, recurrence_type
+- **Access Requests UI** — when a non-Super-Admin edits a user scope/role/field perm, the change is saved as `pending_approval` instead of applied directly. New "Pending Approvals" tab in Audit Logs screen for approvers.
+- **Own Profile rule** — when logged-in user's role is `employee_user`, all queries auto-restrict to `employee_id = current_user.employee_id`. Editable fields whitelisted (phone, email only).
+- Trigger audit log entries on every RBAC action (role created/edited, scope changed, permission denied attempts).
 
-**Chapter 13 -- Security Model** (~6 pages)
-- RLS policies per table
-- JWT-based authentication
-- CORS configuration
-- Service role key isolation
-- Storage bucket RLS (avatars)
+---
 
-**Chapter 14 -- Frontend Architecture & Performance** (~5 pages)
-- Lazy loading, code splitting, React.lazy()
-- SEO optimizations (preload, modulepreload, critical CSS)
-- Notification system (30s polling)
-- Responsive dark theme with deep purple palette
+## Phase 5 — Hardening + Backend Enforcement
 
-**Chapter 15 -- Deployment & Operations** (~4 pages)
-- Docker configuration
-- Environment variables
-- CI/CD workflows
-- Monitoring and health checks
+- Update `create-user` edge function + add `rbac-apply-change` edge function that re-validates permissions server-side before approving requests (so URL/API tampering is blocked).
+- Add `rbac_log_unauthorized_access()` DB function called from a global error boundary on 403s.
+- Verify RLS: run linter, attempt cross-scope reads as test user, confirm denial.
+- Final QA pass on every existing module with each default role.
 
-### Phase 3: Mermaid Diagram Rendering
-- Use `mmdc` (Mermaid CLI) to render 6 Mermaid diagrams as PNG images
-- Embed rendered PNGs into the DOCX document
+---
 
-### Phase 4: PDF Conversion
-- Convert DOCX to PDF using LibreOffice
+## Technical Notes
 
-### Phase 5: Quality Assurance
-- Convert PDF pages to images
-- Inspect for layout issues, missing content, broken formatting
-- Verify page count meets 100+ requirement
+- All RBAC tables use `service_role` GRANT + `authenticated` GRANT, RLS policies use `has_role()` + new `rbac_has_permission()` security-definer function.
+- Audit log is **append-only** (no UPDATE/DELETE policy except for service_role).
+- Field-level masking is enforced both in the UI (via `FieldGuard`) and at the DB view layer for sensitive columns (e.g. `employees_public` view excludes salary unless caller has permission).
+- React Query cache invalidation on any RBAC change so permissions update without reload.
 
-## Technical Approach
-1. Install `docx` (npm) and `@mermaid-js/mermaid-cli` for diagram rendering
-2. Write a Node.js script generating the DOCX with all 15 chapters
-3. Render Mermaid diagrams to PNG, embed in document
-4. Convert to PDF via LibreOffice
-5. Visual QA on both outputs
+---
 
+## What I need from you
+
+1. **Approve the plan** to start Phase 1 (DB migration). I'll pause after each phase for your review.
+2. **Confirm default permission matrix** — I'll seed exactly as specified in section 11 of your spec. Any deviation?
+3. **Approval workflow** — should Super Admin changes also require approval (4-eyes), or apply immediately? Default: Super Admin applies immediately; all others require approval.
+
+Reply "go" (or with answers) and I start Phase 1.

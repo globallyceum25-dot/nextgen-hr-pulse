@@ -260,6 +260,363 @@ export type Database = {
         }
         Relationships: []
       }
+      rbac_access_requests: {
+        Row: {
+          approved_by: string | null
+          approver_note: string | null
+          change_type: string
+          created_at: string
+          id: string
+          payload: Json
+          requested_by: string
+          status: string
+          target_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          approver_note?: string | null
+          change_type: string
+          created_at?: string
+          id?: string
+          payload: Json
+          requested_by: string
+          status?: string
+          target_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          approver_note?: string | null
+          change_type?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          requested_by?: string
+          status?: string
+          target_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rbac_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          employee_id: string | null
+          id: string
+          ip_address: string | null
+          module: string | null
+          new_value: Json | null
+          old_value: Json | null
+          record_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          ip_address?: string | null
+          module?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          record_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          ip_address?: string | null
+          module?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          record_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rbac_audit_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rbac_field_permissions: {
+        Row: {
+          can_edit: boolean
+          can_view: boolean
+          category: string
+          created_at: string
+          field_key: string
+          field_label: string | null
+          id: string
+          module_id: string
+          role_id: string
+          updated_at: string
+        }
+        Insert: {
+          can_edit?: boolean
+          can_view?: boolean
+          category?: string
+          created_at?: string
+          field_key: string
+          field_label?: string | null
+          id?: string
+          module_id: string
+          role_id: string
+          updated_at?: string
+        }
+        Update: {
+          can_edit?: boolean
+          can_view?: boolean
+          category?: string
+          created_at?: string
+          field_key?: string
+          field_label?: string | null
+          id?: string
+          module_id?: string
+          role_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rbac_field_permissions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "rbac_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rbac_field_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "rbac_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rbac_modules: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          module_key: string
+          module_label: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          module_key: string
+          module_label: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          module_key?: string
+          module_label?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rbac_permissions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          permission_key: string
+          permission_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          permission_key: string
+          permission_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          permission_key?: string
+          permission_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rbac_role_permissions: {
+        Row: {
+          created_at: string
+          granted: boolean
+          id: string
+          module_id: string
+          permission_id: string
+          role_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          module_id: string
+          permission_id: string
+          role_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          module_id?: string
+          permission_id?: string
+          role_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rbac_role_permissions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "rbac_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rbac_role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "rbac_permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rbac_role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "rbac_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rbac_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          role_key: string
+          role_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          role_key: string
+          role_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          role_key?: string
+          role_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rbac_user_scopes: {
+        Row: {
+          all_companies: boolean
+          all_departments: boolean
+          all_locations: boolean
+          company_ids: string[]
+          created_at: string
+          department_ids: string[]
+          effective_from: string | null
+          effective_to: string | null
+          employee_id: string | null
+          id: string
+          location_ids: string[]
+          role_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_companies?: boolean
+          all_departments?: boolean
+          all_locations?: boolean
+          company_ids?: string[]
+          created_at?: string
+          department_ids?: string[]
+          effective_from?: string | null
+          effective_to?: string | null
+          employee_id?: string | null
+          id?: string
+          location_ids?: string[]
+          role_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_companies?: boolean
+          all_departments?: boolean
+          all_locations?: boolean
+          company_ids?: string[]
+          created_at?: string
+          department_ids?: string[]
+          effective_from?: string | null
+          effective_to?: string | null
+          employee_id?: string | null
+          id?: string
+          location_ids?: string[]
+          role_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rbac_user_scopes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rbac_user_scopes_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "rbac_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sectors: {
         Row: {
           created_at: string
@@ -695,6 +1052,40 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      rbac_can_access_record: {
+        Args: {
+          _company_id: string
+          _department_id: string
+          _location_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      rbac_has_permission: {
+        Args: { _module_key: string; _permission_key: string; _user_id: string }
+        Returns: boolean
+      }
+      rbac_user_company_scope: {
+        Args: { _user_id: string }
+        Returns: {
+          all_access: boolean
+          company_ids: string[]
+        }[]
+      }
+      rbac_user_department_scope: {
+        Args: { _user_id: string }
+        Returns: {
+          all_access: boolean
+          department_ids: string[]
+        }[]
+      }
+      rbac_user_location_scope: {
+        Args: { _user_id: string }
+        Returns: {
+          all_access: boolean
+          location_ids: string[]
+        }[]
       }
     }
     Enums: {
