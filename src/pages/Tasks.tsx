@@ -20,6 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import ProgressBar from "@/components/dashboard/ProgressBar";
+import { Can } from "@/components/rbac/Can";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface TasksProps {
   selectedSector: number | null;
