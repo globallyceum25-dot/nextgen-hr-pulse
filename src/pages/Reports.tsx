@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as XLSX from "xlsx";
+import { Can } from "@/components/rbac/Can";
 
 interface ReportsProps {
   selectedSector: number | null;
@@ -291,9 +292,11 @@ export default function Reports({ selectedSector }: ReportsProps) {
           <div className="bg-card rounded-lg border p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-foreground">Filtered Task List ({filtered.length} tasks)</h2>
-              <Button onClick={exportTaskList} className="gap-2" size="sm">
-                <Download size={14} /> Export to Excel
-              </Button>
+              <Can module="reports" action="export">
+                <Button onClick={exportTaskList} className="gap-2" size="sm">
+                  <Download size={14} /> Export to Excel
+                </Button>
+              </Can>
             </div>
             <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
               <table className="w-full text-xs">
@@ -332,9 +335,11 @@ export default function Reports({ selectedSector }: ReportsProps) {
           <div className="bg-card rounded-lg border p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-foreground">Department-wise Summary</h2>
-              <Button onClick={exportDepartmentSummary} className="gap-2" size="sm">
-                <Download size={14} /> Export to Excel
-              </Button>
+              <Can module="reports" action="export">
+                <Button onClick={exportDepartmentSummary} className="gap-2" size="sm">
+                  <Download size={14} /> Export to Excel
+                </Button>
+              </Can>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -382,9 +387,11 @@ export default function Reports({ selectedSector }: ReportsProps) {
           <div className="bg-card rounded-lg border p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-foreground">Performance Report</h2>
-              <Button onClick={exportAssigneePerformance} className="gap-2" size="sm">
-                <Download size={14} /> Export to Excel
-              </Button>
+              <Can module="reports" action="export">
+                <Button onClick={exportAssigneePerformance} className="gap-2" size="sm">
+                  <Download size={14} /> Export to Excel
+                </Button>
+              </Can>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -444,9 +451,11 @@ export default function Reports({ selectedSector }: ReportsProps) {
           <div className="bg-card rounded-lg border p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-foreground">Employee Performance Report ({employeePerformanceData.length} employees)</h2>
-              <Button onClick={exportEmployeePerformance} className="gap-2" size="sm">
-                <Download size={14} /> Export to Excel
-              </Button>
+              <Can module="reports" action="export">
+                <Button onClick={exportEmployeePerformance} className="gap-2" size="sm">
+                  <Download size={14} /> Export to Excel
+                </Button>
+              </Can>
             </div>
             <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
               <table className="w-full text-xs">
@@ -504,9 +513,11 @@ export default function Reports({ selectedSector }: ReportsProps) {
           <div className="bg-card rounded-lg border p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-foreground">Overdue Tasks ({filtered.filter(t => getDeadlineInfo(t.due_date, t.status).isOverdue).length})</h2>
-              <Button onClick={exportOverdueReport} className="gap-2" size="sm">
-                <Download size={14} /> Export to Excel
-              </Button>
+              <Can module="reports" action="export">
+                <Button onClick={exportOverdueReport} className="gap-2" size="sm">
+                  <Download size={14} /> Export to Excel
+                </Button>
+              </Can>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">

@@ -20,6 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import ProgressBar from "@/components/dashboard/ProgressBar";
+import { Can } from "@/components/rbac/Can";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface TasksProps {
   selectedSector: number | null;
@@ -51,6 +53,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const myTasksMode = searchParams.get("myTasks") === "true";
   const { isAdmin } = useIsAdmin();
+  const { can: rbacCan } = usePermissions();
+  const canDeleteTasks = isAdmin || rbacCan("tasks", "delete");
   const { data: employeesList = [] } = useEmployees();
   const { data: categories = [] } = useTaskCategories();
   const { data: types = [] } = useTaskTypes();
@@ -482,7 +486,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><Plus size={16} /> New Task</Button>
+            <Can module="tasks" action="create">
+              <Button className="gap-2"><Plus size={16} /> New Task</Button>
+            </Can>
           </DialogTrigger>
           <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Create New Task</DialogTitle></DialogHeader>
@@ -773,10 +779,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); openTaskDetail(task); }}>
                             <MessageSquare size={14} />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); openEditDialog(task); }}>
-                            <Pencil size={14} />
-                          </Button>
-                          {isAdmin && (
+                          <Can module="tasks" action="edit">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); openEditDialog(task); }}>
+                              <Pencil size={14} />
+                            </Button>
+                          </Can>
+                          {canDeleteTasks && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={e => e.stopPropagation()}>
@@ -830,10 +838,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                     <Button variant="ghost" size="icon" className="h-6 w-6" title="View Details" onClick={e => { e.stopPropagation(); setDetailSubTask({ task, subTask: st }); setSubTaskDetailOpen(true); }}>
                                       <Eye size={12} />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
-                                      <Pencil size={12} />
-                                    </Button>
-                                    {isAdmin && (
+                                    <Can module="tasks" action="edit">
+                                      <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
+                                        <Pencil size={12} />
+                                      </Button>
+                                    </Can>
+                                    {canDeleteTasks && (
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                           <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" title="Delete" onClick={e => e.stopPropagation()}>

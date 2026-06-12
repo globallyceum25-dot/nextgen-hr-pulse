@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Trash2, RefreshCw, Users, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
+import { Can } from "@/components/rbac/Can";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -185,10 +186,12 @@ export default function AdminUsersManager() {
           </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Assign User to Role
-              </Button>
+              <Can module="user_management" action="create">
+                <Button size="sm">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Assign User to Role
+                </Button>
+              </Can>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -319,14 +322,16 @@ export default function AdminUsersManager() {
                       {new Date(u.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDeleteRole(u.role_id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Can module="user_management" action="delete">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDeleteRole(u.role_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </Can>
                     </TableCell>
                   </TableRow>
                 ))}
