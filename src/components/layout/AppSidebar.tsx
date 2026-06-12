@@ -8,6 +8,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { usePermissions, RbacModuleKey } from "@/hooks/usePermissions";
 import { Module } from "@/config/rbac";
 
 interface AppSidebarProps {
