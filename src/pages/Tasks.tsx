@@ -22,6 +22,7 @@ import { toast } from "@/hooks/use-toast";
 import ProgressBar from "@/components/dashboard/ProgressBar";
 import { Can } from "@/components/rbac/Can";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useScope } from "@/contexts/ScopeContext";
 
 interface TasksProps {
   selectedSector: number | null;
