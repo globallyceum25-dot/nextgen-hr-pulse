@@ -838,10 +838,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                     <Button variant="ghost" size="icon" className="h-6 w-6" title="View Details" onClick={e => { e.stopPropagation(); setDetailSubTask({ task, subTask: st }); setSubTaskDetailOpen(true); }}>
                                       <Eye size={12} />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
-                                      <Pencil size={12} />
-                                    </Button>
-                                    {isAdmin && (
+                                    <Can module="tasks" action="edit">
+                                      <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
+                                        <Pencil size={12} />
+                                      </Button>
+                                    </Can>
+                                    {canDeleteTasks && (
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                           <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" title="Delete" onClick={e => e.stopPropagation()}>
