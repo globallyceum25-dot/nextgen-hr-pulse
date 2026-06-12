@@ -31,6 +31,7 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
   const { role, can, loading } = useUserRole();
+  const { can: rbacCan, isSuperAdmin } = usePermissions();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -38,7 +39,9 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
     });
   }, []);
 
-  const navItems = allNavItems.filter(item => can(item.module));
+  const navItems = allNavItems.filter(item =>
+    isSuperAdmin || can(item.module) || rbacCan(item.module as RbacModuleKey, "view")
+  );
 
   const roleBadge: Record<string, string> = {
     super_admin: "Super Admin",
