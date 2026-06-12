@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Trash2, RefreshCw, Users, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
+import { Can } from "@/components/rbac/Can";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
