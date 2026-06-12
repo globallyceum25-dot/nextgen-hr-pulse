@@ -65,6 +65,7 @@ export const ROUTE_MODULE_MAP: Record<string, Module> = {
   "/employees": "employees",
   "/reports":   "reports",
   "/admin":     "admin",
+  "/admin/rbac":"admin",
 };
 
 /** Get the highest-privilege role from a list */

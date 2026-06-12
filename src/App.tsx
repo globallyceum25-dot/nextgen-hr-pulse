@@ -17,6 +17,7 @@ const Employees = lazy(() => import("@/pages/Employees"));
 const Reports = lazy(() => import("@/pages/Reports"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Administration = lazy(() => import("@/pages/admin/Administration"));
+const AccessControl = lazy(() => import("@/pages/admin/rbac/AccessControl"));
 const Login = lazy(() => import("@/pages/Login"));
 const ProfileSettings = lazy(() => import("@/pages/ProfileSettings"));
 
@@ -75,6 +76,7 @@ const App = () => (
                       <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
                       <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
                       <Route path="/admin" element={<Administration />} />
+                      <Route path="/admin/rbac" element={<AccessControl />} />
                       <Route path="/profile" element={<ProfileSettings />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
