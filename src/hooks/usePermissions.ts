@@ -161,16 +161,22 @@ export function usePermissions() {
   };
 
   /** Returns whether the user can access a record located in (companyName, departmentName, locationName).
-   *  These are matched against the user's scope by resolving names to ids via the provided lookup maps. */
+   *  Resolved against the user's scope via name->id lookups.
+   *  For role `employee_user`, the user can only access their own employee record. */
   const canAccessByName = (
     companyName: string | null | undefined,
     departmentName: string | null | undefined,
     locationName: string | null | undefined,
-    lookups: { companies: Map<string, string>; departments: Map<string, string>; locations: Map<string, string> }
+    lookups: { companies: Map<string, string>; departments: Map<string, string>; locations: Map<string, string> },
+    employeeId?: string | null
   ): boolean => {
     if (!state || state.legacyAdmin || state.scope?.role_key === "super_admin") return true;
     if (!state.scope) return true;
     const s = state.scope;
+    if (s.role_key === "employee_user") {
+      if (!s.employee_id) return false;
+      if (employeeId !== undefined && employeeId !== s.employee_id) return false;
+    }
     if (!s.all_companies && companyName) {
       const id = lookups.companies.get(companyName.trim().toLowerCase());
       if (!id || !s.company_ids.includes(id)) return false;
@@ -186,6 +192,15 @@ export function usePermissions() {
     return true;
   };
 
+  const canAccessEmployeeId = (employeeId: string | null | undefined): boolean => {
+    if (!state || state.legacyAdmin || state.scope?.role_key === "super_admin") return true;
+    if (!state.scope) return true;
+    if (state.scope.role_key === "employee_user") {
+      return !!employeeId && employeeId === state.scope.employee_id;
+    }
+    return true;
+  };
+
   return {
     loading: query.isLoading,
     state,
@@ -193,7 +208,9 @@ export function usePermissions() {
     canViewField,
     canEditField,
     canAccessByName,
+    canAccessEmployeeId,
     isSuperAdmin: !!state?.legacyAdmin || state?.scope?.role_key === "super_admin",
     roleKey: state?.scope?.role_key ?? null,
+    ownEmployeeId: state?.scope?.employee_id ?? null,
   };
 }
