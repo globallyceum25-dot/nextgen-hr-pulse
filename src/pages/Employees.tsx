@@ -394,7 +394,7 @@ function EmployeeMasterTab() {
   const filtered = employees.filter(e => {
     if (statusFilter !== "All" && e.employment_status !== statusFilter) return false;
     if (search && !e.employee_name.toLowerCase().includes(search.toLowerCase()) && !e.employee_id.includes(search)) return false;
-    if (!canAccessByName(e.company_name, e.department, e.location, scopeLookups)) return false;
+    if (!canAccessByName(e.company_name, e.department, e.location, scopeLookups, e.id)) return false;
     return true;
   });
 
