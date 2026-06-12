@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ActivityLogProvider } from "@/contexts/ActivityLogContext";
+import { ScopeProvider } from "@/contexts/ScopeContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
@@ -65,25 +66,27 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthGate>
-            <AppLayout>
-              {({ selectedSector }) => (
-                <RouteGuard>
-                  <Suspense fallback={<div className="flex items-center justify-center h-full"><p className="text-muted-foreground">Loading...</p></div>}>
-                    <Routes>
-                      <Route path="/" element={<Analytics selectedSector={selectedSector} />} />
-                      <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
-                      <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
-                      <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
-                      <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
-                      <Route path="/admin" element={<Administration />} />
-                      <Route path="/admin/rbac" element={<AccessControl />} />
-                      <Route path="/profile" element={<ProfileSettings />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </RouteGuard>
-              )}
-            </AppLayout>
+            <ScopeProvider>
+              <AppLayout>
+                {({ selectedSector }) => (
+                  <RouteGuard>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><p className="text-muted-foreground">Loading...</p></div>}>
+                      <Routes>
+                        <Route path="/" element={<Analytics selectedSector={selectedSector} />} />
+                        <Route path="/tasks" element={<Tasks selectedSector={selectedSector} />} />
+                        <Route path="/analytics" element={<Analytics selectedSector={selectedSector} />} />
+                        <Route path="/employees" element={<Employees selectedSector={selectedSector} />} />
+                        <Route path="/reports" element={<Reports selectedSector={selectedSector} />} />
+                        <Route path="/admin" element={<Administration />} />
+                        <Route path="/admin/rbac" element={<AccessControl />} />
+                        <Route path="/profile" element={<ProfileSettings />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                  </RouteGuard>
+                )}
+              </AppLayout>
+            </ScopeProvider>
           </AuthGate>
         </BrowserRouter>
         </ActivityLogProvider>
