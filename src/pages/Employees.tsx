@@ -13,6 +13,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Can } from "@/components/rbac/Can";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 
@@ -105,10 +107,12 @@ function CompanyMasterTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} compan{filtered.length !== 1 ? "ies" : "y"}</p>
-        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Company</Button></DialogTrigger>
-          <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Company</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Company")}</DialogContent>
-        </Dialog>
+        <Can module="companies" action="create">
+          <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Company</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Company</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Company")}</DialogContent>
+          </Dialog>
+        </Can>
       </div>
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -133,10 +137,14 @@ function CompanyMasterTab() {
                     <TableCell><Badge variant={c.status === "Active" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Company</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {c.company_name}?</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(c)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        <Can module="companies" action="edit">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        </Can>
+                        <Can module="companies" action="delete">
+                          <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Company</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {c.company_name}?</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(c)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        </Can>
                       </div>
                     </TableCell>
                   </TableRow>
