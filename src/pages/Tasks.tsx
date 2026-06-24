@@ -490,11 +490,11 @@ export default function Tasks({ selectedSector }: TasksProps) {
           )}
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Can module="tasks" action="create">
+          <Can module="tasks" action="create">
+            <DialogTrigger asChild>
               <Button className="gap-2"><Plus size={16} /> New Task</Button>
-            </Can>
-          </DialogTrigger>
+            </DialogTrigger>
+          </Can>
           <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Create New Task</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-2">
