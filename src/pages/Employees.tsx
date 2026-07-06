@@ -3,7 +3,9 @@ import { useEmployees, useAddEmployee, useUpdateEmployee, useDeleteEmployee, typ
 import { useCompanies, useAddCompany, useUpdateCompany, useDeleteCompany, type Company } from "@/hooks/useCompanies";
 import { useLocations, useAddLocation, useUpdateLocation, useDeleteLocation, type Location } from "@/hooks/useLocations";
 import { useDepartments, useAddDepartment, useUpdateDepartment, useDeleteDepartment, type Department } from "@/hooks/useDepartments";
-import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2, Building2, MapPin, Briefcase } from "lucide-react";
+import { useSectors, useAddSector, useUpdateSector, useDeleteSector, type Sector } from "@/hooks/useSectors";
+import { useSubUnits } from "@/hooks/useSubUnits";
+import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2, Building2, MapPin, Briefcase, Network, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
