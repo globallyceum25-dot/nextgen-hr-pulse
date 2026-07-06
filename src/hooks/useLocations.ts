@@ -10,6 +10,8 @@ export interface Location {
   country: string | null;
   status: string;
   company_id: string | null;
+  sector_id: string | null;
+  sub_unit_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -31,8 +33,8 @@ export function useLocations() {
 export function useAddLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (loc: { location_name: string; address?: string | null; city?: string | null; country?: string | null; status?: string; company_id?: string | null }) => {
-      const { data, error } = await supabase.from("locations").insert([{ location_name: loc.location_name, address: loc.address, city: loc.city, country: loc.country, status: loc.status, company_id: loc.company_id } as any]).select().single();
+    mutationFn: async (loc: { location_name: string; address?: string | null; city?: string | null; country?: string | null; status?: string; company_id?: string | null; sector_id?: string | null; sub_unit_id?: string | null }) => {
+      const { data, error } = await supabase.from("locations").insert([{ location_name: loc.location_name, address: loc.address, city: loc.city, country: loc.country, status: loc.status, company_id: loc.company_id, sector_id: loc.sector_id ?? null, sub_unit_id: loc.sub_unit_id ?? null } as any]).select().single();
       if (error) throw error;
       return data as Location;
     },

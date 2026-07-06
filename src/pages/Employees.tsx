@@ -3,7 +3,9 @@ import { useEmployees, useAddEmployee, useUpdateEmployee, useDeleteEmployee, typ
 import { useCompanies, useAddCompany, useUpdateCompany, useDeleteCompany, type Company } from "@/hooks/useCompanies";
 import { useLocations, useAddLocation, useUpdateLocation, useDeleteLocation, type Location } from "@/hooks/useLocations";
 import { useDepartments, useAddDepartment, useUpdateDepartment, useDeleteDepartment, type Department } from "@/hooks/useDepartments";
-import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2, Building2, MapPin, Briefcase } from "lucide-react";
+import { useSectors, useAddSector, useUpdateSector, useDeleteSector, type Sector } from "@/hooks/useSectors";
+import { useSubUnits } from "@/hooks/useSubUnits";
+import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2, Building2, MapPin, Briefcase, Network, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -161,10 +163,176 @@ function CompanyMasterTab() {
   );
 }
 
+// ─── Sector Master Tab ───
+function SectorMasterTab() {
+  const { data: sectors = [], isLoading } = useSectors();
+  const { data: subUnits = [] } = useSubUnits();
+  const { data: companies = [] } = useCompanies();
+  const addSector = useAddSector();
+  const updateSector = useUpdateSector();
+  const deleteSector = useDeleteSector();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Sector | null>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("All");
+
+  const parentCompany = companies.find(c => c.company_name === "NextGen Human Capital Solutions");
+  const emptyForm = { name: "", sector_type: "Other Sectors", company_id: parentCompany?.id ?? "", status: "Active" };
+  const [form, setForm] = useState(emptyForm);
+  const resetForm = () => setForm({ ...emptyForm, company_id: parentCompany?.id ?? "" });
+
+  const filtered = sectors.filter(s => {
+    if (typeFilter !== "All" && s.sector_type !== typeFilter) return false;
+    if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const subUnitNamesFor = (sectorId: string) =>
+    subUnits.filter(su => su.sector_id === sectorId).map(su => su.sub_unit_name).join(", ") || "—";
+
+  const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
+
+  const openAdd = () => { setEditing(null); resetForm(); setDialogOpen(true); };
+  const openEdit = (s: Sector) => {
+    setEditing(s);
+    setForm({ name: s.name, sector_type: s.sector_type ?? "Other Sectors", company_id: s.company_id ?? "", status: s.status });
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) { toast({ title: "Error", description: "Sector name required.", variant: "destructive" }); return; }
+    try {
+      if (editing) {
+        await updateSector.mutateAsync({ id: editing.id, name: form.name, sector_type: form.sector_type, company_id: form.company_id || null, status: form.status });
+        toast({ title: "Sector Updated" });
+      } else {
+        await addSector.mutateAsync({ name: form.name, sector_type: form.sector_type, company_id: form.company_id || null, status: form.status });
+        toast({ title: "Sector Added" });
+      }
+      resetForm(); setDialogOpen(false); setEditing(null);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const handleDelete = async (s: Sector) => {
+    try { await deleteSector.mutateAsync(s.id); toast({ title: "Sector Deleted" }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{filtered.length} sector{filtered.length !== 1 ? "s" : ""}</p>
+        <Button size="sm" className="gap-1.5" onClick={openAdd}><Plus size={14} /> Add Sector</Button>
+      </div>
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input className={inputClass + " pl-9"} placeholder="Search sectors..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className={inputClass + " w-auto"} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+          <option value="All">All Types</option>
+          <option value="LEDU">LEDU</option>
+          <option value="Other Sectors">Other Sectors</option>
+        </select>
+      </div>
+      {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead className="w-24">Sector ID</TableHead>
+              <TableHead>Sector Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Sub-units</TableHead>
+              <TableHead>Company</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="w-20">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No sectors found</TableCell></TableRow> :
+                filtered.map(s => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{s.sector_code || "—"}</TableCell>
+                    <TableCell className="font-semibold">
+                      <div className="flex items-center gap-2">
+                        {s.sector_type === "LEDU" && <GraduationCap className="h-3.5 w-3.5 text-primary" />}
+                        {s.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={s.sector_type === "LEDU" ? "default" : "secondary"}>{s.sector_type || "—"}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={subUnitNamesFor(s.id)}>
+                      {subUnitNamesFor(s.id)}
+                    </TableCell>
+                    <TableCell className="text-sm">{getCompanyName(s.company_id)}</TableCell>
+                    <TableCell><Badge variant={s.status === "Active" ? "default" : "secondary"}>{s.status}</Badge></TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{s.created_at?.slice(0, 10)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(s)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Sector</AlertDialogTitle>
+                              <AlertDialogDescription>Delete {s.name}? This cannot be undone.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(s)}>Delete</AlertDialogAction></AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) { resetForm(); setEditing(null); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>{editing ? "Edit Sector" : "Add Sector"}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <div><label className={labelClass}>Sector Name *</label>
+              <input className={inputClass} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className={labelClass}>Sector Type *</label>
+                <select className={inputClass} value={form.sector_type} onChange={e => setForm(p => ({ ...p, sector_type: e.target.value }))}>
+                  <option value="LEDU">LEDU</option>
+                  <option value="Other Sectors">Other Sectors</option>
+                </select>
+              </div>
+              <div><label className={labelClass}>Status</label>
+                <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+                  <option value="Active">Active</option><option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div><label className={labelClass}>Parent Company</label>
+              <select className={inputClass} value={form.company_id || ""} onChange={e => setForm(p => ({ ...p, company_id: e.target.value }))}>
+                <option value="">— None —</option>
+                {companies.filter(c => c.status === "Active").map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+              </select>
+            </div>
+            <div className="flex justify-end pt-2"><Button type="submit" disabled={addSector.isPending || updateSector.isPending}>{editing ? "Save Changes" : "Add Sector"}</Button></div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ─── Location Master Tab ───
 function LocationMasterTab() {
   const { data: locations = [], isLoading } = useLocations();
   const { data: companies = [] } = useCompanies();
+  const { data: sectors = [] } = useSectors();
+  const { data: subUnits = [] } = useSubUnits();
   const addLocation = useAddLocation();
   const updateLocation = useUpdateLocation();
   const deleteLocation = useDeleteLocation();
@@ -173,17 +341,19 @@ function LocationMasterTab() {
   const [editing, setEditing] = useState<Location | null>(null);
   const [search, setSearch] = useState("");
 
-  const emptyForm = { location_name: "", address: "" as string | null, city: "" as string | null, country: "Sri Lanka" as string | null, status: "Active", company_id: "" as string | null };
+  const emptyForm = { location_name: "", address: "" as string | null, city: "" as string | null, country: "Sri Lanka" as string | null, status: "Active", company_id: "" as string | null, sector_id: "" as string | null, sub_unit_id: "" as string | null };
   const [form, setForm] = useState(emptyForm);
   const resetForm = () => setForm(emptyForm);
 
   const filtered = locations.filter(l => !search || l.location_name.toLowerCase().includes(search.toLowerCase()));
 
+  const availableSubUnits = subUnits.filter(su => !form.sector_id || su.sector_id === form.sector_id);
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.location_name) { toast({ title: "Error", description: "Location name is required.", variant: "destructive" }); return; }
     try {
-      await addLocation.mutateAsync({ ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null });
+      await addLocation.mutateAsync({ ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null });
       toast({ title: "Location Added", description: `${form.location_name} added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -191,7 +361,7 @@ function LocationMasterTab() {
 
   const openEdit = (l: Location) => {
     setEditing(l);
-    setForm({ location_name: l.location_name, address: l.address, city: l.city, country: l.country, status: l.status, company_id: l.company_id });
+    setForm({ location_name: l.location_name, address: l.address, city: l.city, country: l.country, status: l.status, company_id: l.company_id, sector_id: l.sector_id, sub_unit_id: l.sub_unit_id });
     setEditDialogOpen(true);
   };
 
@@ -199,7 +369,7 @@ function LocationMasterTab() {
     e.preventDefault();
     if (!editing) return;
     try {
-      await updateLocation.mutateAsync({ id: editing.id, ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null });
+      await updateLocation.mutateAsync({ id: editing.id, ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null });
       toast({ title: "Location Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -211,6 +381,8 @@ function LocationMasterTab() {
   };
 
   const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
+  const getSectorName = (id: string | null) => sectors.find(s => s.id === id)?.name || "—";
+  const getSubUnitName = (id: string | null) => subUnits.find(s => s.id === id)?.sub_unit_name || "—";
 
   const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (
     <form onSubmit={onSubmit} className="space-y-4 mt-2">
@@ -219,6 +391,22 @@ function LocationMasterTab() {
         <div><label className={labelClass}>City</label><input className={inputClass} value={form.city || ""} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} /></div>
       </div>
       <div><label className={labelClass}>Address</label><input className={inputClass} value={form.address || ""} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Sector</label>
+          <select className={inputClass} value={form.sector_id || ""} onChange={e => setForm(p => ({ ...p, sector_id: e.target.value || null, sub_unit_id: null }))}>
+            <option value="">— None —</option>
+            {sectors.filter(s => s.status === "Active").map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Sub-unit</label>
+          <select className={inputClass} value={form.sub_unit_id || ""} onChange={e => setForm(p => ({ ...p, sub_unit_id: e.target.value || null }))} disabled={availableSubUnits.length === 0}>
+            <option value="">— None —</option>
+            {availableSubUnits.map(su => <option key={su.id} value={su.id}>{su.sub_unit_name}</option>)}
+          </select>
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div><label className={labelClass}>Country</label><input className={inputClass} value={form.country || ""} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} /></div>
         <div>
@@ -258,16 +446,24 @@ function LocationMasterTab() {
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">ID</TableHead><TableHead>Location Name</TableHead><TableHead>City</TableHead><TableHead>Country</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">ID</TableHead>
+              <TableHead>Location Name</TableHead>
+              <TableHead>Sub-unit</TableHead>
+              <TableHead>Sector</TableHead>
+              <TableHead>City</TableHead>
+              <TableHead>Linked Company</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No locations found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No locations found</TableCell></TableRow> :
                 filtered.map(l => (
                   <TableRow key={l.id}>
                     <TableCell className="font-mono text-xs font-semibold">{l.location_code}</TableCell>
                     <TableCell className="font-semibold">{l.location_name}</TableCell>
+                    <TableCell className="text-sm">{getSubUnitName(l.sub_unit_id)}</TableCell>
+                    <TableCell className="text-sm">{getSectorName(l.sector_id)}</TableCell>
                     <TableCell className="text-sm">{l.city || "—"}</TableCell>
-                    <TableCell className="text-sm">{l.country || "—"}</TableCell>
                     <TableCell className="text-sm">{getCompanyName(l.company_id)}</TableCell>
                     <TableCell><Badge variant={l.status === "Active" ? "default" : "secondary"}>{l.status}</Badge></TableCell>
                     <TableCell>
@@ -626,17 +822,22 @@ function DepartmentMasterTab() {
   const [editing, setEditing] = useState<Department | null>(null);
   const [search, setSearch] = useState("");
 
-  const emptyForm = { department_name: "", company_id: "" as string | null, status: "Active" };
+  const emptyForm = { department_name: "", company_id: "" as string | null, sector_type: "Other Sectors", status: "Active" };
   const [form, setForm] = useState(emptyForm);
   const resetForm = () => setForm(emptyForm);
+  const [typeFilter, setTypeFilter] = useState<string>("All");
 
-  const filtered = departments.filter(d => !search || d.department_name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = departments.filter(d => {
+    if (typeFilter !== "All" && d.sector_type !== typeFilter) return false;
+    if (search && !d.department_name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.department_name) { toast({ title: "Error", description: "Department name is required.", variant: "destructive" }); return; }
     try {
-      await addDepartment.mutateAsync({ department_name: form.department_name, company_id: form.company_id || null, status: form.status });
+      await addDepartment.mutateAsync({ department_name: form.department_name, company_id: form.company_id || null, sector_type: form.sector_type, status: form.status });
       toast({ title: "Department Added", description: `${form.department_name} added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -644,7 +845,7 @@ function DepartmentMasterTab() {
 
   const openEdit = (d: Department) => {
     setEditing(d);
-    setForm({ department_name: d.department_name, company_id: d.company_id, status: d.status });
+    setForm({ department_name: d.department_name, company_id: d.company_id, sector_type: d.sector_type ?? "Other Sectors", status: d.status });
     setEditDialogOpen(true);
   };
 
@@ -652,7 +853,7 @@ function DepartmentMasterTab() {
     e.preventDefault();
     if (!editing) return;
     try {
-      await updateDepartment.mutateAsync({ id: editing.id, department_name: form.department_name, company_id: form.company_id || null, status: form.status });
+      await updateDepartment.mutateAsync({ id: editing.id, department_name: form.department_name, company_id: form.company_id || null, sector_type: form.sector_type, status: form.status });
       toast({ title: "Department Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -670,12 +871,24 @@ function DepartmentMasterTab() {
       <div><label className={labelClass}>Department Name *</label><input className={inputClass} value={form.department_name} onChange={e => setForm(p => ({ ...p, department_name: e.target.value }))} /></div>
       <div className="grid grid-cols-2 gap-3">
         <div>
+          <label className={labelClass}>Sector Type *</label>
+          <select className={inputClass} value={form.sector_type} onChange={e => setForm(p => ({ ...p, sector_type: e.target.value }))}>
+            <option value="LEDU">LEDU</option>
+            <option value="Other Sectors">Other Sectors</option>
+          </select>
+        </div>
+        <div>
           <label className={labelClass}>Linked Company</label>
           <select className={inputClass} value={form.company_id || ""} onChange={e => setForm(p => ({ ...p, company_id: e.target.value || null }))}>
             <option value="">— None —</option>
             {companies.filter(c => c.status === "Active").map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
           </select>
         </div>
+      </div>
+      {form.sector_type === "LEDU" && form.department_name === "HR Systems & Compliance" && (
+        <p className="text-xs text-destructive">"HR Systems & Compliance" cannot be assigned to LEDU.</p>
+      )}
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Status</label>
           <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
@@ -698,22 +911,30 @@ function DepartmentMasterTab() {
           </Dialog>
         </Can>
       </div>
-      <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input className={inputClass + " pl-9"} placeholder="Search departments..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input className={inputClass + " pl-9"} placeholder="Search departments..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className={inputClass + " w-auto"} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+          <option value="All">All Sector Types</option>
+          <option value="LEDU">LEDU</option>
+          <option value="Other Sectors">Other Sectors</option>
+        </select>
       </div>
       {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">ID</TableHead><TableHead>Department Name</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">ID</TableHead><TableHead>Department Name</TableHead><TableHead>Sector Type</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No departments found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No departments found</TableCell></TableRow> :
                 filtered.map(d => (
                   <TableRow key={d.id}>
                     <TableCell className="font-mono text-xs font-semibold">{d.department_code}</TableCell>
                     <TableCell className="font-semibold">{d.department_name}</TableCell>
+                    <TableCell><Badge variant={d.sector_type === "LEDU" ? "default" : "secondary"}>{d.sector_type || "—"}</Badge></TableCell>
                     <TableCell className="text-sm">{getCompanyName(d.company_id)}</TableCell>
                     <TableCell><Badge variant={d.status === "Active" ? "default" : "secondary"}>{d.status}</Badge></TableCell>
                     <TableCell>
@@ -750,14 +971,16 @@ export default function Employees({ selectedSector }: EmployeesProps) {
       </h1>
 
       <Tabs defaultValue="employees" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-xl">
+        <TabsList className="grid w-full grid-cols-5 max-w-3xl">
           <TabsTrigger value="employees" className="gap-1.5 text-xs"><Users className="h-3.5 w-3.5" /> Employee Master</TabsTrigger>
+          <TabsTrigger value="sectors" className="gap-1.5 text-xs"><Network className="h-3.5 w-3.5" /> Sector Master</TabsTrigger>
           <TabsTrigger value="companies" className="gap-1.5 text-xs"><Building2 className="h-3.5 w-3.5" /> Company Master</TabsTrigger>
           <TabsTrigger value="locations" className="gap-1.5 text-xs"><MapPin className="h-3.5 w-3.5" /> Location Master</TabsTrigger>
           <TabsTrigger value="departments" className="gap-1.5 text-xs"><Briefcase className="h-3.5 w-3.5" /> Department Master</TabsTrigger>
         </TabsList>
 
         <TabsContent value="employees"><EmployeeMasterTab /></TabsContent>
+        <TabsContent value="sectors"><SectorMasterTab /></TabsContent>
         <TabsContent value="companies"><CompanyMasterTab /></TabsContent>
         <TabsContent value="locations"><LocationMasterTab /></TabsContent>
         <TabsContent value="departments"><DepartmentMasterTab /></TabsContent>

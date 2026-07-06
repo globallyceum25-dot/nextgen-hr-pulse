@@ -1,11 +1,31 @@
-export const SECTORS = [
-  { id: 1, name: "Human Resources Outsourcing" },
-  { id: 2, name: "Talent Acquisition" },
-  { id: 3, name: "Payroll Management" },
-  { id: 4, name: "Compliance & Legal" },
-  { id: 5, name: "Training & Development" },
-  { id: 6, name: "Employee Engagement" },
-  { id: 7, name: "HR Technology Solutions" },
+export type SectorType = "LEDU" | "Other Sectors";
+
+export interface SectorDef {
+  id: number;
+  code: string;
+  name: string;
+  type: SectorType;
+  subUnits?: string[];
+}
+
+// LEDU campus list (used when Lyceum Schools sub-unit is selected)
+export const LYCEUM_CAMPUSES = [
+  "Central Services (LIS)",
+  "Nugegoda", "Panadura", "Katunayake", "Wattala", "Awissawella",
+  "Rathnapura", "Anuradhapura", "Kurunagala", "Nuwaraeliya",
+];
+
+export const LEDU_SUB_UNITS = ["Lyceum Schools", "Early Childhood", "Higher Education"];
+
+export const SECTORS: SectorDef[] = [
+  { id: 1, code: "SEC001", name: "LEDU — Education Sector", type: "LEDU", subUnits: LEDU_SUB_UNITS },
+  { id: 2, code: "SEC002", name: "Lyceum Global Holdings",  type: "Other Sectors" },
+  { id: 3, code: "SEC003", name: "Heracle Holdings",        type: "Other Sectors" },
+  { id: 4, code: "SEC004", name: "Build Holdings",          type: "Other Sectors" },
+  { id: 5, code: "SEC005", name: "Speed Holdings",          type: "Other Sectors" },
+  { id: 6, code: "SEC006", name: "NCG Tech Holdings",       type: "Other Sectors" },
+  { id: 7, code: "SEC007", name: "NCG KIT Holdings",        type: "Other Sectors" },
+  { id: 8, code: "SEC008", name: "NCG Read Holdings",       type: "Other Sectors" },
 ];
 
 export const MONTHS = [

@@ -6,6 +6,7 @@ export interface Department {
   department_code: string;
   department_name: string;
   company_id: string | null;
+  sector_type: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -28,7 +29,7 @@ export function useDepartments() {
 export function useAddDepartment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (dept: Omit<Department, "id" | "department_code" | "created_at" | "updated_at">) => {
+    mutationFn: async (dept: Partial<Omit<Department, "id" | "department_code" | "created_at" | "updated_at">> & { department_name: string }) => {
       const { data, error } = await supabase
         .from("departments")
         .insert({ ...dept, department_code: "" })

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { SECTORS } from "@/data/mockData";
+import { SECTORS, LYCEUM_CAMPUSES } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
   ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut, FileText, Shield,
+  GraduationCap,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,24 +121,42 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
                   <Building2 size={14} />
                   All Sectors
                 </button>
-                {SECTORS.map(s => (
-                  <button
-                    key={s.id}
-                    onClick={() => onSectorChange(s.id)}
-                    className={cn(
-                      "flex items-center gap-2 w-full px-3 py-1.5 rounded text-xs transition-snappy truncate",
-                      selectedSector === s.id
-                        ? "bg-sidebar-accent text-sidebar-foreground"
-                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-2 h-2 rounded-full flex-shrink-0",
-                      selectedSector === s.id ? "bg-sidebar-primary" : "bg-sidebar-foreground/20"
-                    )} />
-                    <span className="truncate">{s.name}</span>
-                  </button>
-                ))}
+                {SECTORS.map(s => {
+                  const isSelected = selectedSector === s.id;
+                  const isLedu = s.type === "LEDU";
+                  return (
+                    <div key={s.id}>
+                      <button
+                        onClick={() => onSectorChange(s.id)}
+                        className={cn(
+                          "flex items-center gap-2 w-full px-3 py-1.5 rounded text-xs transition-snappy truncate",
+                          isSelected
+                            ? "bg-sidebar-accent text-sidebar-foreground"
+                            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50"
+                        )}
+                        title={s.name}
+                      >
+                        {isLedu ? (
+                          <GraduationCap size={14} className="flex-shrink-0 text-primary" />
+                        ) : (
+                          <div className={cn(
+                            "w-2 h-2 rounded-full flex-shrink-0",
+                            isSelected ? "bg-sidebar-primary" : "bg-sidebar-foreground/20"
+                          )} />
+                        )}
+                        <span className="truncate flex-1 text-left">{s.name}</span>
+                        {isLedu && (
+                          <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/20 text-primary tracking-wider">EDU</span>
+                        )}
+                      </button>
+
+                      {/* LEDU sub-units */}
+                      {isLedu && isSelected && s.subUnits && (
+                        <LeduSubtree subUnits={s.subUnits} />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -145,5 +164,45 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
       </nav>
 
     </aside>
+  );
+}
+
+function LeduSubtree({ subUnits }: { subUnits: string[] }) {
+  const [selectedSubUnit, setSelectedSubUnit] = useState<string | null>(null);
+  return (
+    <div className="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border/40 pl-2">
+      {subUnits.map(su => {
+        const active = selectedSubUnit === su;
+        return (
+          <div key={su}>
+            <button
+              onClick={() => setSelectedSubUnit(active ? null : su)}
+              className={cn(
+                "flex items-center gap-2 w-full px-2 py-1 rounded text-[11px] transition-snappy",
+                active
+                  ? "bg-sidebar-accent/60 text-sidebar-foreground"
+                  : "text-sidebar-foreground/50 hover:bg-sidebar-accent/40"
+              )}
+            >
+              <ChevronDown size={11} className={cn("transition-snappy", active ? "rotate-0" : "-rotate-90")} />
+              <span className="truncate">{su}</span>
+            </button>
+            {active && su === "Lyceum Schools" && (
+              <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border/30 pl-2">
+                {LYCEUM_CAMPUSES.map(c => (
+                  <button
+                    key={c}
+                    className="block w-full text-left px-2 py-0.5 rounded text-[10.5px] text-sidebar-foreground/45 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground/80 truncate"
+                    title={c}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

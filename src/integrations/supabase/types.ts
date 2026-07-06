@@ -60,6 +60,7 @@ export type Database = {
           department_code: string
           department_name: string
           id: string
+          sector_type: string | null
           status: string
           updated_at: string
         }
@@ -69,6 +70,7 @@ export type Database = {
           department_code: string
           department_name: string
           id?: string
+          sector_type?: string | null
           status?: string
           updated_at?: string
         }
@@ -78,6 +80,7 @@ export type Database = {
           department_code?: string
           department_name?: string
           id?: string
+          sector_type?: string | null
           status?: string
           updated_at?: string
         }
@@ -105,6 +108,8 @@ export type Database = {
           id: string
           location: string | null
           reporting_manager: string | null
+          sector_id: string | null
+          sub_unit_id: string | null
           updated_at: string
         }
         Insert: {
@@ -120,6 +125,8 @@ export type Database = {
           id?: string
           location?: string | null
           reporting_manager?: string | null
+          sector_id?: string | null
+          sub_unit_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -135,9 +142,26 @@ export type Database = {
           id?: string
           location?: string | null
           reporting_manager?: string | null
+          sector_id?: string | null
+          sub_unit_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employees_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_sub_unit_id_fkey"
+            columns: ["sub_unit_id"]
+            isOneToOne: false
+            referencedRelation: "sub_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       locations: {
         Row: {
@@ -149,7 +173,9 @@ export type Database = {
           id: string
           location_code: string
           location_name: string
+          sector_id: string | null
           status: string
+          sub_unit_id: string | null
           updated_at: string
         }
         Insert: {
@@ -161,7 +187,9 @@ export type Database = {
           id?: string
           location_code: string
           location_name: string
+          sector_id?: string | null
           status?: string
+          sub_unit_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -173,7 +201,9 @@ export type Database = {
           id?: string
           location_code?: string
           location_name?: string
+          sector_id?: string | null
           status?: string
+          sub_unit_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -182,6 +212,20 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "locations_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "locations_sub_unit_id_fkey"
+            columns: ["sub_unit_id"]
+            isOneToOne: false
+            referencedRelation: "sub_units"
             referencedColumns: ["id"]
           },
         ]
@@ -619,27 +663,47 @@ export type Database = {
       }
       sectors: {
         Row: {
+          company_id: string | null
           created_at: string
           id: string
           is_active: boolean
           name: string
+          sector_code: string | null
+          sector_type: string | null
+          status: string
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           name: string
+          sector_code?: string | null
+          sector_type?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           name?: string
+          sector_code?: string | null
+          sector_type?: string | null
+          status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sectors_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sub_tasks: {
         Row: {
@@ -708,6 +772,41 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sub_units: {
+        Row: {
+          created_at: string
+          id: string
+          sector_id: string | null
+          status: string
+          sub_unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sector_id?: string | null
+          status?: string
+          sub_unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sector_id?: string | null
+          status?: string
+          sub_unit_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_units_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
             referencedColumns: ["id"]
           },
         ]
@@ -874,6 +973,7 @@ export type Database = {
           sla_frequency: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["task_workflow_status"]
+          sub_unit_id: string | null
           task_number: number
           task_weight: number
           title: string
@@ -910,6 +1010,7 @@ export type Database = {
           sla_frequency?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["task_workflow_status"]
+          sub_unit_id?: string | null
           task_number?: number
           task_weight?: number
           title: string
@@ -946,6 +1047,7 @@ export type Database = {
           sla_frequency?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["task_workflow_status"]
+          sub_unit_id?: string | null
           task_number?: number
           task_weight?: number
           title?: string
@@ -1009,6 +1111,13 @@ export type Database = {
             columns: ["sector_id"]
             isOneToOne: false
             referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_sub_unit_id_fkey"
+            columns: ["sub_unit_id"]
+            isOneToOne: false
+            referencedRelation: "sub_units"
             referencedColumns: ["id"]
           },
           {
