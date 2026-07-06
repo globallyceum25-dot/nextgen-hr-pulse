@@ -971,14 +971,16 @@ export default function Employees({ selectedSector }: EmployeesProps) {
       </h1>
 
       <Tabs defaultValue="employees" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-xl">
+        <TabsList className="grid w-full grid-cols-5 max-w-3xl">
           <TabsTrigger value="employees" className="gap-1.5 text-xs"><Users className="h-3.5 w-3.5" /> Employee Master</TabsTrigger>
+          <TabsTrigger value="sectors" className="gap-1.5 text-xs"><Network className="h-3.5 w-3.5" /> Sector Master</TabsTrigger>
           <TabsTrigger value="companies" className="gap-1.5 text-xs"><Building2 className="h-3.5 w-3.5" /> Company Master</TabsTrigger>
           <TabsTrigger value="locations" className="gap-1.5 text-xs"><MapPin className="h-3.5 w-3.5" /> Location Master</TabsTrigger>
           <TabsTrigger value="departments" className="gap-1.5 text-xs"><Briefcase className="h-3.5 w-3.5" /> Department Master</TabsTrigger>
         </TabsList>
 
         <TabsContent value="employees"><EmployeeMasterTab /></TabsContent>
+        <TabsContent value="sectors"><SectorMasterTab /></TabsContent>
         <TabsContent value="companies"><CompanyMasterTab /></TabsContent>
         <TabsContent value="locations"><LocationMasterTab /></TabsContent>
         <TabsContent value="departments"><DepartmentMasterTab /></TabsContent>
