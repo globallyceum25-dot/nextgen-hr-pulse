@@ -871,12 +871,24 @@ function DepartmentMasterTab() {
       <div><label className={labelClass}>Department Name *</label><input className={inputClass} value={form.department_name} onChange={e => setForm(p => ({ ...p, department_name: e.target.value }))} /></div>
       <div className="grid grid-cols-2 gap-3">
         <div>
+          <label className={labelClass}>Sector Type *</label>
+          <select className={inputClass} value={form.sector_type} onChange={e => setForm(p => ({ ...p, sector_type: e.target.value }))}>
+            <option value="LEDU">LEDU</option>
+            <option value="Other Sectors">Other Sectors</option>
+          </select>
+        </div>
+        <div>
           <label className={labelClass}>Linked Company</label>
           <select className={inputClass} value={form.company_id || ""} onChange={e => setForm(p => ({ ...p, company_id: e.target.value || null }))}>
             <option value="">— None —</option>
             {companies.filter(c => c.status === "Active").map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
           </select>
         </div>
+      </div>
+      {form.sector_type === "LEDU" && form.department_name === "HR Systems & Compliance" && (
+        <p className="text-xs text-destructive">"HR Systems & Compliance" cannot be assigned to LEDU.</p>
+      )}
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Status</label>
           <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
