@@ -331,6 +331,8 @@ function SectorMasterTab() {
 function LocationMasterTab() {
   const { data: locations = [], isLoading } = useLocations();
   const { data: companies = [] } = useCompanies();
+  const { data: sectors = [] } = useSectors();
+  const { data: subUnits = [] } = useSubUnits();
   const addLocation = useAddLocation();
   const updateLocation = useUpdateLocation();
   const deleteLocation = useDeleteLocation();
@@ -339,17 +341,19 @@ function LocationMasterTab() {
   const [editing, setEditing] = useState<Location | null>(null);
   const [search, setSearch] = useState("");
 
-  const emptyForm = { location_name: "", address: "" as string | null, city: "" as string | null, country: "Sri Lanka" as string | null, status: "Active", company_id: "" as string | null };
+  const emptyForm = { location_name: "", address: "" as string | null, city: "" as string | null, country: "Sri Lanka" as string | null, status: "Active", company_id: "" as string | null, sector_id: "" as string | null, sub_unit_id: "" as string | null };
   const [form, setForm] = useState(emptyForm);
   const resetForm = () => setForm(emptyForm);
 
   const filtered = locations.filter(l => !search || l.location_name.toLowerCase().includes(search.toLowerCase()));
 
+  const availableSubUnits = subUnits.filter(su => !form.sector_id || su.sector_id === form.sector_id);
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.location_name) { toast({ title: "Error", description: "Location name is required.", variant: "destructive" }); return; }
     try {
-      await addLocation.mutateAsync({ ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null });
+      await addLocation.mutateAsync({ ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null });
       toast({ title: "Location Added", description: `${form.location_name} added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -357,7 +361,7 @@ function LocationMasterTab() {
 
   const openEdit = (l: Location) => {
     setEditing(l);
-    setForm({ location_name: l.location_name, address: l.address, city: l.city, country: l.country, status: l.status, company_id: l.company_id });
+    setForm({ location_name: l.location_name, address: l.address, city: l.city, country: l.country, status: l.status, company_id: l.company_id, sector_id: l.sector_id, sub_unit_id: l.sub_unit_id });
     setEditDialogOpen(true);
   };
 
@@ -365,7 +369,7 @@ function LocationMasterTab() {
     e.preventDefault();
     if (!editing) return;
     try {
-      await updateLocation.mutateAsync({ id: editing.id, ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null });
+      await updateLocation.mutateAsync({ id: editing.id, ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null });
       toast({ title: "Location Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -377,6 +381,8 @@ function LocationMasterTab() {
   };
 
   const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
+  const getSectorName = (id: string | null) => sectors.find(s => s.id === id)?.name || "—";
+  const getSubUnitName = (id: string | null) => subUnits.find(s => s.id === id)?.sub_unit_name || "—";
 
   const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (
     <form onSubmit={onSubmit} className="space-y-4 mt-2">
@@ -385,6 +391,22 @@ function LocationMasterTab() {
         <div><label className={labelClass}>City</label><input className={inputClass} value={form.city || ""} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} /></div>
       </div>
       <div><label className={labelClass}>Address</label><input className={inputClass} value={form.address || ""} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Sector</label>
+          <select className={inputClass} value={form.sector_id || ""} onChange={e => setForm(p => ({ ...p, sector_id: e.target.value || null, sub_unit_id: null }))}>
+            <option value="">— None —</option>
+            {sectors.filter(s => s.status === "Active").map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Sub-unit</label>
+          <select className={inputClass} value={form.sub_unit_id || ""} onChange={e => setForm(p => ({ ...p, sub_unit_id: e.target.value || null }))} disabled={availableSubUnits.length === 0}>
+            <option value="">— None —</option>
+            {availableSubUnits.map(su => <option key={su.id} value={su.id}>{su.sub_unit_name}</option>)}
+          </select>
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div><label className={labelClass}>Country</label><input className={inputClass} value={form.country || ""} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} /></div>
         <div>
@@ -424,16 +446,24 @@ function LocationMasterTab() {
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">ID</TableHead><TableHead>Location Name</TableHead><TableHead>City</TableHead><TableHead>Country</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">ID</TableHead>
+              <TableHead>Location Name</TableHead>
+              <TableHead>Sub-unit</TableHead>
+              <TableHead>Sector</TableHead>
+              <TableHead>City</TableHead>
+              <TableHead>Linked Company</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No locations found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No locations found</TableCell></TableRow> :
                 filtered.map(l => (
                   <TableRow key={l.id}>
                     <TableCell className="font-mono text-xs font-semibold">{l.location_code}</TableCell>
                     <TableCell className="font-semibold">{l.location_name}</TableCell>
+                    <TableCell className="text-sm">{getSubUnitName(l.sub_unit_id)}</TableCell>
+                    <TableCell className="text-sm">{getSectorName(l.sector_id)}</TableCell>
                     <TableCell className="text-sm">{l.city || "—"}</TableCell>
-                    <TableCell className="text-sm">{l.country || "—"}</TableCell>
                     <TableCell className="text-sm">{getCompanyName(l.company_id)}</TableCell>
                     <TableCell><Badge variant={l.status === "Active" ? "default" : "secondary"}>{l.status}</Badge></TableCell>
                     <TableCell>
