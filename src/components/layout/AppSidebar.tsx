@@ -206,10 +206,3 @@ function LeduSubtree({ subUnits }: { subUnits: string[] }) {
     </div>
   );
 }
-          </div>
-        )}
-      </nav>
-
-    </aside>
-  );
-}
