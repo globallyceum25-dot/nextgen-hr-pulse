@@ -822,11 +822,16 @@ function DepartmentMasterTab() {
   const [editing, setEditing] = useState<Department | null>(null);
   const [search, setSearch] = useState("");
 
-  const emptyForm = { department_name: "", company_id: "" as string | null, status: "Active" };
+  const emptyForm = { department_name: "", company_id: "" as string | null, sector_type: "Other Sectors", status: "Active" };
   const [form, setForm] = useState(emptyForm);
   const resetForm = () => setForm(emptyForm);
+  const [typeFilter, setTypeFilter] = useState<string>("All");
 
-  const filtered = departments.filter(d => !search || d.department_name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = departments.filter(d => {
+    if (typeFilter !== "All" && d.sector_type !== typeFilter) return false;
+    if (search && !d.department_name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
