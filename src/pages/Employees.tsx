@@ -163,6 +163,170 @@ function CompanyMasterTab() {
   );
 }
 
+// ─── Sector Master Tab ───
+function SectorMasterTab() {
+  const { data: sectors = [], isLoading } = useSectors();
+  const { data: subUnits = [] } = useSubUnits();
+  const { data: companies = [] } = useCompanies();
+  const addSector = useAddSector();
+  const updateSector = useUpdateSector();
+  const deleteSector = useDeleteSector();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Sector | null>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("All");
+
+  const parentCompany = companies.find(c => c.company_name === "NextGen Human Capital Solutions");
+  const emptyForm = { name: "", sector_type: "Other Sectors", company_id: parentCompany?.id ?? "", status: "Active" };
+  const [form, setForm] = useState(emptyForm);
+  const resetForm = () => setForm({ ...emptyForm, company_id: parentCompany?.id ?? "" });
+
+  const filtered = sectors.filter(s => {
+    if (typeFilter !== "All" && s.sector_type !== typeFilter) return false;
+    if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const subUnitNamesFor = (sectorId: string) =>
+    subUnits.filter(su => su.sector_id === sectorId).map(su => su.sub_unit_name).join(", ") || "—";
+
+  const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
+
+  const openAdd = () => { setEditing(null); resetForm(); setDialogOpen(true); };
+  const openEdit = (s: Sector) => {
+    setEditing(s);
+    setForm({ name: s.name, sector_type: s.sector_type ?? "Other Sectors", company_id: s.company_id ?? "", status: s.status });
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) { toast({ title: "Error", description: "Sector name required.", variant: "destructive" }); return; }
+    try {
+      if (editing) {
+        await updateSector.mutateAsync({ id: editing.id, name: form.name, sector_type: form.sector_type, company_id: form.company_id || null, status: form.status });
+        toast({ title: "Sector Updated" });
+      } else {
+        await addSector.mutateAsync({ name: form.name, sector_type: form.sector_type, company_id: form.company_id || null, status: form.status });
+        toast({ title: "Sector Added" });
+      }
+      resetForm(); setDialogOpen(false); setEditing(null);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const handleDelete = async (s: Sector) => {
+    try { await deleteSector.mutateAsync(s.id); toast({ title: "Sector Deleted" }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{filtered.length} sector{filtered.length !== 1 ? "s" : ""}</p>
+        <Button size="sm" className="gap-1.5" onClick={openAdd}><Plus size={14} /> Add Sector</Button>
+      </div>
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input className={inputClass + " pl-9"} placeholder="Search sectors..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className={inputClass + " w-auto"} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+          <option value="All">All Types</option>
+          <option value="LEDU">LEDU</option>
+          <option value="Other Sectors">Other Sectors</option>
+        </select>
+      </div>
+      {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead className="w-24">Sector ID</TableHead>
+              <TableHead>Sector Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Sub-units</TableHead>
+              <TableHead>Company</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="w-20">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No sectors found</TableCell></TableRow> :
+                filtered.map(s => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{s.sector_code || "—"}</TableCell>
+                    <TableCell className="font-semibold">
+                      <div className="flex items-center gap-2">
+                        {s.sector_type === "LEDU" && <GraduationCap className="h-3.5 w-3.5 text-primary" />}
+                        {s.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={s.sector_type === "LEDU" ? "default" : "secondary"}>{s.sector_type || "—"}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={subUnitNamesFor(s.id)}>
+                      {subUnitNamesFor(s.id)}
+                    </TableCell>
+                    <TableCell className="text-sm">{getCompanyName(s.company_id)}</TableCell>
+                    <TableCell><Badge variant={s.status === "Active" ? "default" : "secondary"}>{s.status}</Badge></TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{s.created_at?.slice(0, 10)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(s)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Sector</AlertDialogTitle>
+                              <AlertDialogDescription>Delete {s.name}? This cannot be undone.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(s)}>Delete</AlertDialogAction></AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) { resetForm(); setEditing(null); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>{editing ? "Edit Sector" : "Add Sector"}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <div><label className={labelClass}>Sector Name *</label>
+              <input className={inputClass} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className={labelClass}>Sector Type *</label>
+                <select className={inputClass} value={form.sector_type} onChange={e => setForm(p => ({ ...p, sector_type: e.target.value }))}>
+                  <option value="LEDU">LEDU</option>
+                  <option value="Other Sectors">Other Sectors</option>
+                </select>
+              </div>
+              <div><label className={labelClass}>Status</label>
+                <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+                  <option value="Active">Active</option><option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div><label className={labelClass}>Parent Company</label>
+              <select className={inputClass} value={form.company_id || ""} onChange={e => setForm(p => ({ ...p, company_id: e.target.value }))}>
+                <option value="">— None —</option>
+                {companies.filter(c => c.status === "Active").map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+              </select>
+            </div>
+            <div className="flex justify-end pt-2"><Button type="submit" disabled={addSector.isPending || updateSector.isPending}>{editing ? "Save Changes" : "Add Sector"}</Button></div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ─── Location Master Tab ───
 function LocationMasterTab() {
   const { data: locations = [], isLoading } = useLocations();
