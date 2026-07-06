@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { SECTORS } from "@/data/mockData";
+import { SECTORS, LYCEUM_CAMPUSES } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
   ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut, FileText, Shield,
+  GraduationCap,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
