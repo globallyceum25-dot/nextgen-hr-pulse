@@ -854,22 +854,6 @@ function DepartmentMasterTab() {
     if (!editing) return;
     try {
       await updateDepartment.mutateAsync({ id: editing.id, department_name: form.department_name, company_id: form.company_id || null, sector_type: form.sector_type, status: form.status });
-      toast({ title: "Department Added", description: `${form.department_name} added.` });
-      resetForm(); setDialogOpen(false);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
-  };
-
-  const openEdit = (d: Department) => {
-    setEditing(d);
-    setForm({ department_name: d.department_name, company_id: d.company_id, status: d.status });
-    setEditDialogOpen(true);
-  };
-
-  const handleEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editing) return;
-    try {
-      await updateDepartment.mutateAsync({ id: editing.id, department_name: form.department_name, company_id: form.company_id || null, status: form.status });
       toast({ title: "Department Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
