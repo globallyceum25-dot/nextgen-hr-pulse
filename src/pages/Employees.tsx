@@ -911,15 +911,22 @@ function DepartmentMasterTab() {
           </Dialog>
         </Can>
       </div>
-      <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input className={inputClass + " pl-9"} placeholder="Search departments..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input className={inputClass + " pl-9"} placeholder="Search departments..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className={inputClass + " w-auto"} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+          <option value="All">All Sector Types</option>
+          <option value="LEDU">LEDU</option>
+          <option value="Other Sectors">Other Sectors</option>
+        </select>
       </div>
       {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">ID</TableHead><TableHead>Department Name</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">ID</TableHead><TableHead>Department Name</TableHead><TableHead>Sector Type</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {filtered.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No departments found</TableCell></TableRow> :
