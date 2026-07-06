@@ -929,11 +929,12 @@ function DepartmentMasterTab() {
               <TableHead className="w-20">ID</TableHead><TableHead>Department Name</TableHead><TableHead>Sector Type</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No departments found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No departments found</TableCell></TableRow> :
                 filtered.map(d => (
                   <TableRow key={d.id}>
                     <TableCell className="font-mono text-xs font-semibold">{d.department_code}</TableCell>
                     <TableCell className="font-semibold">{d.department_name}</TableCell>
+                    <TableCell><Badge variant={d.sector_type === "LEDU" ? "default" : "secondary"}>{d.sector_type || "—"}</Badge></TableCell>
                     <TableCell className="text-sm">{getCompanyName(d.company_id)}</TableCell>
                     <TableCell><Badge variant={d.status === "Active" ? "default" : "secondary"}>{d.status}</Badge></TableCell>
                     <TableCell>
