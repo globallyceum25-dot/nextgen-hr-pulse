@@ -128,6 +128,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     sector_id: "",
     company_id: "",
     location_id: "",
+    sub_unit_id: "",
     priority: "Medium" as TaskPriority,
     start_date: new Date().toISOString().split("T")[0],
     due_date: "",
