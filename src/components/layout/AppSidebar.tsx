@@ -201,18 +201,6 @@ function LeduSubtree({ subUnits }: { subUnits: string[] }) {
                 ))}
               </div>
             )}
-              <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border/30 pl-2">
-                {LYCEUM_CAMPUSES.map(c => (
-                  <button
-                    key={c}
-                    className="block w-full text-left px-2 py-0.5 rounded text-[10.5px] text-sidebar-foreground/45 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground/80 truncate"
-                    title={c}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         );
       })}
