@@ -7,6 +7,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useDepartments } from "@/hooks/useDepartments";
 import { useLocations } from "@/hooks/useLocations";
+import { useSubUnits } from "@/hooks/useSubUnits";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceType } from "@/types/tasks";
 import { WORKFLOW_STATUSES, MAIN_TASK_STATUSES, PRIORITIES, getWeightFromPriority, getStatusColor, getPriorityColor, getDeadlineInfo, getProgressFromStatus } from "@/types/tasks";
