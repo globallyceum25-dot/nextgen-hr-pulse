@@ -569,7 +569,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     <label className={labelClass}>Department</label>
                     <select className={inputClass} value={formData.department_id} onChange={e => setFormData(p => ({ ...p, department_id: e.target.value }))}>
                       <option value="">Select department</option>
-                      {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
+                      {filteredDepartments.map(d => <option key={d.id} value={d.id}>{d.department_code} — {d.department_name}</option>)}
                     </select>
                   </div>
                   <div>
