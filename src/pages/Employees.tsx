@@ -187,8 +187,16 @@ function SectorMasterTab() {
     return true;
   });
 
-  const subUnitNamesFor = (sectorId: string) =>
-    subUnits.filter(su => su.sector_id === sectorId).map(su => su.sub_unit_name).join(", ") || "—";
+  const subUnitBreakdownFor = (sectorId: string, sectorType: string | null) => {
+    const list = subUnits.filter(su => su.sector_id === sectorId).map(su => su.sub_unit_name);
+    if (list.length === 0) return { short: "—", lines: [] as string[] };
+    if (sectorType !== "LEDU") return { short: list.join(", "), lines: list };
+    const lines: string[] = [];
+    if (list.includes("Lyceum Schools")) lines.push("Lyceum Schools (10 campuses)");
+    if (list.includes("Early Childhood")) lines.push("Early Childhood → Lyceum Leaf School, Lyceum Daycare");
+    if (list.includes("Higher Education")) lines.push("Higher Education → Lyceum Placements, Placements - LIS, Lyceum Campus, Lyceum Assessments, Lyceum Education, JBD, The Lyceum Academy");
+    return { short: list.join(", "), lines };
+  };
 
   const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
 
