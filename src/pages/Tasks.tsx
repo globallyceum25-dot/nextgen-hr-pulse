@@ -66,23 +66,6 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const { data: locations = [] } = useLocations();
   const { data: subUnits = [] } = useSubUnits();
 
-  // Sub-unit-aware location filter: LEDU → filter by sub_unit_id; Other sector → HQ only
-  const filteredLocations = useMemo(() => {
-    if (formData.sub_unit_id) return locations.filter(l => (l as any).sub_unit_id === formData.sub_unit_id);
-    if (formData.sector_id) {
-      const sec = sectors.find(s => s.id === formData.sector_id);
-      if (sec && (sec as any).sector_type !== "LEDU") {
-        return locations.filter(l => l.sector_id === formData.sector_id && !(l as any).sub_unit_id);
-      }
-      return locations.filter(l => l.sector_id === formData.sector_id);
-    }
-    return locations;
-  }, [locations, subUnits, sectors, formData.sub_unit_id, formData.sector_id]);
-
-  const availableSubUnits = useMemo(
-    () => (formData.sector_id ? subUnits.filter(su => su.sector_id === formData.sector_id) : subUnits),
-    [subUnits, formData.sector_id]
-  );
 
 
   // Current user identity for My Tasks filtering
