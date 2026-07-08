@@ -97,7 +97,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [sectorFilter, setSectorFilter] = useState<string>("All");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const { companyId: scopeCompanyId, departmentId: scopeDepartmentId } = useScope();
+  const { companyId: scopeCompanyId, sectorId: scopeSectorId, departmentId: scopeDepartmentId } = useScope();
 
   // UI state
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
