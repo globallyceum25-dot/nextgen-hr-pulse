@@ -165,6 +165,24 @@ export default function Tasks({ selectedSector }: TasksProps) {
     });
   };
 
+  // Sub-unit-aware location filter: LEDU → filter by sub_unit_id; Other sector → HQ only
+  const filteredLocations = useMemo(() => {
+    if (formData.sub_unit_id) return locations.filter(l => (l as any).sub_unit_id === formData.sub_unit_id);
+    if (formData.sector_id) {
+      const sec = sectors.find(s => s.id === formData.sector_id) as any;
+      if (sec && sec.sector_type !== "LEDU") {
+        return locations.filter(l => l.sector_id === formData.sector_id && !(l as any).sub_unit_id);
+      }
+      return locations.filter(l => l.sector_id === formData.sector_id);
+    }
+    return locations;
+  }, [locations, sectors, formData.sub_unit_id, formData.sector_id]);
+
+  const availableSubUnits = useMemo(
+    () => (formData.sector_id ? subUnits.filter(su => su.sector_id === formData.sector_id) : subUnits),
+    [subUnits, formData.sector_id]
+  );
+
   const handleAssigneeChange = (name: string) => {
     const emp = employeesList.find(e => e.employee_name === name);
     if (emp) {
