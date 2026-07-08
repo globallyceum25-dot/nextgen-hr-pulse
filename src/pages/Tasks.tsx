@@ -64,6 +64,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const { data: companies = [] } = useCompanies();
   const { data: departments = [] } = useDepartments();
   const { data: locations = [] } = useLocations();
+  const { data: subUnits = [] } = useSubUnits();
 
   // Current user identity for My Tasks filtering
   const [currentUserEmployeeName, setCurrentUserEmployeeName] = useState<string | null>(null);
