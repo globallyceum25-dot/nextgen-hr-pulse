@@ -139,6 +139,7 @@ export interface CreateTaskInput {
   sector_id?: string;
   company_id?: string;
   location_id?: string;
+  sub_unit_id?: string;
   priority: TaskPriority;
   start_date?: string;
   due_date?: string;
