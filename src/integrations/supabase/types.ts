@@ -55,30 +55,36 @@ export type Database = {
       }
       departments: {
         Row: {
+          applies_to: string
           company_id: string | null
           created_at: string
           department_code: string
           department_name: string
+          description: string | null
           id: string
           sector_type: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          applies_to?: string
           company_id?: string | null
           created_at?: string
           department_code: string
           department_name: string
+          description?: string | null
           id?: string
           sector_type?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          applies_to?: string
           company_id?: string | null
           created_at?: string
           department_code?: string
           department_name?: string
+          description?: string | null
           id?: string
           sector_type?: string | null
           status?: string
