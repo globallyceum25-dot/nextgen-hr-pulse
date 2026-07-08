@@ -826,7 +826,6 @@ function EmployeeMasterTab() {
 // ─── Department Master Tab ───
 function DepartmentMasterTab() {
   const { data: departments = [], isLoading } = useDepartments();
-  const { data: companies = [] } = useCompanies();
   const addDepartment = useAddDepartment();
   const updateDepartment = useUpdateDepartment();
   const deleteDepartment = useDeleteDepartment();
@@ -834,14 +833,14 @@ function DepartmentMasterTab() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Department | null>(null);
   const [search, setSearch] = useState("");
+  const [appliesFilter, setAppliesFilter] = useState<string>("All");
 
-  const emptyForm = { department_name: "", company_id: "" as string | null, sector_type: "Other Sectors", status: "Active" };
+  const emptyForm = { department_name: "", applies_to: "All Sectors", description: "" as string | null, status: "Active" };
   const [form, setForm] = useState(emptyForm);
   const resetForm = () => setForm(emptyForm);
-  const [typeFilter, setTypeFilter] = useState<string>("All");
 
   const filtered = departments.filter(d => {
-    if (typeFilter !== "All" && d.sector_type !== typeFilter) return false;
+    if (appliesFilter !== "All" && d.applies_to !== appliesFilter) return false;
     if (search && !d.department_name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -850,7 +849,7 @@ function DepartmentMasterTab() {
     e.preventDefault();
     if (!form.department_name) { toast({ title: "Error", description: "Department name is required.", variant: "destructive" }); return; }
     try {
-      await addDepartment.mutateAsync({ department_name: form.department_name, company_id: form.company_id || null, sector_type: form.sector_type, status: form.status });
+      await addDepartment.mutateAsync({ department_name: form.department_name, applies_to: form.applies_to, description: form.description || null, status: form.status } as any);
       toast({ title: "Department Added", description: `${form.department_name} added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -858,7 +857,7 @@ function DepartmentMasterTab() {
 
   const openEdit = (d: Department) => {
     setEditing(d);
-    setForm({ department_name: d.department_name, company_id: d.company_id, sector_type: d.sector_type ?? "Other Sectors", status: d.status });
+    setForm({ department_name: d.department_name, applies_to: d.applies_to || "All Sectors", description: d.description ?? "", status: d.status });
     setEditDialogOpen(true);
   };
 
@@ -866,7 +865,7 @@ function DepartmentMasterTab() {
     e.preventDefault();
     if (!editing) return;
     try {
-      await updateDepartment.mutateAsync({ id: editing.id, department_name: form.department_name, company_id: form.company_id || null, sector_type: form.sector_type, status: form.status });
+      await updateDepartment.mutateAsync({ id: editing.id, department_name: form.department_name, applies_to: form.applies_to, description: form.description || null, status: form.status } as any);
       toast({ title: "Department Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -877,37 +876,38 @@ function DepartmentMasterTab() {
     catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
   };
 
-  const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
+  const toggleStatus = async (d: Department) => {
+    const next = d.status === "Active" ? "Inactive" : "Active";
+    try { await updateDepartment.mutateAsync({ id: d.id, status: next } as any); toast({ title: `Marked ${next}` }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const appliesBadge = (v: string) =>
+    v === "Other Sectors Only"
+      ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
+      : "bg-blue-500/10 text-blue-500 border-blue-500/20";
 
   const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (
     <form onSubmit={onSubmit} className="space-y-4 mt-2">
       <div><label className={labelClass}>Department Name *</label><input className={inputClass} value={form.department_name} onChange={e => setForm(p => ({ ...p, department_name: e.target.value }))} /></div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Sector Type *</label>
-          <select className={inputClass} value={form.sector_type} onChange={e => setForm(p => ({ ...p, sector_type: e.target.value }))}>
-            <option value="LEDU">LEDU</option>
-            <option value="Other Sectors">Other Sectors</option>
+          <label className={labelClass}>Applies To *</label>
+          <select className={inputClass} value={form.applies_to} onChange={e => setForm(p => ({ ...p, applies_to: e.target.value }))}>
+            <option value="All Sectors">All Sectors</option>
+            <option value="Other Sectors Only">Other Sectors Only</option>
           </select>
         </div>
-        <div>
-          <label className={labelClass}>Linked Company</label>
-          <select className={inputClass} value={form.company_id || ""} onChange={e => setForm(p => ({ ...p, company_id: e.target.value || null }))}>
-            <option value="">— None —</option>
-            {companies.filter(c => c.status === "Active").map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
-          </select>
-        </div>
-      </div>
-      {form.sector_type === "LEDU" && form.department_name === "HR Systems & Compliance" && (
-        <p className="text-xs text-destructive">"HR Systems & Compliance" cannot be assigned to LEDU.</p>
-      )}
-      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Status</label>
           <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
             <option value="Active">Active</option><option value="Inactive">Inactive</option>
           </select>
         </div>
+      </div>
+      <div>
+        <label className={labelClass}>Description</label>
+        <textarea className={inputClass} rows={3} value={form.description || ""} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
       </div>
       <div className="flex justify-end pt-2"><Button type="submit" disabled={addDepartment.isPending || updateDepartment.isPending}>{label}</Button></div>
     </form>
@@ -929,17 +929,22 @@ function DepartmentMasterTab() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input className={inputClass + " pl-9"} placeholder="Search departments..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <select className={inputClass + " w-auto"} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-          <option value="All">All Sector Types</option>
-          <option value="LEDU">LEDU</option>
-          <option value="Other Sectors">Other Sectors</option>
+        <select className={inputClass + " w-auto"} value={appliesFilter} onChange={e => setAppliesFilter(e.target.value)}>
+          <option value="All">All Departments</option>
+          <option value="All Sectors">All Sectors departments</option>
+          <option value="Other Sectors Only">Other Sectors Only departments</option>
         </select>
       </div>
       {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
         <div className="bg-card rounded-lg border overflow-hidden">
           <Table>
             <TableHeader><TableRow>
-              <TableHead className="w-20">ID</TableHead><TableHead>Department Name</TableHead><TableHead>Sector Type</TableHead><TableHead>Linked Company</TableHead><TableHead>Status</TableHead><TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-20">Dept ID</TableHead>
+              <TableHead>Department Name</TableHead>
+              <TableHead>Applies To</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-28">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No departments found</TableCell></TableRow> :
@@ -947,9 +952,13 @@ function DepartmentMasterTab() {
                   <TableRow key={d.id}>
                     <TableCell className="font-mono text-xs font-semibold">{d.department_code}</TableCell>
                     <TableCell className="font-semibold">{d.department_name}</TableCell>
-                    <TableCell><Badge variant={d.sector_type === "LEDU" ? "default" : "secondary"}>{d.sector_type || "—"}</Badge></TableCell>
-                    <TableCell className="text-sm">{getCompanyName(d.company_id)}</TableCell>
-                    <TableCell><Badge variant={d.status === "Active" ? "default" : "secondary"}>{d.status}</Badge></TableCell>
+                    <TableCell><Badge className={appliesBadge(d.applies_to)} variant="outline">{d.applies_to}</Badge></TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-md"><div className="line-clamp-2" title={d.description || ""}>{d.description || "—"}</div></TableCell>
+                    <TableCell>
+                      <button onClick={() => toggleStatus(d)} className="cursor-pointer">
+                        <Badge variant={d.status === "Active" ? "default" : "secondary"}>{d.status}</Badge>
+                      </button>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Can module="departments" action="edit">

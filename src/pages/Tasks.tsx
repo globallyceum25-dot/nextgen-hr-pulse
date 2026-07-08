@@ -183,6 +183,15 @@ export default function Tasks({ selectedSector }: TasksProps) {
     [subUnits, formData.sector_id]
   );
 
+  // Sector-aware department filter: LEDU excludes 'Other Sectors Only' departments
+  const filteredDepartments = useMemo(() => {
+    const sec = sectors.find(s => s.id === formData.sector_id) as any;
+    if (sec && sec.sector_type === "LEDU") {
+      return departments.filter(d => (d as any).applies_to !== "Other Sectors Only" && d.status === "Active");
+    }
+    return departments.filter(d => d.status === "Active");
+  }, [departments, sectors, formData.sector_id]);
+
   const handleAssigneeChange = (name: string) => {
     const emp = employeesList.find(e => e.employee_name === name);
     if (emp) {
@@ -560,7 +569,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     <label className={labelClass}>Department</label>
                     <select className={inputClass} value={formData.department_id} onChange={e => setFormData(p => ({ ...p, department_id: e.target.value }))}>
                       <option value="">Select department</option>
-                      {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
+                      {filteredDepartments.map(d => <option key={d.id} value={d.id}>{d.department_code} — {d.department_name}</option>)}
                     </select>
                   </div>
                   <div>
@@ -983,7 +992,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   <label className={labelClass}>Department</label>
                   <select className={inputClass} value={formData.department_id} onChange={e => setFormData(p => ({ ...p, department_id: e.target.value }))}>
                     <option value="">Select department</option>
-                    {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
+                    {filteredDepartments.map(d => <option key={d.id} value={d.id}>{d.department_code} — {d.department_name}</option>)}
                   </select>
                 </div>
                 <div>
