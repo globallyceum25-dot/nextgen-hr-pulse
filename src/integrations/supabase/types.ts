@@ -175,6 +175,7 @@ export type Database = {
           location_name: string
           sector_id: string | null
           status: string
+          sub_unit_entity_id: string | null
           sub_unit_id: string | null
           updated_at: string
         }
@@ -189,6 +190,7 @@ export type Database = {
           location_name: string
           sector_id?: string | null
           status?: string
+          sub_unit_entity_id?: string | null
           sub_unit_id?: string | null
           updated_at?: string
         }
@@ -203,6 +205,7 @@ export type Database = {
           location_name?: string
           sector_id?: string | null
           status?: string
+          sub_unit_entity_id?: string | null
           sub_unit_id?: string | null
           updated_at?: string
         }
@@ -219,6 +222,13 @@ export type Database = {
             columns: ["sector_id"]
             isOneToOne: false
             referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "locations_sub_unit_entity_id_fkey"
+            columns: ["sub_unit_entity_id"]
+            isOneToOne: false
+            referencedRelation: "sub_unit_entities"
             referencedColumns: ["id"]
           },
           {
@@ -776,6 +786,51 @@ export type Database = {
           },
         ]
       }
+      sub_unit_entities: {
+        Row: {
+          created_at: string
+          entity_name: string
+          id: string
+          sector_id: string | null
+          status: string
+          sub_unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_name: string
+          id?: string
+          sector_id?: string | null
+          status?: string
+          sub_unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_name?: string
+          id?: string
+          sector_id?: string | null
+          status?: string
+          sub_unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_unit_entities_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sub_unit_entities_sub_unit_id_fkey"
+            columns: ["sub_unit_id"]
+            isOneToOne: false
+            referencedRelation: "sub_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sub_units: {
         Row: {
           created_at: string
@@ -973,6 +1028,7 @@ export type Database = {
           sla_frequency: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["task_workflow_status"]
+          sub_unit_entity_id: string | null
           sub_unit_id: string | null
           task_number: number
           task_weight: number
@@ -1010,6 +1066,7 @@ export type Database = {
           sla_frequency?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["task_workflow_status"]
+          sub_unit_entity_id?: string | null
           sub_unit_id?: string | null
           task_number?: number
           task_weight?: number
@@ -1047,6 +1104,7 @@ export type Database = {
           sla_frequency?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["task_workflow_status"]
+          sub_unit_entity_id?: string | null
           sub_unit_id?: string | null
           task_number?: number
           task_weight?: number
@@ -1111,6 +1169,13 @@ export type Database = {
             columns: ["sector_id"]
             isOneToOne: false
             referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_sub_unit_entity_id_fkey"
+            columns: ["sub_unit_entity_id"]
+            isOneToOne: false
+            referencedRelation: "sub_unit_entities"
             referencedColumns: ["id"]
           },
           {
