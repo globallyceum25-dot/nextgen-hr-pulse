@@ -203,6 +203,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         sector_id: formData.sector_id || undefined,
         company_id: formData.company_id || undefined,
         location_id: formData.location_id || undefined,
+        sub_unit_id: formData.sub_unit_id || undefined,
         priority: formData.priority,
         start_date: formData.start_date || undefined,
         due_date: formData.due_date || undefined,
