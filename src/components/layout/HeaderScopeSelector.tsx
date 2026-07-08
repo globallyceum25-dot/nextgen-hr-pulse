@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from "react";
-import { Building2, Network } from "lucide-react";
+import { Building2, Network, Layers } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useDepartments } from "@/hooks/useDepartments";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useSectors } from "@/hooks/useSectors";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useScope } from "@/contexts/ScopeContext";
 
@@ -11,10 +12,10 @@ export default function HeaderScopeSelector() {
   const { data: companies = [] } = useCompanies();
   const { data: departments = [] } = useDepartments();
   const { data: employees = [] } = useEmployees();
+  const { data: sectors = [] } = useSectors();
   const { state, isSuperAdmin, ownEmployeeId } = usePermissions();
-  const { companyId, departmentId, setCompanyId, setDepartmentId } = useScope();
+  const { companyId, sectorId, departmentId, setCompanyId, setSectorId, setDepartmentId } = useScope();
 
-  // Resolve which company/departments the current user is allowed to see (via RBAC scope).
   const linkedEmployee = useMemo(
     () => employees.find(e => e.id === ownEmployeeId) ?? null,
     [employees, ownEmployeeId]
@@ -23,7 +24,6 @@ export default function HeaderScopeSelector() {
   const allowedCompanies = useMemo(() => {
     const active = companies.filter(c => c.status === "Active");
     if (isSuperAdmin || state?.scope?.all_companies || !state?.scope) {
-      // Restrict to companies relevant to the linked employee if present.
       if (linkedEmployee) {
         return active.filter(c => c.company_name === linkedEmployee.company_name);
       }
@@ -33,19 +33,32 @@ export default function HeaderScopeSelector() {
     return active.filter(c => ids.has(c.id));
   }, [companies, state, isSuperAdmin, linkedEmployee]);
 
+  // Sectors scoped to company (or all if none). Only active sectors.
+  const allowedSectors = useMemo(() => {
+    if (!companyId) return [];
+    const active = (sectors as any[]).filter(s => (s.is_active ?? true) && (s.status ? s.status === "Active" : true));
+    return active.filter(s => !s.company_id || s.company_id === companyId);
+  }, [sectors, companyId]);
+
+  // Departments filtered by selected sector using the LEDU rule
   const allowedDepartments = useMemo(() => {
     if (!companyId) return [];
-    const active = departments.filter(
-      d => d.status === "Active" && d.company_id === companyId
-    );
-    if (isSuperAdmin || state?.scope?.all_departments || !state?.scope) {
-      return active;
-    }
-    const ids = new Set(state.scope.department_ids);
-    return active.filter(d => ids.has(d.id));
-  }, [departments, companyId, state, isSuperAdmin]);
+    let active = departments.filter(d => d.status === "Active");
 
-  // Auto-pick: linked employee's company/department, else first allowed.
+    const sec = (sectors as any[]).find(s => s.id === sectorId);
+    if (sec) {
+      if (sec.sector_type === "LEDU") {
+        active = active.filter(d => (d as any).applies_to !== "Other Sectors Only");
+      }
+    }
+
+    if (!(isSuperAdmin || state?.scope?.all_departments || !state?.scope)) {
+      const ids = new Set(state.scope.department_ids);
+      active = active.filter(d => ids.has(d.id));
+    }
+    return active;
+  }, [departments, companyId, sectorId, sectors, state, isSuperAdmin]);
+
   useEffect(() => {
     if (companyId || allowedCompanies.length === 0) return;
     if (linkedEmployee) {
@@ -54,6 +67,11 @@ export default function HeaderScopeSelector() {
     }
     if (allowedCompanies.length === 1) setCompanyId(allowedCompanies[0].id);
   }, [allowedCompanies, companyId, linkedEmployee, setCompanyId]);
+
+  useEffect(() => {
+    if (sectorId || allowedSectors.length === 0) return;
+    if (allowedSectors.length === 1) setSectorId(allowedSectors[0].id);
+  }, [allowedSectors, sectorId, setSectorId]);
 
   useEffect(() => {
     if (departmentId || allowedDepartments.length === 0) return;
@@ -66,7 +84,7 @@ export default function HeaderScopeSelector() {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1.5 min-w-[200px]">
+      <div className="flex items-center gap-1.5 min-w-[180px]">
         <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
         <Select
           value={companyId ?? ""}
@@ -87,7 +105,28 @@ export default function HeaderScopeSelector() {
         </Select>
       </div>
 
-      <div className="flex items-center gap-1.5 min-w-[200px]">
+      <div className="flex items-center gap-1.5 min-w-[180px]">
+        <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Select
+          value={sectorId ?? ""}
+          onValueChange={(v) => setSectorId(v || null)}
+          disabled={!companyId || allowedSectors.length === 0}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder={companyId ? "Select Sector" : "Pick company first"} />
+          </SelectTrigger>
+          <SelectContent>
+            {allowedSectors.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+            {companyId && allowedSectors.length === 0 && (
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">No sectors for this company</div>
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-center gap-1.5 min-w-[180px]">
         <Network className="h-4 w-4 text-muted-foreground shrink-0" />
         <Select
           value={departmentId ?? ""}
@@ -95,7 +134,7 @@ export default function HeaderScopeSelector() {
           disabled={!companyId || allowedDepartments.length === 0}
         >
           <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder={companyId ? "Select Department" : "Pick company first"} />
+            <SelectValue placeholder={!companyId ? "Pick company first" : (sectorId ? "Select Department" : "Select Department")} />
           </SelectTrigger>
           <SelectContent>
             {allowedDepartments.map(d => (
