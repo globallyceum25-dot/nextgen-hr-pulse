@@ -426,6 +426,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (companyFilter !== "All" && t.company_id !== companyFilter) return false;
       // Header scope filter (global) — applies on top of page-local filters
       if (scopeCompanyId && t.company_id !== scopeCompanyId) return false;
+      if (scopeSectorId && t.sector_id !== scopeSectorId) return false;
       if (scopeDepartmentId && t.department_id !== scopeDepartmentId) return false;
       if (locationFilter !== "All" && t.location_id !== locationFilter) return false;
       if (sectorFilter !== "All" && t.sector_id !== sectorFilter) return false;
