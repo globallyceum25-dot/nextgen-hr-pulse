@@ -40,6 +40,8 @@ export interface DbTask {
   sector_id: string | null;
   company_id: string | null;
   location_id: string | null;
+  sub_unit_id: string | null;
+  sub_unit_entity_id?: string | null;
   priority: TaskPriority;
   status: TaskWorkflowStatus;
   start_date: string | null;
