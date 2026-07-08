@@ -155,7 +155,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     setFormData({
       title: "", description: "", category_id: "", type_id: "",
       assignee_name: "", department_id: "", sector_id: "",
-      company_id: "", location_id: "", priority: "Medium",
+      company_id: "", location_id: "", sub_unit_id: "", priority: "Medium",
       start_date: new Date().toISOString().split("T")[0], due_date: "",
       kpi_target_percent: 100, remarks: "", sla_frequency: "Day 1",
       escalation_person: "", recurrence: "none", recurrence_count: 0,
