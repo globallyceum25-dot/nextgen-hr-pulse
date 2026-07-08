@@ -87,14 +87,15 @@ export default function HeaderScopeSelector() {
       <div className="flex items-center gap-1.5 min-w-[180px]">
         <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
         <Select
-          value={companyId ?? ""}
-          onValueChange={(v) => setCompanyId(v || null)}
+          value={companyId ?? "__all__"}
+          onValueChange={(v) => setCompanyId(v === "__all__" ? null : v)}
           disabled={allowedCompanies.length === 0}
         >
           <SelectTrigger className="h-8 text-xs">
             <SelectValue placeholder="Select Company" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="__all__">All Companies</SelectItem>
             {allowedCompanies.map(c => (
               <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
             ))}
@@ -108,14 +109,15 @@ export default function HeaderScopeSelector() {
       <div className="flex items-center gap-1.5 min-w-[180px]">
         <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
         <Select
-          value={sectorId ?? ""}
-          onValueChange={(v) => setSectorId(v || null)}
-          disabled={!companyId || allowedSectors.length === 0}
+          value={sectorId ?? "__all__"}
+          onValueChange={(v) => setSectorId(v === "__all__" ? null : v)}
+          disabled={allowedSectors.length === 0 && !companyId}
         >
           <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder={companyId ? "Select Sector" : "Pick company first"} />
+            <SelectValue placeholder="Select Sector" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="__all__">All Sectors</SelectItem>
             {allowedSectors.map((s: any) => (
               <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
             ))}
@@ -129,14 +131,15 @@ export default function HeaderScopeSelector() {
       <div className="flex items-center gap-1.5 min-w-[180px]">
         <Network className="h-4 w-4 text-muted-foreground shrink-0" />
         <Select
-          value={departmentId ?? ""}
-          onValueChange={(v) => setDepartmentId(v || null)}
-          disabled={!companyId || allowedDepartments.length === 0}
+          value={departmentId ?? "__all__"}
+          onValueChange={(v) => setDepartmentId(v === "__all__" ? null : v)}
+          disabled={allowedDepartments.length === 0 && !companyId}
         >
           <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder={!companyId ? "Pick company first" : (sectorId ? "Select Department" : "Select Department")} />
+            <SelectValue placeholder="Select Department" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="__all__">All Departments</SelectItem>
             {allowedDepartments.map(d => (
               <SelectItem key={d.id} value={d.id}>{d.department_name}</SelectItem>
             ))}
