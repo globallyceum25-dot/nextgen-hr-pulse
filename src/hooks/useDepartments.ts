@@ -7,6 +7,8 @@ export interface Department {
   department_name: string;
   company_id: string | null;
   sector_type: string | null;
+  applies_to: string;
+  description: string | null;
   status: string;
   created_at: string;
   updated_at: string;
