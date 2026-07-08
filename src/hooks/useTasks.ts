@@ -174,6 +174,7 @@ export function useCreateTask() {
         sector_id: input.sector_id || null,
         company_id: input.company_id || null,
         location_id: input.location_id || null,
+        sub_unit_id: input.sub_unit_id || null,
         priority: input.priority,
         status: (input.assignee_id ? "Assigned" : "Created") as TaskWorkflowStatus,
         start_date: input.start_date || null,
