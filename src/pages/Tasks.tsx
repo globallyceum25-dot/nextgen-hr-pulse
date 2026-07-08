@@ -97,7 +97,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [sectorFilter, setSectorFilter] = useState<string>("All");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const { companyId: scopeCompanyId, departmentId: scopeDepartmentId } = useScope();
+  const { companyId: scopeCompanyId, sectorId: scopeSectorId, departmentId: scopeDepartmentId } = useScope();
 
   // UI state
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
@@ -426,6 +426,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       if (companyFilter !== "All" && t.company_id !== companyFilter) return false;
       // Header scope filter (global) — applies on top of page-local filters
       if (scopeCompanyId && t.company_id !== scopeCompanyId) return false;
+      if (scopeSectorId && t.sector_id !== scopeSectorId) return false;
       if (scopeDepartmentId && t.department_id !== scopeDepartmentId) return false;
       if (locationFilter !== "All" && t.location_id !== locationFilter) return false;
       if (sectorFilter !== "All" && t.sector_id !== sectorFilter) return false;
@@ -451,7 +452,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName, currentUserId, scopeCompanyId, scopeDepartmentId]);
+  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName, currentUserId, scopeCompanyId, scopeSectorId, scopeDepartmentId]);
 
   // KPI summary cards
   const summary = useMemo(() => {
