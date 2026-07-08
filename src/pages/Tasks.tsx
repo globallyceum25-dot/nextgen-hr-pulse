@@ -988,7 +988,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div>
                   <label className={labelClass}>Sector</label>
-                  <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value }))}>
+                  <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value, sub_unit_id: "", location_id: "" }))}>
                     <option value="">Select sector</option>
                     {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
@@ -996,17 +996,26 @@ export default function Tasks({ selectedSector }: TasksProps) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className={labelClass}>Sub-unit</label>
+                  <select className={inputClass} value={formData.sub_unit_id} disabled={availableSubUnits.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_id: e.target.value, location_id: "" }))}>
+                    <option value="">{availableSubUnits.length === 0 ? "— None —" : "Select sub-unit"}</option>
+                    {availableSubUnits.map(su => <option key={su.id} value={su.id}>{su.sub_unit_name}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className={labelClass}>Company</label>
                   <select className={inputClass} value={formData.company_id} onChange={e => setFormData(p => ({ ...p, company_id: e.target.value }))}>
                     <option value="">Select company</option>
                     {companies.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
                   </select>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Location</label>
                   <select className={inputClass} value={formData.location_id} onChange={e => setFormData(p => ({ ...p, location_id: e.target.value }))}>
                     <option value="">Select location</option>
-                    {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
+                    {filteredLocations.map(l => <option key={l.id} value={l.id}>{l.location_code} — {l.location_name}</option>)}
                   </select>
                 </div>
               </div>
