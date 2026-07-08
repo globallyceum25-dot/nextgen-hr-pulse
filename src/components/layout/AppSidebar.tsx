@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { SECTORS, LYCEUM_CAMPUSES } from "@/data/mockData";
+import { SECTORS, LYCEUM_CAMPUSES, LEDU_SUB_UNIT_ENTITIES } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
   ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut, FileText, Shield,
@@ -173,6 +173,7 @@ function LeduSubtree({ subUnits }: { subUnits: string[] }) {
     <div className="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border/40 pl-2">
       {subUnits.map(su => {
         const active = selectedSubUnit === su;
+        const entities = LEDU_SUB_UNIT_ENTITIES[su] ?? [];
         return (
           <div key={su}>
             <button
@@ -187,9 +188,9 @@ function LeduSubtree({ subUnits }: { subUnits: string[] }) {
               <ChevronDown size={11} className={cn("transition-snappy", active ? "rotate-0" : "-rotate-90")} />
               <span className="truncate">{su}</span>
             </button>
-            {active && su === "Lyceum Schools" && (
+            {active && entities.length > 0 && (
               <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border/30 pl-2">
-                {LYCEUM_CAMPUSES.map(c => (
+                {entities.map(c => (
                   <button
                     key={c}
                     className="block w-full text-left px-2 py-0.5 rounded text-[10.5px] text-sidebar-foreground/45 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground/80 truncate"

@@ -7,6 +7,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useDepartments } from "@/hooks/useDepartments";
 import { useLocations } from "@/hooks/useLocations";
+import { useSubUnits } from "@/hooks/useSubUnits";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceType } from "@/types/tasks";
 import { WORKFLOW_STATUSES, MAIN_TASK_STATUSES, PRIORITIES, getWeightFromPriority, getStatusColor, getPriorityColor, getDeadlineInfo, getProgressFromStatus } from "@/types/tasks";
@@ -63,6 +64,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const { data: companies = [] } = useCompanies();
   const { data: departments = [] } = useDepartments();
   const { data: locations = [] } = useLocations();
+  const { data: subUnits = [] } = useSubUnits();
+
+
 
   // Current user identity for My Tasks filtering
   const [currentUserEmployeeName, setCurrentUserEmployeeName] = useState<string | null>(null);
@@ -126,6 +130,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     sector_id: "",
     company_id: "",
     location_id: "",
+    sub_unit_id: "",
     priority: "Medium" as TaskPriority,
     start_date: new Date().toISOString().split("T")[0],
     due_date: "",
@@ -152,13 +157,31 @@ export default function Tasks({ selectedSector }: TasksProps) {
     setFormData({
       title: "", description: "", category_id: "", type_id: "",
       assignee_name: "", department_id: "", sector_id: "",
-      company_id: "", location_id: "", priority: "Medium",
+      company_id: "", location_id: "", sub_unit_id: "", priority: "Medium",
       start_date: new Date().toISOString().split("T")[0], due_date: "",
       kpi_target_percent: 100, remarks: "", sla_frequency: "Day 1",
       escalation_person: "", recurrence: "none", recurrence_count: 0,
       related_module: "", sub_task_count: 0,
     });
   };
+
+  // Sub-unit-aware location filter: LEDU → filter by sub_unit_id; Other sector → HQ only
+  const filteredLocations = useMemo(() => {
+    if (formData.sub_unit_id) return locations.filter(l => (l as any).sub_unit_id === formData.sub_unit_id);
+    if (formData.sector_id) {
+      const sec = sectors.find(s => s.id === formData.sector_id) as any;
+      if (sec && sec.sector_type !== "LEDU") {
+        return locations.filter(l => l.sector_id === formData.sector_id && !(l as any).sub_unit_id);
+      }
+      return locations.filter(l => l.sector_id === formData.sector_id);
+    }
+    return locations;
+  }, [locations, sectors, formData.sub_unit_id, formData.sector_id]);
+
+  const availableSubUnits = useMemo(
+    () => (formData.sector_id ? subUnits.filter(su => su.sector_id === formData.sector_id) : subUnits),
+    [subUnits, formData.sector_id]
+  );
 
   const handleAssigneeChange = (name: string) => {
     const emp = employeesList.find(e => e.employee_name === name);
@@ -200,6 +223,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         sector_id: formData.sector_id || undefined,
         company_id: formData.company_id || undefined,
         location_id: formData.location_id || undefined,
+        sub_unit_id: formData.sub_unit_id || undefined,
         priority: formData.priority,
         start_date: formData.start_date || undefined,
         due_date: formData.due_date || undefined,
@@ -236,6 +260,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           sector_id: formData.sector_id || null,
           company_id: formData.company_id || null,
           location_id: formData.location_id || null,
+          sub_unit_id: formData.sub_unit_id || null,
           priority: formData.priority as any,
           start_date: formData.start_date || null,
           due_date: formData.due_date || null,
@@ -269,6 +294,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       sector_id: task.sector_id || "",
       company_id: task.company_id || "",
       location_id: task.location_id || "",
+      sub_unit_id: (task as any).sub_unit_id || "",
       priority: task.priority,
       start_date: task.start_date || "",
       due_date: task.due_date || "",
@@ -539,7 +565,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </div>
                   <div>
                     <label className={labelClass}>Sector</label>
-                    <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value }))}>
+                    <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value, sub_unit_id: "", location_id: "" }))}>
                       <option value="">Select sector</option>
                       {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
@@ -547,17 +573,26 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
+                    <label className={labelClass}>Sub-unit</label>
+                    <select className={inputClass} value={formData.sub_unit_id} disabled={availableSubUnits.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_id: e.target.value, location_id: "" }))}>
+                      <option value="">{availableSubUnits.length === 0 ? "— None —" : "Select sub-unit"}</option>
+                      {availableSubUnits.map(su => <option key={su.id} value={su.id}>{su.sub_unit_name}</option>)}
+                    </select>
+                  </div>
+                  <div>
                     <label className={labelClass}>Company</label>
                     <select className={inputClass} value={formData.company_id} onChange={e => setFormData(p => ({ ...p, company_id: e.target.value }))}>
                       <option value="">Select company</option>
                       {companies.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
                     </select>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelClass}>Location</label>
                     <select className={inputClass} value={formData.location_id} onChange={e => setFormData(p => ({ ...p, location_id: e.target.value }))}>
                       <option value="">Select location</option>
-                      {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
+                      {filteredLocations.map(l => <option key={l.id} value={l.id}>{l.location_code} — {l.location_name}</option>)}
                     </select>
                   </div>
                 </div>
@@ -953,7 +988,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div>
                   <label className={labelClass}>Sector</label>
-                  <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value }))}>
+                  <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value, sub_unit_id: "", location_id: "" }))}>
                     <option value="">Select sector</option>
                     {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
@@ -961,17 +996,26 @@ export default function Tasks({ selectedSector }: TasksProps) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className={labelClass}>Sub-unit</label>
+                  <select className={inputClass} value={formData.sub_unit_id} disabled={availableSubUnits.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_id: e.target.value, location_id: "" }))}>
+                    <option value="">{availableSubUnits.length === 0 ? "— None —" : "Select sub-unit"}</option>
+                    {availableSubUnits.map(su => <option key={su.id} value={su.id}>{su.sub_unit_name}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className={labelClass}>Company</label>
                   <select className={inputClass} value={formData.company_id} onChange={e => setFormData(p => ({ ...p, company_id: e.target.value }))}>
                     <option value="">Select company</option>
                     {companies.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
                   </select>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Location</label>
                   <select className={inputClass} value={formData.location_id} onChange={e => setFormData(p => ({ ...p, location_id: e.target.value }))}>
                     <option value="">Select location</option>
-                    {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
+                    {filteredLocations.map(l => <option key={l.id} value={l.id}>{l.location_code} — {l.location_name}</option>)}
                   </select>
                 </div>
               </div>

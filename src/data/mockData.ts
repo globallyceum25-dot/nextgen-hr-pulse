@@ -15,6 +15,19 @@ export const LYCEUM_CAMPUSES = [
   "Rathnapura", "Anuradhapura", "Kurunagala", "Nuwaraeliya",
 ];
 
+// Named entities under divisible LEDU sub-units
+export const EARLY_CHILDHOOD_ENTITIES = ["Lyceum Leaf School", "Lyceum Daycare"];
+export const HIGHER_EDUCATION_ENTITIES = [
+  "Lyceum Placements", "Placements - LIS", "Lyceum Campus",
+  "Lyceum Assessments", "Lyceum Education", "JBD", "The Lyceum Academy",
+];
+
+export const LEDU_SUB_UNIT_ENTITIES: Record<string, string[]> = {
+  "Lyceum Schools": LYCEUM_CAMPUSES,
+  "Early Childhood": EARLY_CHILDHOOD_ENTITIES,
+  "Higher Education": HIGHER_EDUCATION_ENTITIES,
+};
+
 export const LEDU_SUB_UNITS = ["Lyceum Schools", "Early Childhood", "Higher Education"];
 
 export const SECTORS: SectorDef[] = [
