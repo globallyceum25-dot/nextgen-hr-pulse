@@ -271,8 +271,13 @@ function SectorMasterTab() {
                     <TableCell>
                       <Badge variant={s.sector_type === "LEDU" ? "default" : "secondary"}>{s.sector_type || "—"}</Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={subUnitNamesFor(s.id)}>
-                      {subUnitNamesFor(s.id)}
+                    <TableCell className="text-xs text-muted-foreground max-w-xs">
+                      {(() => {
+                        const b = subUnitBreakdownFor(s.id, s.sector_type);
+                        return (
+                          <div className="truncate cursor-help" title={b.lines.join("\n")}>{b.short}</div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-sm">{getCompanyName(s.company_id)}</TableCell>
                     <TableCell><Badge variant={s.status === "Active" ? "default" : "secondary"}>{s.status}</Badge></TableCell>
