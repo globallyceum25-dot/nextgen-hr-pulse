@@ -272,6 +272,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       sector_id: task.sector_id || "",
       company_id: task.company_id || "",
       location_id: task.location_id || "",
+      sub_unit_id: (task as any).sub_unit_id || "",
       priority: task.priority,
       start_date: task.start_date || "",
       due_date: task.due_date || "",
