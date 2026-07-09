@@ -253,11 +253,22 @@ export default function AdminRolesManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {roleConfigs[role].modules.map((mod) => (
-                          <Badge key={mod} variant="outline" className="text-[10px] font-normal">
-                            {mod}
-                          </Badge>
-                        ))}
+                        {roleConfigs[role].modules.map((mod) => {
+                          const to = MODULE_ROUTES[mod];
+                          const badge = (
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] font-normal ${to ? "cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors" : ""}`}
+                            >
+                              {mod}
+                            </Badge>
+                          );
+                          return to ? (
+                            <Link key={mod} to={to} title={`Open ${mod}`}>{badge}</Link>
+                          ) : (
+                            <span key={mod}>{badge}</span>
+                          );
+                        })}
                       </div>
                     </TableCell>
                     <TableCell>
