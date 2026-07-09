@@ -29,19 +29,36 @@ const ROLE_LABELS: Record<AppRole, string> = {
   viewer: "Viewer",
 };
 
-const ALL_MODULES = ["Dashboard", "Tasks", "Employees", "Analytics", "Administration"];
+const ALL_MODULES = [
+  "Tasks",
+  "Task Analysis",
+  "Master Sheets",
+  "Reports",
+  "Administration",
+  "Access Control",
+] as const;
+
+const MODULE_ROUTES: Record<string, string> = {
+  "Tasks": "/tasks",
+  "Task Analysis": "/",
+  "Master Sheets": "/employees",
+  "Reports": "/reports",
+  "Administration": "/admin",
+  "Access Control": "/admin/rbac",
+};
+
 const ALL_PERMISSIONS = [
   "All permissions",
   "Manage users & roles",
   "System configuration",
   "Delete tasks",
   "Manage sector tasks",
-  "View analytics",
+  "View reports",
   "Assign responsible persons",
   "View assigned tasks",
   "Update task status",
   "Add sub-tasks",
-  "View dashboards",
+  "View task analysis",
   "View tasks",
 ];
 
@@ -49,21 +66,21 @@ const DEFAULT_DESCRIPTIONS: Record<AppRole, string> = {
   super_admin: "Full system access. Can manage all settings, users, roles, and data across all sectors.",
   sector_hr_admin: "Manages HR operations within assigned sectors. Can create tasks and manage sector users.",
   responsible_person: "Assigned to specific tasks. Can view and update tasks they are responsible for.",
-  viewer: "Read-only access. Can view dashboards, tasks, and reports but cannot modify data.",
+  viewer: "Read-only access. Can view task analysis, tasks, and reports but cannot modify data.",
 };
 
 const DEFAULT_MODULES: Record<AppRole, string[]> = {
-  super_admin: ["Dashboard", "Tasks", "Employees", "Analytics", "Administration"],
-  sector_hr_admin: ["Dashboard", "Tasks", "Employees", "Analytics"],
-  responsible_person: ["Dashboard", "Tasks"],
-  viewer: ["Dashboard", "Tasks", "Analytics"],
+  super_admin: ["Tasks", "Task Analysis", "Master Sheets", "Reports", "Administration", "Access Control"],
+  sector_hr_admin: ["Tasks", "Task Analysis", "Master Sheets", "Reports"],
+  responsible_person: ["Tasks", "Task Analysis"],
+  viewer: ["Tasks", "Task Analysis", "Reports"],
 };
 
 const DEFAULT_PERMISSIONS: Record<AppRole, string[]> = {
   super_admin: ["All permissions", "Manage users & roles", "System configuration", "Delete tasks"],
-  sector_hr_admin: ["Manage sector tasks", "View analytics", "Assign responsible persons", "Delete tasks"],
+  sector_hr_admin: ["Manage sector tasks", "View reports", "Assign responsible persons", "Delete tasks"],
   responsible_person: ["View assigned tasks", "Update task status", "Add sub-tasks"],
-  viewer: ["View dashboards", "View tasks", "View analytics"],
+  viewer: ["View task analysis", "View tasks", "View reports"],
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
