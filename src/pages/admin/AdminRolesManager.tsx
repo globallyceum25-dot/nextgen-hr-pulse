@@ -100,8 +100,13 @@ export default function AdminRolesManager() {
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [roleConfigs, setRoleConfigs] = useState<Record<AppRole, RoleConfig>>(() => {
-    const saved = localStorage.getItem("roleConfigs");
-    if (saved) return JSON.parse(saved);
+    const STORAGE_KEY = "roleConfigs.v2";
+    // Clear legacy cache with obsolete module names
+    if (typeof window !== "undefined") localStorage.removeItem("roleConfigs");
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try { return JSON.parse(saved); } catch { /* fall through */ }
+    }
     const initial: Record<string, RoleConfig> = {};
     (Object.keys(ROLE_LABELS) as AppRole[]).forEach((role) => {
       initial[role] = {
