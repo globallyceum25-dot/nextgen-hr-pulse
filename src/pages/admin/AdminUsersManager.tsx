@@ -185,14 +185,14 @@ export default function AdminUsersManager() {
             Refresh
           </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Can module="user_management" action="create">
+            <Can module="user_management" action="create">
+              <DialogTrigger asChild>
                 <Button size="sm">
                   <UserPlus className="mr-2 h-4 w-4" />
                   Assign User to Role
                 </Button>
-              </Can>
-            </DialogTrigger>
+              </DialogTrigger>
+            </Can>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create User & Assign Role</DialogTitle>
