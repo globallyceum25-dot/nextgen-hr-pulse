@@ -148,7 +148,7 @@ export default function AdminRolesManager() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("roleConfigs", JSON.stringify(roleConfigs));
+    localStorage.setItem("roleConfigs.v2", JSON.stringify(roleConfigs));
   }, [roleConfigs]);
 
   const openEdit = (role: AppRole) => {
