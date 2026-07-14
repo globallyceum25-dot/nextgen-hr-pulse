@@ -27,6 +27,17 @@
     --accent: 210 60% 95%;
     --accent-foreground: 217 70% 25%;
 
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 70% 38%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 90% 50%;
+    --warning-foreground: 0 0% 10%;
+
+    --border: 215 20% 90%;
+    --input: 215 20% 90%;
     --ring: 217 90% 55%;
 
     --radius: 0.75rem;
