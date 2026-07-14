@@ -184,12 +184,12 @@
   }
 
   .gradient-border {
-    border-image: linear-gradient(135deg, hsl(280 60% 40%), hsl(320 70% 50%)) 1;
+    border-image: linear-gradient(135deg, hsl(217 90% 55%), hsl(200 90% 60%)) 1;
   }
 
   .card-gradient {
     background: var(--gradient-card);
-    border: 1px solid hsl(260 15% 22%);
+    border: 1px solid hsl(220 20% 22%);
     position: relative;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -202,20 +202,20 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(300 70% 55% / 0.3), transparent);
+    background: linear-gradient(90deg, transparent, hsl(217 90% 60% / 0.3), transparent);
     transition: opacity 0.4s ease;
   }
 
   .card-gradient:hover {
-    border-color: hsl(300 70% 55% / 0.3);
-    box-shadow: 0 8px 32px hsl(300 70% 55% / 0.1), 0 0 0 1px hsl(300 70% 55% / 0.05);
+    border-color: hsl(217 90% 60% / 0.3);
+    box-shadow: 0 8px 32px hsl(217 90% 60% / 0.1), 0 0 0 1px hsl(217 90% 60% / 0.05);
     transform: translateY(-2px);
   }
 
   .card-gradient:hover::before {
     opacity: 1;
     height: 2px;
-    background: linear-gradient(90deg, transparent, hsl(300 70% 55% / 0.6), hsl(320 80% 55% / 0.4), transparent);
+    background: linear-gradient(90deg, transparent, hsl(217 90% 60% / 0.6), hsl(200 90% 60% / 0.4), transparent);
   }
 
   /* Animated gradient shimmer on hover */
@@ -232,7 +232,7 @@
     background: linear-gradient(
       135deg,
       transparent 30%,
-      hsl(300 70% 55% / 0.06) 50%,
+      hsl(217 90% 60% / 0.06) 50%,
       transparent 70%
     );
     opacity: 0;
@@ -247,8 +247,8 @@
   }
 
   .card-shimmer:hover {
-    border-color: hsl(300 70% 55% / 0.25);
-    box-shadow: 0 4px 20px hsl(300 70% 55% / 0.08);
+    border-color: hsl(217 90% 60% / 0.25);
+    box-shadow: 0 4px 20px hsl(217 90% 60% / 0.08);
   }
 
   /* Gradient border glow on hover */
@@ -257,7 +257,7 @@
   }
 
   .hover-glow:hover {
-    box-shadow: 0 0 20px hsl(300 70% 55% / 0.15), 0 0 40px hsl(280 60% 50% / 0.05);
+    box-shadow: 0 0 20px hsl(217 90% 60% / 0.15), 0 0 40px hsl(200 90% 55% / 0.05);
   }
 
   /* Interactive button/element pulse */
@@ -270,7 +270,7 @@
   .hover-gradient-shift:hover {
     background-position: 100% 50%;
     transform: translateY(-1px);
-    box-shadow: 0 6px 24px hsl(300 70% 55% / 0.25);
+    box-shadow: 0 6px 24px hsl(217 90% 60% / 0.25);
   }
 
   /* Table row hover */
@@ -279,7 +279,7 @@
   }
 
   .row-hover:hover {
-    background: linear-gradient(90deg, hsl(280 30% 18% / 0.5), hsl(300 25% 16% / 0.3)) !important;
+    background: linear-gradient(90deg, hsl(217 30% 18% / 0.5), hsl(210 25% 16% / 0.3)) !important;
   }
 
   /* Badge/chip hover */
@@ -289,6 +289,6 @@
 
   .badge-hover:hover {
     transform: scale(1.05);
-    box-shadow: 0 2px 8px hsl(300 70% 55% / 0.2);
+    box-shadow: 0 2px 8px hsl(217 90% 60% / 0.2);
   }
 }
