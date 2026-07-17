@@ -38,9 +38,16 @@ const ROLE_COLORS: Record<AppRole, string> = {
   viewer: "bg-muted text-muted-foreground border-border",
 };
 
+interface RoleOption {
+  role_key: string;
+  role_name: string;
+}
+
 export default function AdminUsersManager() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [availableRoles, setAvailableRoles] = useState<RoleOption[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -54,6 +61,10 @@ export default function AdminUsersManager() {
   const [editRole, setEditRole] = useState<AppRole>("viewer");
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+
+  const roleLabel = (key: string) =>
+    availableRoles.find(r => r.role_key === key)?.role_name ??
+    ROLE_LABELS[key as AppRole] ?? key;
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -97,8 +108,20 @@ export default function AdminUsersManager() {
     setLoading(false);
   };
 
+  const fetchRoles = async () => {
+    setRolesLoading(true);
+    const { data, error } = await supabase
+      .from("rbac_roles")
+      .select("role_key, role_name")
+      .eq("status", "active")
+      .order("role_name");
+    if (!error && data) setAvailableRoles(data as RoleOption[]);
+    setRolesLoading(false);
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
   const handleDeleteRole = async (roleId: string) => {
@@ -274,14 +297,14 @@ export default function AdminUsersManager() {
                 </div>
                 <div className="space-y-2">
                   <Label>Role <span className="text-destructive">*</span></Label>
-                  <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
+                  <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)} disabled={rolesLoading}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder={rolesLoading ? "Loading roles..." : "Select role"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {(Object.keys(ROLE_LABELS) as AppRole[]).map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {ROLE_LABELS[role]}
+                      {availableRoles.map((role) => (
+                        <SelectItem key={role.role_key} value={role.role_key}>
+                          {role.role_name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -359,8 +382,8 @@ export default function AdminUsersManager() {
                       {u.email || "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={ROLE_COLORS[u.role]}>
-                        {ROLE_LABELS[u.role]}
+                      <Badge variant="outline" className={ROLE_COLORS[u.role] ?? "bg-muted text-muted-foreground border-border"}>
+                        {roleLabel(u.role)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">
@@ -415,11 +438,11 @@ export default function AdminUsersManager() {
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={editRole} onValueChange={(v) => setEditRole(v as AppRole)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select value={editRole} onValueChange={(v) => setEditRole(v as AppRole)} disabled={rolesLoading}>
+                <SelectTrigger><SelectValue placeholder={rolesLoading ? "Loading roles..." : "Select role"} /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(ROLE_LABELS) as AppRole[]).map((role) => (
-                    <SelectItem key={role} value={role}>{ROLE_LABELS[role]}</SelectItem>
+                  {availableRoles.map((role) => (
+                    <SelectItem key={role.role_key} value={role.role_key}>{role.role_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
