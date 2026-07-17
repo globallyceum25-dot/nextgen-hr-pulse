@@ -108,8 +108,20 @@ export default function AdminUsersManager() {
     setLoading(false);
   };
 
+  const fetchRoles = async () => {
+    setRolesLoading(true);
+    const { data, error } = await supabase
+      .from("rbac_roles")
+      .select("role_key, role_name")
+      .eq("status", "active")
+      .order("role_name");
+    if (!error && data) setAvailableRoles(data as RoleOption[]);
+    setRolesLoading(false);
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
   const handleDeleteRole = async (roleId: string) => {
