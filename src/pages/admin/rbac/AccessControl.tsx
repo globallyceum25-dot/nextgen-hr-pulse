@@ -23,7 +23,7 @@ const tabs = [
 
 export default function AccessControl() {
   const [params, setParams] = useSearchParams();
-  const tab = params.get("tab") ?? "user-roles";
+  const tab = params.get("tab") ?? "users";
 
   return (
     <div className="min-h-screen">
