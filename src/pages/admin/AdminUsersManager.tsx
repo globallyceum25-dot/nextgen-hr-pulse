@@ -382,8 +382,8 @@ export default function AdminUsersManager() {
                       {u.email || "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={ROLE_COLORS[u.role]}>
-                        {ROLE_LABELS[u.role]}
+                      <Badge variant="outline" className={ROLE_COLORS[u.role] ?? "bg-muted text-muted-foreground border-border"}>
+                        {roleLabel(u.role)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">
