@@ -174,6 +174,45 @@ export default function AdminUsersManager() {
     }
   };
 
+  const openEdit = (u: UserWithRole) => {
+    setEditUser(u);
+    setEditFullName(u.full_name ?? "");
+    setEditEmail(u.email ?? "");
+    setEditRole(u.role);
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editUser) return;
+    setSaving(true);
+    try {
+      // Update profile fields
+      const { error: profErr } = await supabase
+        .from("profiles")
+        .update({ full_name: editFullName.trim() || null, email: editEmail.trim() || null })
+        .eq("user_id", editUser.user_id);
+      if (profErr) throw profErr;
+
+      // Update role if changed
+      if (editRole !== editUser.role) {
+        const { error: roleErr } = await supabase
+          .from("user_roles")
+          .update({ role: editRole })
+          .eq("id", editUser.role_id);
+        if (roleErr) throw roleErr;
+      }
+
+      toast({ title: "User updated" });
+      setEditOpen(false);
+      setEditUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const uniqueUsers = new Set(users.map((u) => u.user_id)).size;
 
   return (
