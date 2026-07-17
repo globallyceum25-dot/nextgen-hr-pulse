@@ -366,17 +366,29 @@ export default function AdminUsersManager() {
                     <TableCell className="text-muted-foreground text-xs">
                       {new Date(u.created_at).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
-                      <Can module="user_management" action="delete">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDeleteRole(u.role_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </Can>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Can module="user_management" action="edit">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => openEdit(u)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </Can>
+                        <Can module="user_management" action="delete">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDeleteRole(u.role_id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </Can>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
