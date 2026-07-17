@@ -115,7 +115,7 @@ export default function AdminRolesManager() {
         permissions: [...DEFAULT_PERMISSIONS[role]],
       };
     });
-    return initial as Partial<Record<AppRole, RoleConfig>;
+    return initial as Partial<Record<AppRole, RoleConfig>>;
   });
 
   const [editingRole, setEditingRole] = useState<AppRole | null>(null);
