@@ -438,11 +438,11 @@ export default function AdminUsersManager() {
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={editRole} onValueChange={(v) => setEditRole(v as AppRole)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select value={editRole} onValueChange={(v) => setEditRole(v as AppRole)} disabled={rolesLoading}>
+                <SelectTrigger><SelectValue placeholder={rolesLoading ? "Loading roles..." : "Select role"} /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(ROLE_LABELS) as AppRole[]).map((role) => (
-                    <SelectItem key={role} value={role}>{ROLE_LABELS[role]}</SelectItem>
+                  {availableRoles.map((role) => (
+                    <SelectItem key={role.role_key} value={role.role_key}>{role.role_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
