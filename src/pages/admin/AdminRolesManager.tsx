@@ -99,7 +99,7 @@ interface RoleConfig {
 export default function AdminRolesManager() {
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [roleConfigs, setRoleConfigs] = useState<Partial<Record<AppRole, RoleConfig>>(() => {
+  const [roleConfigs, setRoleConfigs] = useState<Partial<Record<AppRole, RoleConfig>>>(() => {
     const STORAGE_KEY = "roleConfigs.v2";
     // Clear legacy cache with obsolete module names
     if (typeof window !== "undefined") localStorage.removeItem("roleConfigs");
