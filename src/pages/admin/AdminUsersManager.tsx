@@ -47,6 +47,12 @@ export default function AdminUsersManager() {
   const [newFullName, setNewFullName] = useState("");
   const [newRole, setNewRole] = useState<AppRole>("viewer");
   const [assigning, setAssigning] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editUser, setEditUser] = useState<UserWithRole | null>(null);
+  const [editFullName, setEditFullName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<AppRole>("viewer");
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
