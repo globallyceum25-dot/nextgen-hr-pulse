@@ -24,14 +24,14 @@ interface UserWithRole {
   created_at: string;
 }
 
-const ROLE_LABELS: Record<AppRole, string> = {
+const ROLE_LABELS: Partial<Record<AppRole, string>> = {
   super_admin: "Super Admin",
   sector_hr_admin: "Sector HR Admin",
   responsible_person: "Responsible Person",
   viewer: "Viewer",
 };
 
-const ROLE_COLORS: Record<AppRole, string> = {
+const ROLE_COLORS: Partial<Record<AppRole, string>> = {
   super_admin: "bg-destructive/10 text-destructive border-destructive/20",
   sector_hr_admin: "bg-primary/10 text-primary border-primary/20",
   responsible_person: "bg-amber-500/10 text-amber-600 border-amber-500/20",

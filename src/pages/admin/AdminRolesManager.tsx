@@ -22,7 +22,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
-const ROLE_LABELS: Record<AppRole, string> = {
+const ROLE_LABELS: Partial<Record<AppRole, string>> = {
   super_admin: "Super Admin",
   sector_hr_admin: "Sector HR Admin",
   responsible_person: "Responsible Person",
@@ -62,28 +62,28 @@ const ALL_PERMISSIONS = [
   "View tasks",
 ];
 
-const DEFAULT_DESCRIPTIONS: Record<AppRole, string> = {
+const DEFAULT_DESCRIPTIONS: Partial<Record<AppRole, string>> = {
   super_admin: "Full system access. Can manage all settings, users, roles, and data across all sectors.",
   sector_hr_admin: "Manages HR operations within assigned sectors. Can create tasks and manage sector users.",
   responsible_person: "Assigned to specific tasks. Can view and update tasks they are responsible for.",
   viewer: "Read-only access. Can view task analysis, tasks, and reports but cannot modify data.",
 };
 
-const DEFAULT_MODULES: Record<AppRole, string[]> = {
+const DEFAULT_MODULES: Partial<Record<AppRole, string[]>> = {
   super_admin: ["Tasks", "Task Analysis", "Master Sheets", "Reports", "Administration", "Access Control"],
   sector_hr_admin: ["Tasks", "Task Analysis", "Master Sheets", "Reports"],
   responsible_person: ["Tasks", "Task Analysis"],
   viewer: ["Tasks", "Task Analysis", "Reports"],
 };
 
-const DEFAULT_PERMISSIONS: Record<AppRole, string[]> = {
+const DEFAULT_PERMISSIONS: Partial<Record<AppRole, string[]>> = {
   super_admin: ["All permissions", "Manage users & roles", "System configuration", "Delete tasks"],
   sector_hr_admin: ["Manage sector tasks", "View reports", "Assign responsible persons", "Delete tasks"],
   responsible_person: ["View assigned tasks", "Update task status", "Add sub-tasks"],
   viewer: ["View task analysis", "View tasks", "View reports"],
 };
 
-const ROLE_COLORS: Record<AppRole, string> = {
+const ROLE_COLORS: Partial<Record<AppRole, string>> = {
   super_admin: "bg-destructive/10 text-destructive border-destructive/20",
   sector_hr_admin: "bg-primary/10 text-primary border-primary/20",
   responsible_person: "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -99,7 +99,7 @@ interface RoleConfig {
 export default function AdminRolesManager() {
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [roleConfigs, setRoleConfigs] = useState<Record<AppRole, RoleConfig>>(() => {
+  const [roleConfigs, setRoleConfigs] = useState<Partial<Record<AppRole, RoleConfig>>>(() => {
     const STORAGE_KEY = "roleConfigs.v2";
     // Clear legacy cache with obsolete module names
     if (typeof window !== "undefined") localStorage.removeItem("roleConfigs");
@@ -115,7 +115,7 @@ export default function AdminRolesManager() {
         permissions: [...DEFAULT_PERMISSIONS[role]],
       };
     });
-    return initial as Record<AppRole, RoleConfig>;
+    return initial as Partial<Record<AppRole, RoleConfig>>;
   });
 
   const [editingRole, setEditingRole] = useState<AppRole | null>(null);

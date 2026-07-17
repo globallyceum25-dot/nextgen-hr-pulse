@@ -10,7 +10,7 @@ const CreateUserSchema = z.object({
   email: z.string().trim().email().max(255),
   password: z.string().min(6).max(128),
   full_name: z.string().trim().min(1).max(120).optional().or(z.literal("")),
-  role: z.enum(["super_admin", "sector_hr_admin", "responsible_person", "viewer"]),
+  role: z.string().trim().min(1).max(64),
 });
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>

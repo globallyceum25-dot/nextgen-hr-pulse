@@ -1274,6 +1274,12 @@ export type Database = {
         | "sector_hr_admin"
         | "responsible_person"
         | "viewer"
+        | "group_admin"
+        | "department_manager"
+        | "location_manager"
+        | "data_entry_user"
+        | "employee_user"
+        | "company_admin"
       recurrence_type: "none" | "daily" | "weekly" | "monthly" | "custom"
       task_priority: "High" | "Medium" | "Low"
       task_workflow_status:
@@ -1419,6 +1425,12 @@ export const Constants = {
         "sector_hr_admin",
         "responsible_person",
         "viewer",
+        "group_admin",
+        "department_manager",
+        "location_manager",
+        "data_entry_user",
+        "employee_user",
+        "company_admin",
       ],
       recurrence_type: ["none", "daily", "weekly", "monthly", "custom"],
       task_priority: ["High", "Medium", "Low"],
