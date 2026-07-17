@@ -38,9 +38,16 @@ const ROLE_COLORS: Record<AppRole, string> = {
   viewer: "bg-muted text-muted-foreground border-border",
 };
 
+interface RoleOption {
+  role_key: string;
+  role_name: string;
+}
+
 export default function AdminUsersManager() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [availableRoles, setAvailableRoles] = useState<RoleOption[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -54,6 +61,10 @@ export default function AdminUsersManager() {
   const [editRole, setEditRole] = useState<AppRole>("viewer");
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+
+  const roleLabel = (key: string) =>
+    availableRoles.find(r => r.role_key === key)?.role_name ??
+    ROLE_LABELS[key as AppRole] ?? key;
 
   const fetchUsers = async () => {
     setLoading(true);
