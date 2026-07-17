@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Trash2, RefreshCw, Users, Shield } from "lucide-react";
+import { UserPlus, Trash2, RefreshCw, Users, Shield, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 import { Can } from "@/components/rbac/Can";
@@ -47,6 +47,12 @@ export default function AdminUsersManager() {
   const [newFullName, setNewFullName] = useState("");
   const [newRole, setNewRole] = useState<AppRole>("viewer");
   const [assigning, setAssigning] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editUser, setEditUser] = useState<UserWithRole | null>(null);
+  const [editFullName, setEditFullName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<AppRole>("viewer");
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -165,6 +171,45 @@ export default function AdminUsersManager() {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const openEdit = (u: UserWithRole) => {
+    setEditUser(u);
+    setEditFullName(u.full_name ?? "");
+    setEditEmail(u.email ?? "");
+    setEditRole(u.role);
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editUser) return;
+    setSaving(true);
+    try {
+      // Update profile fields
+      const { error: profErr } = await supabase
+        .from("profiles")
+        .update({ full_name: editFullName.trim() || null, email: editEmail.trim() || null })
+        .eq("user_id", editUser.user_id);
+      if (profErr) throw profErr;
+
+      // Update role if changed
+      if (editRole !== editUser.role) {
+        const { error: roleErr } = await supabase
+          .from("user_roles")
+          .update({ role: editRole })
+          .eq("id", editUser.role_id);
+        if (roleErr) throw roleErr;
+      }
+
+      toast({ title: "User updated" });
+      setEditOpen(false);
+      setEditUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -301,7 +346,7 @@ export default function AdminUsersManager() {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Assigned Date</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -321,17 +366,29 @@ export default function AdminUsersManager() {
                     <TableCell className="text-muted-foreground text-xs">
                       {new Date(u.created_at).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
-                      <Can module="user_management" action="delete">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDeleteRole(u.role_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </Can>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Can module="user_management" action="edit">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => openEdit(u)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </Can>
+                        <Can module="user_management" action="delete">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDeleteRole(u.role_id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </Can>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -340,6 +397,42 @@ export default function AdminUsersManager() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>Update user details and role assignment.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input value={editFullName} onChange={(e) => setEditFullName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={editRole} onValueChange={(v) => setEditRole(v as AppRole)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(ROLE_LABELS) as AppRole[]).map((role) => (
+                    <SelectItem key={role} value={role}>{ROLE_LABELS[role]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
