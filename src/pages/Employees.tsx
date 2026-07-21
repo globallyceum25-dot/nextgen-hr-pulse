@@ -747,7 +747,7 @@ function EmployeeMasterTab() {
                             {bulkData.map((row, i) => (
                               <TableRow key={i}>
                                 <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
-                                <TableCell className="text-sm font-medium">{row.employee_name}</TableCell>
+                                <TableCell className="text-sm font-medium">{row.employee_name}{row.last_name ? ` ${row.last_name}` : ""}</TableCell>
                                 <TableCell className="text-xs">{row.company_name}</TableCell>
                                 <TableCell className="text-xs">{row.location || "—"}</TableCell>
                                 <TableCell className="text-xs">{row.designation || "—"}</TableCell>
