@@ -556,7 +556,8 @@ function EmployeeMasterTab() {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
       const parsed = rows.map(row => ({
-        employee_name: String(row["Employee Name"] || row["employee_name"] || "").trim(),
+        employee_name: String(row["Employee First Name"] || row["Employee Name"] || row["employee_name"] || "").trim(),
+        last_name: String(row["Last Name"] || row["last_name"] || "").trim() || null,
         company_name: String(row["Company Name"] || row["company_name"] || activeCompanies[0]?.company_name || "").trim(),
         location: String(row["Location"] || row["location"] || "").trim() || null,
         designation: String(row["Designation"] || row["designation"] || "").trim() || null,
