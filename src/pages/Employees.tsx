@@ -609,7 +609,7 @@ function EmployeeMasterTab() {
 
   const filtered = employees.filter(e => {
     if (statusFilter !== "All" && e.employment_status !== statusFilter) return false;
-    if (search && !e.employee_name.toLowerCase().includes(search.toLowerCase()) && !e.employee_id.includes(search)) return false;
+    if (search) { const q = search.toLowerCase(); const full = `${e.employee_name} ${e.last_name || ""}`.toLowerCase(); if (!full.includes(q) && !e.employee_id.includes(search)) return false; }
     if (!canAccessByName(e.company_name, e.department, e.location, scopeLookups, e.id)) return false;
     if (scopeCompany && e.company_name !== scopeCompany.company_name) return false;
     if (scopeDepartment && e.department !== scopeDepartment.department_name) return false;
