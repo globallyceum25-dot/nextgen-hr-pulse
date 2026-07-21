@@ -112,6 +112,7 @@ export type Database = {
           employee_name: string
           employment_status: string
           id: string
+          last_name: string | null
           location: string | null
           reporting_manager: string | null
           sector_id: string | null
@@ -129,6 +130,7 @@ export type Database = {
           employee_name: string
           employment_status?: string
           id?: string
+          last_name?: string | null
           location?: string | null
           reporting_manager?: string | null
           sector_id?: string | null
@@ -146,6 +148,7 @@ export type Database = {
           employee_name?: string
           employment_status?: string
           id?: string
+          last_name?: string | null
           location?: string | null
           reporting_manager?: string | null
           sector_id?: string | null
