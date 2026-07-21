@@ -650,7 +650,10 @@ function EmployeeMasterTab() {
   const renderForm = (onSubmit: (e: React.FormEvent) => void, submitLabel: string) => (
     <form onSubmit={onSubmit} className="space-y-4 mt-2">
       <div className="grid grid-cols-2 gap-3">
-        <div><label className={labelClass}>Employee Name *</label><input className={inputClass} placeholder="Full name" value={form.employee_name} onChange={e => setForm(p => ({ ...p, employee_name: e.target.value }))} /></div>
+        <div><label className={labelClass}>Employee First Name *</label><input className={inputClass} placeholder="First name" value={form.employee_name} onChange={e => setForm(p => ({ ...p, employee_name: e.target.value }))} /></div>
+        <div><label className={labelClass}>Last Name</label><input className={inputClass} placeholder="Last name" value={form.last_name || ""} onChange={e => setForm(p => ({ ...p, last_name: e.target.value || null }))} /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Company Name</label>
           <select className={inputClass} value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))}>
