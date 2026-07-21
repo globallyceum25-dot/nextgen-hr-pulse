@@ -83,7 +83,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       const matched = employeesList.find(
         e => e.email?.toLowerCase() === user.email?.toLowerCase()
       );
-      setCurrentUserEmployeeName(matched?.employee_name || null);
+      setCurrentUserEmployeeName(matched ? `${matched.employee_name}${matched.last_name ? " " + matched.last_name : ""}` : null);
     }
     matchEmployee();
   }, [employeesList]);
