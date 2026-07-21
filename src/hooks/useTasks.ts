@@ -115,10 +115,11 @@ export function useTasks(filters?: {
             // Find matching employee_name via profiles/employees email match
             const { data: emp } = await supabase
               .from("employees")
-              .select("employee_name")
+              .select("employee_name, last_name")
               .ilike("email", user.email || "")
               .maybeSingle();
-            const nameLower = emp?.employee_name?.toLowerCase();
+            const fullName = emp ? `${emp.employee_name}${(emp as any).last_name ? " " + (emp as any).last_name : ""}` : "";
+            const nameLower = fullName.toLowerCase() || undefined;
             tasks = tasks.filter(t => {
               const isAssigneeById = t.assignee_id === user.id;
               const isAssigneeByName = !!(nameLower && (t as any).assignee_name?.toLowerCase() === nameLower);
