@@ -559,7 +559,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     <label className={labelClass}>Task Owner / Assignee</label>
                     <select className={inputClass} value={formData.assignee_name} onChange={e => handleAssigneeChange(e.target.value)}>
                       <option value="">Select person</option>
-                      {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                      {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
                     </select>
                   </div>
                   <div>
@@ -969,7 +969,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   <label className={labelClass}>Task Owner / Assignee</label>
                   <select className={inputClass} value={formData.assignee_name} onChange={e => handleAssigneeChange(e.target.value)}>
                     <option value="">Select person</option>
-                    {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                    {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
                   </select>
                 </div>
                 <div>
@@ -1159,7 +1159,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <label className={labelClass}>Owner / Assignee</label>
                 <select className={inputClass} value={subTaskForm.assignee_name} onChange={e => setSubTaskForm(p => ({ ...p, assignee_name: e.target.value }))}>
                   <option value="">Select person</option>
-                  {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                  {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
                 </select>
               </div>
               <div>
