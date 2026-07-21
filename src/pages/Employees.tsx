@@ -790,7 +790,7 @@ function EmployeeMasterTab() {
                 filtered.map(emp => (
                   <TableRow key={emp.id}>
                     <TableCell className="font-mono text-xs font-semibold">{emp.employee_id}</TableCell>
-                    <TableCell className="font-semibold">{emp.employee_name}</TableCell>
+                    <TableCell className="font-semibold">{emp.employee_name}{emp.last_name ? ` ${emp.last_name}` : ""}</TableCell>
                     <TableCell className="text-sm">{emp.company_name}</TableCell>
                     <TableCell className="text-sm">{emp.location || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.department || "—"}</TableCell>
