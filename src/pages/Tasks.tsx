@@ -55,7 +55,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const myTasksMode = searchParams.get("myTasks") === "true";
   const { isAdmin } = useIsAdmin();
-  const { can: rbacCan } = usePermissions();
+  const { can: rbacCan, roleKey, isSuperAdmin } = usePermissions();
+  // Roles that see ONLY their own tasks (assigned to/by/created by them)
+  const restrictedToOwn = !isSuperAdmin && (roleKey === "employee_user" || roleKey === "data_entry_user");
   const canDeleteTasks = isAdmin || rbacCan("tasks", "delete");
   const { data: employeesList = [] } = useEmployees();
   const { data: categories = [] } = useTaskCategories();
