@@ -531,6 +531,7 @@ function EmployeeMasterTab() {
 
   const emptyForm = {
     employee_name: "",
+    last_name: "" as string | null,
     company_name: activeCompanies[0]?.company_name || "",
     location: "" as string | null,
     designation: "" as string | null,
@@ -555,7 +556,8 @@ function EmployeeMasterTab() {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
       const parsed = rows.map(row => ({
-        employee_name: String(row["Employee Name"] || row["employee_name"] || "").trim(),
+        employee_name: String(row["Employee First Name"] || row["Employee Name"] || row["employee_name"] || "").trim(),
+        last_name: String(row["Last Name"] || row["last_name"] || "").trim() || null,
         company_name: String(row["Company Name"] || row["company_name"] || activeCompanies[0]?.company_name || "").trim(),
         location: String(row["Location"] || row["location"] || "").trim() || null,
         designation: String(row["Designation"] || row["designation"] || "").trim() || null,
@@ -586,8 +588,8 @@ function EmployeeMasterTab() {
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ["Employee Name", "Company Name", "Location", "Designation", "Reporting Manager", "Employment Status", "Date Joined", "Email"],
-      ["John Doe", "NextGen Human Capital Solutions", "Colombo", "HR Executive", "", "Active", "2026-01-15", "john@example.com"],
+      ["Employee First Name", "Last Name", "Company Name", "Location", "Designation", "Reporting Manager", "Employment Status", "Date Joined", "Email"],
+      ["John", "Doe", "NextGen Human Capital Solutions", "Colombo", "HR Executive", "", "Active", "2026-01-15", "john@example.com"],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Employees");
@@ -607,7 +609,7 @@ function EmployeeMasterTab() {
 
   const filtered = employees.filter(e => {
     if (statusFilter !== "All" && e.employment_status !== statusFilter) return false;
-    if (search && !e.employee_name.toLowerCase().includes(search.toLowerCase()) && !e.employee_id.includes(search)) return false;
+    if (search) { const q = search.toLowerCase(); const full = `${e.employee_name} ${e.last_name || ""}`.toLowerCase(); if (!full.includes(q) && !e.employee_id.includes(search)) return false; }
     if (!canAccessByName(e.company_name, e.department, e.location, scopeLookups, e.id)) return false;
     if (scopeCompany && e.company_name !== scopeCompany.company_name) return false;
     if (scopeDepartment && e.department !== scopeDepartment.department_name) return false;
@@ -626,7 +628,7 @@ function EmployeeMasterTab() {
 
   const openEdit = (emp: Employee) => {
     setEditingEmployee(emp);
-    setForm({ employee_name: emp.employee_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, department: emp.department, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined, email: emp.email });
+    setForm({ employee_name: emp.employee_name, last_name: emp.last_name, company_name: emp.company_name, location: emp.location, designation: emp.designation, department: emp.department, reporting_manager: emp.reporting_manager, employment_status: emp.employment_status, date_joined: emp.date_joined, email: emp.email });
     setEditDialogOpen(true);
   };
 
@@ -648,7 +650,10 @@ function EmployeeMasterTab() {
   const renderForm = (onSubmit: (e: React.FormEvent) => void, submitLabel: string) => (
     <form onSubmit={onSubmit} className="space-y-4 mt-2">
       <div className="grid grid-cols-2 gap-3">
-        <div><label className={labelClass}>Employee Name *</label><input className={inputClass} placeholder="Full name" value={form.employee_name} onChange={e => setForm(p => ({ ...p, employee_name: e.target.value }))} /></div>
+        <div><label className={labelClass}>Employee First Name *</label><input className={inputClass} placeholder="First name" value={form.employee_name} onChange={e => setForm(p => ({ ...p, employee_name: e.target.value }))} /></div>
+        <div><label className={labelClass}>Last Name</label><input className={inputClass} placeholder="Last name" value={form.last_name || ""} onChange={e => setForm(p => ({ ...p, last_name: e.target.value || null }))} /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Company Name</label>
           <select className={inputClass} value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))}>
@@ -684,7 +689,7 @@ function EmployeeMasterTab() {
           <label className={labelClass}>Reporting Manager</label>
           <select className={inputClass} value={form.reporting_manager || ""} onChange={e => setForm(p => ({ ...p, reporting_manager: e.target.value || null }))}>
             <option value="">Select manager</option>
-            {employees.filter(emp => emp.employee_name !== form.employee_name).map(emp => <option key={emp.id} value={emp.employee_name}>{emp.employee_name}</option>)}
+            {employees.filter(emp => emp.employee_name !== form.employee_name).map(emp => { const full = `${emp.employee_name}${emp.last_name ? " " + emp.last_name : ""}`; return <option key={emp.id} value={full}>{full}</option>; })}
           </select>
         </div>
         <div>
@@ -742,7 +747,7 @@ function EmployeeMasterTab() {
                             {bulkData.map((row, i) => (
                               <TableRow key={i}>
                                 <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
-                                <TableCell className="text-sm font-medium">{row.employee_name}</TableCell>
+                                <TableCell className="text-sm font-medium">{row.employee_name}{row.last_name ? ` ${row.last_name}` : ""}</TableCell>
                                 <TableCell className="text-xs">{row.company_name}</TableCell>
                                 <TableCell className="text-xs">{row.location || "—"}</TableCell>
                                 <TableCell className="text-xs">{row.designation || "—"}</TableCell>
@@ -785,7 +790,7 @@ function EmployeeMasterTab() {
                 filtered.map(emp => (
                   <TableRow key={emp.id}>
                     <TableCell className="font-mono text-xs font-semibold">{emp.employee_id}</TableCell>
-                    <TableCell className="font-semibold">{emp.employee_name}</TableCell>
+                    <TableCell className="font-semibold">{emp.employee_name}{emp.last_name ? ` ${emp.last_name}` : ""}</TableCell>
                     <TableCell className="text-sm">{emp.company_name}</TableCell>
                     <TableCell className="text-sm">{emp.location || "—"}</TableCell>
                     <TableCell className="text-sm">{emp.department || "—"}</TableCell>

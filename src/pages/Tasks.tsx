@@ -83,7 +83,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       const matched = employeesList.find(
         e => e.email?.toLowerCase() === user.email?.toLowerCase()
       );
-      setCurrentUserEmployeeName(matched?.employee_name || null);
+      setCurrentUserEmployeeName(matched ? `${matched.employee_name}${matched.last_name ? " " + matched.last_name : ""}` : null);
     }
     matchEmployee();
   }, [employeesList]);
@@ -195,7 +195,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   }, [departments, sectors, formData.sector_id]);
 
   const handleAssigneeChange = (name: string) => {
-    const emp = employeesList.find(e => e.employee_name === name);
+    const emp = employeesList.find(e => `${e.employee_name}${e.last_name ? " " + e.last_name : ""}` === name || e.employee_name === name);
     if (emp) {
       const comp = companies.find(c => c.company_name === emp.company_name);
       const loc = locations.find(l => l.location_name === emp.location);
@@ -559,7 +559,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                     <label className={labelClass}>Task Owner / Assignee</label>
                     <select className={inputClass} value={formData.assignee_name} onChange={e => handleAssigneeChange(e.target.value)}>
                       <option value="">Select person</option>
-                      {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                      {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
                     </select>
                   </div>
                   <div>
@@ -969,7 +969,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   <label className={labelClass}>Task Owner / Assignee</label>
                   <select className={inputClass} value={formData.assignee_name} onChange={e => handleAssigneeChange(e.target.value)}>
                     <option value="">Select person</option>
-                    {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                    {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
                   </select>
                 </div>
                 <div>
@@ -1159,7 +1159,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <label className={labelClass}>Owner / Assignee</label>
                 <select className={inputClass} value={subTaskForm.assignee_name} onChange={e => setSubTaskForm(p => ({ ...p, assignee_name: e.target.value }))}>
                   <option value="">Select person</option>
-                  {employeesList.filter(e => e.employment_status === "Active").map(e => <option key={e.id} value={e.employee_name}>{e.employee_name}</option>)}
+                  {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
                 </select>
               </div>
               <div>
