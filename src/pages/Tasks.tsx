@@ -398,13 +398,15 @@ export default function Tasks({ selectedSector }: TasksProps) {
     weekEnd.setDate(weekEnd.getDate() + 7);
 
     return tasks.filter(t => {
-      // My Tasks filter: show tasks where user is assignee or assigned_by, or has subtasks assigned
-      if (myTasksMode && (currentUserEmployeeName || currentUserId)) {
+      // My Tasks filter (manual toggle) OR forced for restricted roles (Employee/User, Data Entry User)
+      if ((myTasksMode || restrictedToOwn) && (currentUserEmployeeName || currentUserId || currentUserEmail)) {
         const nameLower = currentUserEmployeeName?.toLowerCase();
+        const emailLower = currentUserEmail?.toLowerCase();
         // Check if user is the assignee (by name, id, or email)
         const isAssignee = !!(
           (nameLower && (t as any).assignee_name?.toLowerCase() === nameLower) ||
-          (currentUserId && t.assignee_id === currentUserId)
+          (currentUserId && t.assignee_id === currentUserId) ||
+          (emailLower && (t as any).assignee_profile?.email?.toLowerCase() === emailLower)
         );
         // Check if user assigned the task (assigned_by)
         const isAssigner = !!(currentUserId && t.assigned_by === currentUserId);
@@ -419,7 +421,12 @@ export default function Tasks({ selectedSector }: TasksProps) {
           const stCreator = !!(currentUserId && st.created_by === currentUserId);
           return stAssignee || stCreator;
         });
-        if (!isAssignee && !isAssigner && !isCreator && !hasRelatedSubTask) return false;
+        if (restrictedToOwn) {
+          // Restricted roles: only their own assigned tasks/sub-tasks (not tasks they merely created for others is allowed too via creator)
+          if (!isAssignee && !isCreator && !isAssigner && !hasRelatedSubTask) return false;
+        } else {
+          if (!isAssignee && !isAssigner && !isCreator && !hasRelatedSubTask) return false;
+        }
       }
 
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
