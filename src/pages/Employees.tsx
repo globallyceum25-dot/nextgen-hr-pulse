@@ -689,7 +689,7 @@ function EmployeeMasterTab() {
           <label className={labelClass}>Reporting Manager</label>
           <select className={inputClass} value={form.reporting_manager || ""} onChange={e => setForm(p => ({ ...p, reporting_manager: e.target.value || null }))}>
             <option value="">Select manager</option>
-            {employees.filter(emp => emp.employee_name !== form.employee_name).map(emp => <option key={emp.id} value={emp.employee_name}>{emp.employee_name}</option>)}
+            {employees.filter(emp => emp.employee_name !== form.employee_name).map(emp => { const full = `${emp.employee_name}${emp.last_name ? " " + emp.last_name : ""}`; return <option key={emp.id} value={full}>{full}</option>; })}
           </select>
         </div>
         <div>
