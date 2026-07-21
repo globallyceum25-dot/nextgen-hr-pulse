@@ -531,6 +531,7 @@ function EmployeeMasterTab() {
 
   const emptyForm = {
     employee_name: "",
+    last_name: "" as string | null,
     company_name: activeCompanies[0]?.company_name || "",
     location: "" as string | null,
     designation: "" as string | null,
