@@ -5,6 +5,7 @@ export interface Employee {
   id: string;
   employee_id: string;
   employee_name: string;
+  last_name: string | null;
   company_name: string;
   location: string | null;
   designation: string | null;
