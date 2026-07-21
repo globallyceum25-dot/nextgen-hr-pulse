@@ -195,7 +195,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   }, [departments, sectors, formData.sector_id]);
 
   const handleAssigneeChange = (name: string) => {
-    const emp = employeesList.find(e => e.employee_name === name);
+    const emp = employeesList.find(e => `${e.employee_name}${e.last_name ? " " + e.last_name : ""}` === name || e.employee_name === name);
     if (emp) {
       const comp = companies.find(c => c.company_name === emp.company_name);
       const loc = locations.find(l => l.location_name === emp.location);
