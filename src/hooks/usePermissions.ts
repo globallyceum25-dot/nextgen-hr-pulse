@@ -81,7 +81,7 @@ export function usePermissions() {
       const scopeRaw = scopeRes.data as unknown as
         | (Omit<ScopeRow, "role_key"> & { rbac_roles: { role_key: string } | null })
         | null;
-      const scope: ScopeRow | null = scopeRaw ? {
+      let scope: ScopeRow | null = scopeRaw ? {
         role_id: scopeRaw.role_id,
         role_key: scopeRaw.rbac_roles?.role_key ?? null,
         employee_id: scopeRaw.employee_id,
@@ -93,6 +93,24 @@ export function usePermissions() {
         all_locations: scopeRaw.all_locations,
         status: scopeRaw.status,
       } : null;
+
+      // Fallback: if no rbac_user_scopes row exists, derive role from user_roles
+      // and load its permission matrix so users still see what their role allows.
+      if (!scope && legacyRoles.length > 0) {
+        const roleKey = legacyRoles.find(r => r !== "super_admin") ?? legacyRoles[0];
+        const { data: roleRow } = await supabase.from("rbac_roles")
+          .select("id,role_key").eq("role_key", roleKey).maybeSingle();
+        if (roleRow) {
+          scope = {
+            role_id: roleRow.id,
+            role_key: roleRow.role_key,
+            employee_id: null,
+            company_ids: [], department_ids: [], location_ids: [],
+            all_companies: true, all_departments: true, all_locations: true,
+            status: "active",
+          };
+        }
+      }
 
       let matrix: MatrixRow[] = [];
       let fields: FieldPerm[] = [];
@@ -130,6 +148,7 @@ export function usePermissions() {
     },
     staleTime: 60_000,
   });
+
 
   const state = query.data;
 

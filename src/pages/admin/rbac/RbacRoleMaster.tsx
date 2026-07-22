@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,10 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Pencil, Power, Trash2, Search, Settings2 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Pencil, Power, Trash2, Search } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 
 interface Role {
@@ -25,68 +23,9 @@ interface Role {
   updated_at: string;
 }
 
-const ALL_MODULES = [
-  "Tasks",
-  "Task Analysis",
-  "Master Sheets",
-  "Reports",
-  "Administration",
-  "Access Control",
-] as const;
-
-const MODULE_ROUTES: Record<string, string> = {
-  "Tasks": "/tasks",
-  "Task Analysis": "/",
-  "Master Sheets": "/employees",
-  "Reports": "/reports",
-  "Administration": "/admin",
-  "Access Control": "/admin/rbac",
-};
-
-const ALL_PERMISSIONS = [
-  "All permissions",
-  "Manage users & roles",
-  "System configuration",
-  "Delete tasks",
-  "Manage sector tasks",
-  "View reports",
-  "Assign responsible persons",
-  "View assigned tasks",
-  "Update task status",
-  "Add sub-tasks",
-  "View task analysis",
-  "View tasks",
-];
-
-interface RoleAccess {
+interface MatrixCounts {
   modules: string[];
   permissions: string[];
-}
-
-const STORAGE_KEY = "rbacRoleAccess.v1";
-
-const DEFAULT_ACCESS: Record<string, RoleAccess> = {
-  super_admin: { modules: [...ALL_MODULES], permissions: [...ALL_PERMISSIONS] },
-  sector_hr_admin: {
-    modules: ["Tasks", "Task Analysis", "Master Sheets", "Reports"],
-    permissions: ["Manage sector tasks", "View reports", "Assign responsible persons", "Delete tasks"],
-  },
-  responsible_person: {
-    modules: ["Tasks", "Task Analysis"],
-    permissions: ["View assigned tasks", "Update task status", "Add sub-tasks"],
-  },
-  viewer: {
-    modules: ["Tasks", "Task Analysis", "Reports"],
-    permissions: ["View task analysis", "View tasks", "View reports"],
-  },
-};
-
-function loadAccess(): Record<string, RoleAccess> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
 }
 
 export default function RbacRoleMaster() {
@@ -96,34 +35,45 @@ export default function RbacRoleMaster() {
   const [editing, setEditing] = useState<Role | null>(null);
   const [form, setForm] = useState({ role_key: "", role_name: "", description: "" });
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
-  const [access, setAccess] = useState<Record<string, RoleAccess>>(() => loadAccess());
-  const [accessEditing, setAccessEditing] = useState<Role | null>(null);
-  const [accessForm, setAccessForm] = useState<RoleAccess>({ modules: [], permissions: [] });
+  const [matrix, setMatrix] = useState<Record<string, MatrixCounts>>({});
   const { toast } = useToast();
   const { role: currentRole } = useUserRole();
   const isSuper = currentRole === "super_admin";
 
-  const getAccess = (roleKey: string): RoleAccess => {
-    if (roleKey === "super_admin") return { modules: [...ALL_MODULES], permissions: [...ALL_PERMISSIONS] };
-    return access[roleKey] ?? DEFAULT_ACCESS[roleKey] ?? { modules: [], permissions: [] };
-  };
-
   const load = async () => {
     setLoading(true);
-    const [{ data, error }, { data: userRoles }] = await Promise.all([
+    const [rolesRes, userRolesRes, rpRes] = await Promise.all([
       supabase.from("rbac_roles").select("*").order("is_system", { ascending: false }).order("role_name"),
       supabase.from("user_roles").select("role"),
+      supabase.from("rbac_role_permissions")
+        .select("granted, rbac_roles(role_key), rbac_modules(module_label), rbac_permissions(permission_name)")
+        .eq("granted", true),
     ]);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else setRows((data as Role[]) ?? []);
+    if (rolesRes.error) toast({ title: "Error", description: rolesRes.error.message, variant: "destructive" });
+    else setRows((rolesRes.data as Role[]) ?? []);
+
     const counts: Record<string, number> = {};
-    userRoles?.forEach((r: any) => { counts[r.role] = (counts[r.role] || 0) + 1; });
+    userRolesRes.data?.forEach((r: any) => { counts[r.role] = (counts[r.role] || 0) + 1; });
     setUserCounts(counts);
+
+    const m: Record<string, MatrixCounts> = {};
+    ((rpRes.data ?? []) as unknown as Array<{
+      granted: boolean;
+      rbac_roles: { role_key: string } | null;
+      rbac_modules: { module_label: string } | null;
+      rbac_permissions: { permission_name: string } | null;
+    }>).forEach(r => {
+      const rk = r.rbac_roles?.role_key; if (!rk) return;
+      if (!m[rk]) m[rk] = { modules: [], permissions: [] };
+      const mod = r.rbac_modules?.module_label; const perm = r.rbac_permissions?.permission_name;
+      if (mod && !m[rk].modules.includes(mod)) m[rk].modules.push(mod);
+      if (perm && !m[rk].permissions.includes(perm)) m[rk].permissions.push(perm);
+    });
+    setMatrix(m);
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(access)); }, [access]);
 
   const openNew = () => {
     setEditing({ id: "", role_key: "", role_name: "", description: "", is_system: false, status: "active", created_at: "", updated_at: "" });
@@ -133,26 +83,6 @@ export default function RbacRoleMaster() {
   const openEdit = (r: Role) => {
     setEditing(r);
     setForm({ role_key: r.role_key, role_name: r.role_name, description: r.description ?? "" });
-  };
-
-  const openAccess = (r: Role) => {
-    setAccessEditing(r);
-    const a = getAccess(r.role_key);
-    setAccessForm({ modules: [...a.modules], permissions: [...a.permissions] });
-  };
-
-  const toggleModule = (m: string) => setAccessForm(p => ({ ...p, modules: p.modules.includes(m) ? p.modules.filter(x => x !== m) : [...p.modules, m] }));
-  const togglePermission = (perm: string) => setAccessForm(p => ({ ...p, permissions: p.permissions.includes(perm) ? p.permissions.filter(x => x !== perm) : [...p.permissions, perm] }));
-
-  const saveAccess = () => {
-    if (!accessEditing) return;
-    if (accessEditing.role_key === "super_admin") {
-      toast({ title: "Locked", description: "Super Admin always has full access.", variant: "destructive" });
-      setAccessEditing(null); return;
-    }
-    setAccess(prev => ({ ...prev, [accessEditing.role_key]: { modules: [...accessForm.modules], permissions: [...accessForm.permissions] } }));
-    toast({ title: "Access Updated", description: `${accessEditing.role_name} access saved.` });
-    setAccessEditing(null);
   };
 
   const save = async () => {
@@ -189,12 +119,17 @@ export default function RbacRoleMaster() {
     !search || r.role_name.toLowerCase().includes(search.toLowerCase()) || r.role_key.toLowerCase().includes(search.toLowerCase())
   ), [rows, search]);
 
+  const getCounts = (roleKey: string): MatrixCounts => matrix[roleKey] ?? { modules: [], permissions: [] };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-foreground">Role Master</h2>
-          <p className="text-sm text-muted-foreground">Manage system roles, their module access and permissions.</p>
+          <p className="text-sm text-muted-foreground">
+            Manage system roles. Module &amp; permission access is configured in the{" "}
+            <span className="font-medium text-foreground">Permission Matrix</span> tab.
+          </p>
         </div>
         <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />New Role</Button>
       </div>
@@ -225,7 +160,9 @@ export default function RbacRoleMaster() {
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No roles</TableCell></TableRow>
               ) : filtered.map(r => {
-                const a = getAccess(r.role_key);
+                const a = r.role_key === "super_admin"
+                  ? { modules: ["All modules"], permissions: ["All permissions"] }
+                  : getCounts(r.role_key);
                 return (
                   <TableRow key={r.id}>
                     <TableCell>
@@ -235,25 +172,22 @@ export default function RbacRoleMaster() {
                     <TableCell className="text-sm text-muted-foreground max-w-[240px]">{r.description}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1 max-w-[240px]">
-                        {a.modules.length === 0 ? <span className="text-xs text-muted-foreground">—</span> : a.modules.map(m => {
-                          const to = MODULE_ROUTES[m];
-                          const badge = <Badge variant="outline" className={`text-[10px] font-normal ${to ? "cursor-pointer hover:bg-accent" : ""}`}>{m}</Badge>;
-                          return to ? <Link key={m} to={to} title={`Open ${m}`}>{badge}</Link> : <span key={m}>{badge}</span>;
-                        })}
+                        {a.modules.length === 0
+                          ? <span className="text-xs text-muted-foreground">—</span>
+                          : a.modules.map(m => <Badge key={m} variant="outline" className="text-[10px] font-normal">{m}</Badge>)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1 max-w-[260px]">
-                        {a.permissions.length === 0 ? <span className="text-xs text-muted-foreground">—</span> : a.permissions.map(p => (
-                          <Badge key={p} variant="secondary" className="text-[10px] font-normal">{p}</Badge>
-                        ))}
+                        {a.permissions.length === 0
+                          ? <span className="text-xs text-muted-foreground">—</span>
+                          : a.permissions.map(p => <Badge key={p} variant="secondary" className="text-[10px] font-normal">{p}</Badge>)}
                       </div>
                     </TableCell>
                     <TableCell>{r.is_system ? <Badge variant="secondary">System</Badge> : <Badge variant="outline">Custom</Badge>}</TableCell>
                     <TableCell><Badge variant={r.status === "active" ? "default" : "outline"}>{r.status}</Badge></TableCell>
                     <TableCell className="text-right font-semibold">{userCounts[r.role_key] || 0}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">
-                      <Button variant="ghost" size="icon" onClick={() => openAccess(r)} title="Edit access"><Settings2 className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(r)} title="Edit role"><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => toggleStatus(r)} title="Toggle status"><Power className="h-4 w-4" /></Button>
                       {isSuper && !r.is_system && (
@@ -268,7 +202,6 @@ export default function RbacRoleMaster() {
         </CardContent>
       </Card>
 
-      {/* Edit role dialog */}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editing?.id ? "Edit Role" : "New Role"}</DialogTitle></DialogHeader>
@@ -286,56 +219,6 @@ export default function RbacRoleMaster() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
             <Button onClick={save}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Access edit dialog */}
-      <Dialog open={!!accessEditing} onOpenChange={(o) => !o && setAccessEditing(null)}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Access – {accessEditing?.role_name}</DialogTitle>
-            <DialogDescription>
-              {accessEditing?.role_key === "super_admin"
-                ? "Super Admin always has access to all modules and permissions."
-                : "Select which modules and permissions this role can access."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-5 py-2">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Module Access</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {ALL_MODULES.map(m => (
-                  <label key={m} className="flex items-center gap-2 text-sm cursor-pointer rounded-md border border-border px-3 py-2 hover:bg-accent/50">
-                    <Checkbox
-                      checked={accessForm.modules.includes(m)}
-                      disabled={accessEditing?.role_key === "super_admin"}
-                      onCheckedChange={() => toggleModule(m)}
-                    />
-                    {m}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Permissions</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {ALL_PERMISSIONS.map(p => (
-                  <label key={p} className="flex items-center gap-2 text-sm cursor-pointer rounded-md border border-border px-3 py-2 hover:bg-accent/50">
-                    <Checkbox
-                      checked={accessForm.permissions.includes(p)}
-                      disabled={accessEditing?.role_key === "super_admin"}
-                      onCheckedChange={() => togglePermission(p)}
-                    />
-                    {p}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAccessEditing(null)}>Cancel</Button>
-            <Button onClick={saveAccess} disabled={accessEditing?.role_key === "super_admin"}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
