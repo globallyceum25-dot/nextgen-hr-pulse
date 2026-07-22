@@ -40,10 +40,33 @@ export interface FieldPerm {
 interface PermissionState {
   userId: string | null;
   scope: ScopeRow | null;
+  roleIds: string[];
+  roleKeys: string[];
+  effectiveRoleKey: string | null;
   matrix: MatrixRow[];
   fields: FieldPerm[];
   legacyAdmin: boolean; // fallback for users with no rbac scope yet
 }
+
+const ROLE_PRIORITY = [
+  "super_admin",
+  "sector_hr_admin",
+  "company_admin",
+  "group_admin",
+  "department_manager",
+  "location_manager",
+  "responsible_person",
+  "data_entry_user",
+  "employee_user",
+  "viewer",
+];
+
+const getEffectiveRoleKey = (roleKeys: string[]): string | null => {
+  for (const key of ROLE_PRIORITY) {
+    if (roleKeys.includes(key)) return key;
+  }
+  return roleKeys[0] ?? null;
+};
 
 // Legacy module aliases → new module keys
 const aliasModule = (m: string): string => {
@@ -78,6 +101,16 @@ export function usePermissions() {
       const legacyRoles = (legacyRolesRes.data ?? []).map((r: { role: string }) => r.role);
       const legacyAdmin = legacyRoles.includes("super_admin");
 
+      const { data: assignedRoleRows } = legacyRoles.length > 0
+        ? await supabase.from("rbac_roles")
+          .select("id,role_key")
+          .in("role_key", legacyRoles)
+          .eq("status", "active")
+        : { data: [] as Array<{ id: string; role_key: string }> };
+
+      const assignedRoleIds = (assignedRoleRows ?? []).map(r => r.id);
+      const assignedRoleKeys = (assignedRoleRows ?? []).map(r => r.role_key);
+
       const scopeRaw = scopeRes.data as unknown as
         | (Omit<ScopeRow, "role_key"> & { rbac_roles: { role_key: string } | null })
         | null;
@@ -94,12 +127,11 @@ export function usePermissions() {
         status: scopeRaw.status,
       } : null;
 
-      // Fallback: if no rbac_user_scopes row exists, derive role from user_roles
-      // and load its permission matrix so users still see what their role allows.
-      if (!scope && legacyRoles.length > 0) {
-        const roleKey = legacyRoles.find(r => r !== "super_admin") ?? legacyRoles[0];
-        const { data: roleRow } = await supabase.from("rbac_roles")
-          .select("id,role_key").eq("role_key", roleKey).maybeSingle();
+      // Fallback display scope: if no rbac_user_scopes row exists, derive role from user_roles.
+      // Actual access is always loaded from roleIds below, so the Permission Matrix is the source of truth.
+      if (!scope && assignedRoleRows && assignedRoleRows.length > 0) {
+        const roleKey = getEffectiveRoleKey(assignedRoleKeys) ?? assignedRoleRows[0].role_key;
+        const roleRow = assignedRoleRows.find(r => r.role_key === roleKey) ?? assignedRoleRows[0];
         if (roleRow) {
           scope = {
             role_id: roleRow.id,
@@ -112,17 +144,28 @@ export function usePermissions() {
         }
       }
 
+      const scopeIsActive = !!scope && scope.status === "active";
+      const roleIds = Array.from(new Set([
+        ...assignedRoleIds,
+        ...(scopeIsActive && scope?.role_id ? [scope.role_id] : []),
+      ]));
+      const roleKeys = Array.from(new Set([
+        ...assignedRoleKeys,
+        ...(scopeIsActive && scope?.role_key ? [scope.role_key] : []),
+      ]));
+      const effectiveRoleKey = getEffectiveRoleKey(roleKeys);
+
       let matrix: MatrixRow[] = [];
       let fields: FieldPerm[] = [];
 
-      if (scope?.role_id) {
+      if (roleIds.length > 0) {
         const [mRes, fRes] = await Promise.all([
           supabase.from("rbac_role_permissions")
             .select("granted, rbac_modules(module_key), rbac_permissions(permission_key)")
-            .eq("role_id", scope.role_id).eq("granted", true),
+            .in("role_id", roleIds).eq("granted", true),
           supabase.from("rbac_field_permissions")
             .select("can_view,can_edit,field_key, rbac_modules(module_key)")
-            .eq("role_id", scope.role_id),
+            .in("role_id", roleIds),
         ]);
 
         matrix = ((mRes.data ?? []) as unknown as Array<{
@@ -144,9 +187,9 @@ export function usePermissions() {
         }));
       }
 
-      return { userId: uid, scope, matrix, fields, legacyAdmin };
+      return { userId: uid, scope, roleIds, roleKeys, effectiveRoleKey, matrix, fields, legacyAdmin };
     },
-    staleTime: 60_000,
+    staleTime: 15_000,
   });
 
 
@@ -155,10 +198,9 @@ export function usePermissions() {
   const can = (moduleKey: RbacModuleKey, action: RbacActionKey = "view"): boolean => {
     if (!state) return false;
     // Super admin via legacy table OR via scope role
-    if (state.legacyAdmin) return true;
-    if (state.scope?.role_key === "super_admin") return true;
-    if (!state.scope) {
-      // No RBAC scope assigned → deny by default (secure-by-default)
+    if (state.legacyAdmin || state.roleKeys.includes("super_admin")) return true;
+    if (state.roleIds.length === 0) {
+      // No role assigned → deny by default (secure-by-default)
       return false;
     }
     const key = aliasModule(moduleKey);
@@ -166,14 +208,14 @@ export function usePermissions() {
   };
 
   const canViewField = (moduleKey: RbacModuleKey, fieldKey: string): boolean => {
-    if (!state || state.legacyAdmin || state.scope?.role_key === "super_admin") return true;
+    if (!state || state.legacyAdmin || state.roleKeys.includes("super_admin")) return true;
     const key = aliasModule(moduleKey);
     const rule = state.fields.find(f => f.module_key === key && f.field_key === fieldKey);
     return rule ? rule.can_view : true; // default: visible if no rule
   };
 
   const canEditField = (moduleKey: RbacModuleKey, fieldKey: string): boolean => {
-    if (!state || state.legacyAdmin || state.scope?.role_key === "super_admin") return true;
+    if (!state || state.legacyAdmin || state.roleKeys.includes("super_admin")) return true;
     const key = aliasModule(moduleKey);
     const rule = state.fields.find(f => f.module_key === key && f.field_key === fieldKey);
     return rule ? rule.can_edit : true;
@@ -189,7 +231,7 @@ export function usePermissions() {
     lookups: { companies: Map<string, string>; departments: Map<string, string>; locations: Map<string, string> },
     employeeId?: string | null
   ): boolean => {
-    if (!state || state.legacyAdmin || state.scope?.role_key === "super_admin") return true;
+    if (!state || state.legacyAdmin || state.roleKeys.includes("super_admin")) return true;
     if (!state.scope) return true;
     const s = state.scope;
     if (s.role_key === "employee_user") {
@@ -212,7 +254,7 @@ export function usePermissions() {
   };
 
   const canAccessEmployeeId = (employeeId: string | null | undefined): boolean => {
-    if (!state || state.legacyAdmin || state.scope?.role_key === "super_admin") return true;
+    if (!state || state.legacyAdmin || state.roleKeys.includes("super_admin")) return true;
     if (!state.scope) return true;
     if (state.scope.role_key === "employee_user") {
       return !!employeeId && employeeId === state.scope.employee_id;
@@ -228,8 +270,9 @@ export function usePermissions() {
     canEditField,
     canAccessByName,
     canAccessEmployeeId,
-    isSuperAdmin: !!state?.legacyAdmin || state?.scope?.role_key === "super_admin",
-    roleKey: state?.scope?.role_key ?? null,
+    isSuperAdmin: !!state?.legacyAdmin || !!state?.roleKeys.includes("super_admin"),
+    roleKey: state?.effectiveRoleKey ?? state?.scope?.role_key ?? null,
+    roleKeys: state?.roleKeys ?? [],
     ownEmployeeId: state?.scope?.employee_id ?? null,
   };
 }
