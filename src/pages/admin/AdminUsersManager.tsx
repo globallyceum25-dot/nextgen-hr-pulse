@@ -39,6 +39,7 @@ const ROLE_COLORS: Partial<Record<AppRole, string>> = {
 };
 
 interface RoleOption {
+  id: string;
   role_key: string;
   role_name: string;
 }
@@ -112,7 +113,7 @@ export default function AdminUsersManager() {
     setRolesLoading(true);
     const { data, error } = await supabase
       .from("rbac_roles")
-      .select("role_key, role_name")
+      .select("id, role_key, role_name")
       .eq("status", "active")
       .order("role_name");
     if (!error && data) setAvailableRoles(data as RoleOption[]);
@@ -218,11 +219,22 @@ export default function AdminUsersManager() {
 
       // Update role if changed
       if (editRole !== editUser.role) {
+        const selectedRole = availableRoles.find((role) => role.role_key === editRole);
         const { error: roleErr } = await supabase
           .from("user_roles")
           .update({ role: editRole })
           .eq("id", editUser.role_id);
         if (roleErr) throw roleErr;
+
+        // Keep User Access Scope Mapping aligned with the Users section.
+        // Permissions still come from the Permission Matrix for this role.
+        if (selectedRole?.id) {
+          const { error: scopeErr } = await supabase
+            .from("rbac_user_scopes")
+            .update({ role_id: selectedRole.id })
+            .eq("user_id", editUser.user_id);
+          if (scopeErr) throw scopeErr;
+        }
       }
 
       toast({ title: "User updated" });
