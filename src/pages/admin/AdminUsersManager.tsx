@@ -180,6 +180,14 @@ export default function AdminUsersManager() {
         const msg = data?.error || data?.message || "Failed to create user";
         toast({ title: "Error", description: msg, variant: "destructive" });
       } else {
+        const createdUserId = data?.user_id as string | undefined;
+        const selectedRole = availableRoles.find((role) => role.role_key === newRole);
+        if (createdUserId && selectedRole?.id) {
+          await supabase
+            .from("rbac_user_scopes")
+            .update({ role_id: selectedRole.id })
+            .eq("user_id", createdUserId);
+        }
         toast({
           title: data?.role_assigned === false ? "Notice" : "Success",
           description: data?.message || "User created & role assigned successfully",
