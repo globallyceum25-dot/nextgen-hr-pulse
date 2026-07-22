@@ -1229,6 +1229,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_user_matches_name: { Args: { _name: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
