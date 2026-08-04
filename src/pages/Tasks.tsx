@@ -56,8 +56,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const myTasksMode = searchParams.get("myTasks") === "true";
   const { isAdmin } = useIsAdmin();
   const { can: rbacCan, roleKey, isSuperAdmin } = usePermissions();
-  // Roles that see ONLY their own tasks (assigned to/by/created by them)
-  const restrictedToOwn = !isSuperAdmin && (roleKey === "employee_user" || roleKey === "data_entry_user");
+  // All roles can see every task in the main list. Narrowing to the current
+  // user's own tasks happens ONLY in the "My Tasks" view (myTasksMode).
   const canDeleteTasks = isAdmin || rbacCan("tasks", "delete");
   const { data: employeesList = [] } = useEmployees();
   const { data: categories = [] } = useTaskCategories();
@@ -87,6 +87,33 @@ export default function Tasks({ selectedSector }: TasksProps) {
     }
     matchEmployee();
   }, [employeesList]);
+
+  // Edit gating: everyone can VIEW all tasks, but only an admin or the task's owner
+  // (assignee / creator / assigner) who also holds the tasks:edit permission may edit
+  // it. Roles without tasks:edit (e.g. Viewer) can edit nothing.
+  const isOwnTask = (t: DbTask): boolean => {
+    const nameLower = currentUserEmployeeName?.toLowerCase();
+    const emailLower = currentUserEmail?.toLowerCase();
+    return !!(
+      (currentUserId && t.assignee_id === currentUserId) ||
+      (nameLower && (t as any).assignee_name?.toLowerCase() === nameLower) ||
+      (emailLower && (t as any).assignee_profile?.email?.toLowerCase() === emailLower) ||
+      (currentUserId && t.created_by === currentUserId) ||
+      (currentUserId && t.assigned_by === currentUserId)
+    );
+  };
+  const canEditTask = (t: DbTask): boolean =>
+    isAdmin || isSuperAdmin || (rbacCan("tasks", "edit") && isOwnTask(t));
+  const isOwnSubTask = (st: DbSubTask): boolean => {
+    const nameLower = currentUserEmployeeName?.toLowerCase();
+    return !!(
+      (currentUserId && (st as any).assignee_id === currentUserId) ||
+      (nameLower && (st as any).assignee_name?.toLowerCase() === nameLower) ||
+      (currentUserId && (st as any).created_by === currentUserId)
+    );
+  };
+  const canEditSubTask = (st: DbSubTask): boolean =>
+    isAdmin || isSuperAdmin || (rbacCan("tasks", "edit") && isOwnSubTask(st));
 
   // Filters
   const [search, setSearch] = useState("");
@@ -398,8 +425,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
     weekEnd.setDate(weekEnd.getDate() + 7);
 
     return tasks.filter(t => {
-      // My Tasks filter (manual toggle) OR forced for restricted roles (Employee/User, Data Entry User)
-      if ((myTasksMode || restrictedToOwn) && (currentUserEmployeeName || currentUserId || currentUserEmail)) {
+      // My Tasks view: narrow to tasks the current user is involved in (assigned to,
+      // assigned by, created by, or a related sub-task). Only active in myTasksMode.
+      if (myTasksMode && (currentUserEmployeeName || currentUserId || currentUserEmail)) {
         const nameLower = currentUserEmployeeName?.toLowerCase();
         const emailLower = currentUserEmail?.toLowerCase();
         // Check if user is the assignee (by name, id, or email)
@@ -421,12 +449,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           const stCreator = !!(currentUserId && st.created_by === currentUserId);
           return stAssignee || stCreator;
         });
-        if (restrictedToOwn) {
-          // Restricted roles: only their own assigned tasks/sub-tasks (not tasks they merely created for others is allowed too via creator)
-          if (!isAssignee && !isCreator && !isAssigner && !hasRelatedSubTask) return false;
-        } else {
-          if (!isAssignee && !isAssigner && !isCreator && !hasRelatedSubTask) return false;
-        }
+        if (!isAssignee && !isAssigner && !isCreator && !hasRelatedSubTask) return false;
       }
 
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
@@ -461,7 +484,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
       return true;
     });
-  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, restrictedToOwn, currentUserEmployeeName, currentUserId, currentUserEmail, scopeCompanyId, scopeSectorId, scopeDepartmentId]);
+  }, [tasks, statusFilter, priorityFilter, departmentFilter, companyFilter, locationFilter, sectorFilter, dateFrom, dateTo, quickFilter, myTasksMode, currentUserEmployeeName, currentUserId, currentUserEmail, scopeCompanyId, scopeSectorId, scopeDepartmentId]);
 
   // KPI summary cards
   const summary = useMemo(() => {
@@ -761,9 +784,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
         </select>
         <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
           <option value="All">All Locations</option>
-          {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
+          {locations.filter(l => sectorFilter === "All" || l.sector_id === sectorFilter).map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
         </select>
-        <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+        <select value={sectorFilter} onChange={e => { setSectorFilter(e.target.value); setLocationFilter("All"); }} className="text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
           <option value="All">All Sectors</option>
           {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
@@ -838,11 +861,11 @@ export default function Tasks({ selectedSector }: TasksProps) {
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); openTaskDetail(task); }}>
                             <MessageSquare size={14} />
                           </Button>
-                          <Can module="tasks" action="edit">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); openEditDialog(task); }}>
+                          {canEditTask(task) && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Edit" onClick={e => { e.stopPropagation(); openEditDialog(task); }}>
                               <Pencil size={14} />
                             </Button>
-                          </Can>
+                          )}
                           {canDeleteTasks && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -897,11 +920,11 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                     <Button variant="ghost" size="icon" className="h-6 w-6" title="View Details" onClick={e => { e.stopPropagation(); setDetailSubTask({ task, subTask: st }); setSubTaskDetailOpen(true); }}>
                                       <Eye size={12} />
                                     </Button>
-                                    <Can module="tasks" action="edit">
+                                    {canEditSubTask(st) && (
                                       <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit" onClick={e => { e.stopPropagation(); openSubTaskEdit(task.id, st); }}>
                                         <Pencil size={12} />
                                       </Button>
-                                    </Can>
+                                    )}
                                     {canDeleteTasks && (
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
@@ -1230,19 +1253,21 @@ export default function Tasks({ selectedSector }: TasksProps) {
         onStatusChange={handleStatusChange}
         onEdit={openEditDialog}
         isAdmin={isAdmin}
+        canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
     </div>
   );
 }
 
 // Task Detail Side Drawer Component
-function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, isAdmin }: {
+function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, isAdmin, canEdit }: {
   task: DbTask | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusChange: (task: DbTask, status: TaskWorkflowStatus) => void;
   onEdit: (task: DbTask) => void;
   isAdmin: boolean;
+  canEdit: boolean;
 }) {
   const { data: comments = [] } = useTaskComments(task?.id || null);
   const addComment = useAddComment();
@@ -1285,11 +1310,15 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
 
           {/* Quick Actions */}
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => { onEdit(task); onOpenChange(false); }}>
-              <Pencil size={14} className="mr-1" /> Edit
-            </Button>
+            {canEdit && (
+              <Button size="sm" variant="outline" onClick={() => { onEdit(task); onOpenChange(false); }}>
+                <Pencil size={14} className="mr-1" /> Edit
+              </Button>
+            )}
             {subTasks.length > 0 ? (
               <span className="text-xs text-muted-foreground italic px-2 py-1">Status auto-calculated</span>
+            ) : !canEdit ? (
+              <span className="text-xs text-muted-foreground italic px-2 py-1">View only</span>
             ) : (
               <select className="text-xs border rounded-md px-2 py-1 bg-card" value={task.status}
                 onChange={e => onStatusChange(task, e.target.value as TaskWorkflowStatus)}>

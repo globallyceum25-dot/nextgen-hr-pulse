@@ -63,7 +63,13 @@ export default function UserAccountDropdown() {
   const roleLabelMap: Record<string, string> = {
     super_admin: "Super Admin",
     sector_hr_admin: "Sector HR Admin",
+    group_admin: "Group Admin",
+    company_admin: "Company Admin",
+    department_manager: "Department Manager",
+    location_manager: "Location Manager",
     responsible_person: "Responsible Person",
+    data_entry_user: "Data Entry User",
+    employee_user: "Employee/User",
     viewer: "Viewer",
   };
 

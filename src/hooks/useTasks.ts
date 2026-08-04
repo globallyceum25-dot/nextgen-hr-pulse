@@ -99,47 +99,9 @@ export function useTasks(filters?: {
         return task;
       }) || [];
 
-      // RBAC: restrict to own tasks for employee_user / data_entry_user roles
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: scopeRow } = await supabase
-            .from("rbac_user_scopes")
-            .select("rbac_roles(role_key)")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          const roleKey = (scopeRow as any)?.rbac_roles?.role_key as string | undefined;
-          const restrictedRoles = ["employee_user", "data_entry_user"];
-          if (roleKey && restrictedRoles.includes(roleKey)) {
-            const emailLower = user.email?.toLowerCase();
-            // Find matching employee_name via profiles/employees email match
-            const { data: emp } = await supabase
-              .from("employees")
-              .select("employee_name, last_name")
-              .ilike("email", user.email || "")
-              .maybeSingle();
-            const fullName = emp ? `${emp.employee_name}${(emp as any).last_name ? " " + (emp as any).last_name : ""}` : "";
-            const nameLower = fullName.toLowerCase() || undefined;
-            tasks = tasks.filter(t => {
-              const isAssigneeById = t.assignee_id === user.id;
-              const isAssigneeByName = !!(nameLower && (t as any).assignee_name?.toLowerCase() === nameLower);
-              const isAssigneeByEmail = !!(emailLower && (t as any).assignee_profile?.email?.toLowerCase() === emailLower);
-              const isAssigner = t.assigned_by === user.id;
-              const isCreator = t.created_by === user.id;
-              const hasSub = (t.sub_tasks || []).some((st: any) =>
-                st.assignee_id === user.id ||
-                (nameLower && st.assignee_name?.toLowerCase() === nameLower) ||
-                st.created_by === user.id
-              );
-              return isAssigneeById || isAssigneeByName || isAssigneeByEmail || isAssigner || isCreator || hasSub;
-            });
-          }
-        }
-      } catch (e) {
-        // Fail open (RLS still applies at DB level)
-        console.warn("RBAC task filter skipped:", e);
-      }
-
+      // All users may see every task. The "My Tasks" view (Tasks page, myTasksMode)
+      // is the only place the list is narrowed to the current user's own tasks, so
+      // this hook returns the full set the database RLS policy allows.
       return tasks;
     },
   });

@@ -168,6 +168,8 @@ function SectorMasterTab() {
   const { data: sectors = [], isLoading } = useSectors();
   const { data: subUnits = [] } = useSubUnits();
   const { data: companies = [] } = useCompanies();
+  const { data: locations = [] } = useLocations();
+  const updateLocation = useUpdateLocation();
   const addSector = useAddSector();
   const updateSector = useUpdateSector();
   const deleteSector = useDeleteSector();
@@ -176,10 +178,24 @@ function SectorMasterTab() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("All");
 
+  // Locations linked to the sector being added/edited. A location belongs to one
+  // sector (locations.sector_id), so a sector can own many locations. The
+  // "Allow multiple locations" checkbox toggles between single- and multi-select.
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
+  const [multiLocation, setMultiLocation] = useState(false);
+
   const parentCompany = companies.find(c => c.company_name === "NextGen Human Capital Solutions");
   const emptyForm = { name: "", sector_type: "Other Sectors", company_id: parentCompany?.id ?? "", status: "Active" };
   const [form, setForm] = useState(emptyForm);
   const resetForm = () => setForm({ ...emptyForm, company_id: parentCompany?.id ?? "" });
+
+  const sectorLocations = (sectorId: string) => locations.filter(l => l.sector_id === sectorId);
+  const toggleLocation = (id: string) => {
+    setSelectedLocationIds(prev => {
+      if (multiLocation) return prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      return prev.includes(id) ? [] : [id];
+    });
+  };
 
   const filtered = sectors.filter(s => {
     if (typeFilter !== "All" && s.sector_type !== typeFilter) return false;
@@ -200,10 +216,13 @@ function SectorMasterTab() {
 
   const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
 
-  const openAdd = () => { setEditing(null); resetForm(); setDialogOpen(true); };
+  const openAdd = () => { setEditing(null); resetForm(); setSelectedLocationIds([]); setMultiLocation(false); setDialogOpen(true); };
   const openEdit = (s: Sector) => {
     setEditing(s);
     setForm({ name: s.name, sector_type: s.sector_type ?? "Other Sectors", company_id: s.company_id ?? "", status: s.status });
+    const linked = sectorLocations(s.id).map(l => l.id);
+    setSelectedLocationIds(linked);
+    setMultiLocation(linked.length > 1);
     setDialogOpen(true);
   };
 
@@ -211,14 +230,26 @@ function SectorMasterTab() {
     e.preventDefault();
     if (!form.name.trim()) { toast({ title: "Error", description: "Sector name required.", variant: "destructive" }); return; }
     try {
+      let sectorId: string;
       if (editing) {
         await updateSector.mutateAsync({ id: editing.id, name: form.name, sector_type: form.sector_type, company_id: form.company_id || null, status: form.status });
+        sectorId = editing.id;
         toast({ title: "Sector Updated" });
       } else {
-        await addSector.mutateAsync({ name: form.name, sector_type: form.sector_type, company_id: form.company_id || null, status: form.status });
+        const created = await addSector.mutateAsync({ name: form.name, sector_type: form.sector_type, company_id: form.company_id || null, status: form.status });
+        sectorId = created.id;
         toast({ title: "Sector Added" });
       }
-      resetForm(); setDialogOpen(false); setEditing(null);
+      // Sync location ⇄ sector links: attach newly-selected locations to this sector
+      // and detach ones that were unticked. (A location can belong to one sector.)
+      const previouslyLinked = locations.filter(l => l.sector_id === sectorId).map(l => l.id);
+      const toLink = selectedLocationIds.filter(id => !previouslyLinked.includes(id));
+      const toUnlink = previouslyLinked.filter(id => !selectedLocationIds.includes(id));
+      await Promise.all([
+        ...toLink.map(id => updateLocation.mutateAsync({ id, sector_id: sectorId })),
+        ...toUnlink.map(id => updateLocation.mutateAsync({ id, sector_id: null })),
+      ]);
+      resetForm(); setSelectedLocationIds([]); setMultiLocation(false); setDialogOpen(false); setEditing(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
   };
 
@@ -252,13 +283,14 @@ function SectorMasterTab() {
               <TableHead>Sector Name</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Sub-units</TableHead>
+              <TableHead>Locations</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="w-20">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No sectors found</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No sectors found</TableCell></TableRow> :
                 filtered.map(s => (
                   <TableRow key={s.id}>
                     <TableCell className="font-mono text-xs font-semibold">{s.sector_code || "—"}</TableCell>
@@ -277,6 +309,12 @@ function SectorMasterTab() {
                         return (
                           <div className="truncate cursor-help" title={b.lines.join("\n")}>{b.short}</div>
                         );
+                      })()}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-xs">
+                      {(() => {
+                        const locs = sectorLocations(s.id).map(l => l.location_name);
+                        return locs.length ? <div className="truncate cursor-help" title={locs.join("\n")}>{locs.join(", ")}</div> : "—";
                       })()}
                     </TableCell>
                     <TableCell className="text-sm">{getCompanyName(s.company_id)}</TableCell>
@@ -331,6 +369,42 @@ function SectorMasterTab() {
                 <option value="">— None —</option>
                 {companies.filter(c => c.status === "Active").map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
               </select>
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <label className={labelClass}>Locations</label>
+                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={multiLocation}
+                    onChange={e => {
+                      const on = e.target.checked;
+                      setMultiLocation(on);
+                      if (!on) setSelectedLocationIds(prev => prev.slice(0, 1));
+                    }}
+                  />
+                  Allow multiple locations
+                </label>
+              </div>
+              <div className="mt-1 max-h-40 overflow-y-auto rounded-md border divide-y">
+                {locations.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">No locations yet — add them in Location Master first.</div>
+                ) : locations.map(l => (
+                  <label key={l.id} className="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-muted/50">
+                    <input
+                      type={multiLocation ? "checkbox" : "radio"}
+                      name="sector-location"
+                      checked={selectedLocationIds.includes(l.id)}
+                      onChange={() => toggleLocation(l.id)}
+                    />
+                    <span>{l.location_code ? `${l.location_code} — ` : ""}{l.location_name}</span>
+                    {l.sector_id && l.sector_id !== (editing?.id ?? "") && !selectedLocationIds.includes(l.id) && (
+                      <span className="ml-auto text-[10px] text-amber-600">in another sector</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Linked locations become available in the Task form and Tasks filters for this sector.</p>
             </div>
             <div className="flex justify-end pt-2"><Button type="submit" disabled={addSector.isPending || updateSector.isPending}>{editing ? "Save Changes" : "Add Sector"}</Button></div>
           </form>
