@@ -8,6 +8,10 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
  * cards on the right. The right panel is decorative and is dropped below the
  * lg breakpoint so small screens get the form full-width.
  *
+ * Colours come from the app's semantic tokens (primary / card / muted / border)
+ * rather than literal values, so this page tracks the same light and dark
+ * themes as the authenticated screens without any dark: variants.
+ *
  * There is no self-registration in this product — accounts are provisioned by
  * an admin through the create-user function — so this is a sign-in form only.
  */
@@ -39,39 +43,37 @@ export default function Login() {
   };
 
   const fieldClass =
-    "w-full rounded-full border border-black/5 bg-white/70 px-5 py-3 text-sm text-neutral-800 " +
-    "placeholder:text-neutral-400 shadow-sm outline-none transition " +
-    "focus:border-amber-300 focus:bg-white focus:ring-2 focus:ring-amber-200/70 " +
-    "dark:border-white/10 dark:bg-white/5 dark:text-neutral-100 dark:placeholder:text-neutral-500 " +
-    "dark:focus:border-amber-400/40 dark:focus:bg-white/10 dark:focus:ring-amber-400/20";
+    "w-full rounded-full border border-input bg-background px-5 py-3 text-sm text-foreground " +
+    "placeholder:text-muted-foreground shadow-sm outline-none transition-snappy " +
+    "focus:border-primary focus:ring-2 focus:ring-primary/20";
 
-  const labelClass =
-    "mb-1.5 block text-[11px] font-medium tracking-wide text-neutral-500 dark:text-neutral-400";
+  const labelClass = "mb-1.5 block text-[11px] font-medium tracking-wide text-muted-foreground";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-200/70 p-4 dark:bg-neutral-950 sm:p-8">
+    <div
+      className="relative flex min-h-screen items-center justify-center p-4 sm:p-8"
+      style={{ background: "var(--gradient-page)" }}
+    >
+      <div className="pointer-events-none absolute inset-0 gradient-glow" />
+
       <div
-        className="grid w-full max-w-6xl overflow-hidden rounded-[28px] bg-white shadow-2xl
-                   shadow-black/10 ring-1 ring-black/5 lg:grid-cols-2
-                   dark:bg-neutral-900 dark:shadow-black/40 dark:ring-white/10"
+        className="relative z-10 grid w-full max-w-6xl overflow-hidden rounded-[28px] border
+                   border-border bg-card shadow-2xl shadow-primary/10 lg:grid-cols-2"
       >
         {/* ---------- form ---------- */}
-        <div
-          className="relative flex flex-col justify-between bg-gradient-to-b from-neutral-50 via-amber-50/40
-                     to-amber-100/60 p-8 sm:p-12 dark:from-neutral-900 dark:via-neutral-900 dark:to-amber-950/20"
-        >
+        <div className="gradient-accent relative flex flex-col justify-between p-8 sm:p-12">
           <span
-            className="inline-flex w-fit items-center rounded-full border border-black/10 px-4 py-2
-                       text-sm font-medium text-neutral-700 dark:border-white/15 dark:text-neutral-200"
+            className="inline-flex w-fit items-center rounded-full border border-border bg-card/60
+                       px-4 py-2 text-sm font-medium text-foreground"
           >
             Nextgen HCS
           </span>
 
           <div className="mx-auto w-full max-w-sm py-12">
-            <h1 className="text-center text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
+            <h1 className="text-center text-3xl font-semibold tracking-tight text-foreground">
               Welcome back
             </h1>
-            <p className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
+            <p className="mt-2 text-center text-sm text-muted-foreground">
               Sign in to the HR Task &amp; KPI system
             </p>
 
@@ -111,8 +113,8 @@ export default function Login() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400
-                               transition-colors hover:text-neutral-600 dark:hover:text-neutral-200"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground
+                               transition-snappy hover:text-foreground"
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -122,11 +124,11 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-amber-300
-                           px-5 py-3.5 text-sm font-semibold text-neutral-900 shadow-sm transition
-                           hover:bg-amber-400 focus-visible:outline focus-visible:outline-2
-                           focus-visible:outline-offset-2 focus-visible:outline-amber-500
-                           disabled:cursor-not-allowed disabled:opacity-60"
+                className="gradient-primary gradient-primary-hover mt-2 flex w-full items-center
+                           justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold
+                           text-primary-foreground shadow-md shadow-primary/20 transition-snappy
+                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+                           focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading && <Loader2 size={16} className="animate-spin" />}
                 {loading ? "Signing in…" : "Sign in"}
@@ -134,7 +136,7 @@ export default function Login() {
             </form>
           </div>
 
-          <p className="text-center text-xs text-neutral-500 dark:text-neutral-400 sm:text-left">
+          <p className="text-center text-xs text-muted-foreground sm:text-left">
             Trouble signing in? Contact your system administrator.
           </p>
         </div>
@@ -152,12 +154,9 @@ export default function Login() {
             />
 
             {/* floating card: upcoming review */}
-            <div
-              className="absolute left-6 top-6 rounded-2xl bg-amber-300/95 px-4 py-3 shadow-lg
-                         shadow-black/10 backdrop-blur"
-            >
-              <p className="text-sm font-semibold text-neutral-900">Task Review With Team</p>
-              <p className="text-xs text-neutral-700">09:30am – 10:00am</p>
+            <div className="gradient-primary absolute left-6 top-6 rounded-2xl px-4 py-3 shadow-lg shadow-primary/25">
+              <p className="text-sm font-semibold text-primary-foreground">Task Review With Team</p>
+              <p className="text-xs text-primary-foreground/80">09:30am – 10:00am</p>
             </div>
 
             {/* floating card: week strip. Sits clear of the meeting card below it;
@@ -183,18 +182,18 @@ export default function Login() {
             </div>
 
             {/* floating card: daily meeting */}
-            <div className="absolute bottom-6 left-6 rounded-2xl bg-white/95 px-4 py-3 shadow-lg shadow-black/10">
+            <div className="absolute bottom-6 left-6 rounded-2xl bg-card px-4 py-3 shadow-lg shadow-black/15">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-amber-400" />
-                <p className="text-sm font-semibold text-neutral-900">Daily Meeting</p>
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                <p className="text-sm font-semibold text-foreground">Daily Meeting</p>
               </div>
-              <p className="mt-0.5 text-xs text-neutral-500">12:00pm – 01:00pm</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">12:00pm – 01:00pm</p>
               <div className="mt-2 flex -space-x-2">
                 {["AR", "SM", "KP"].map((initials) => (
                   <span
                     key={initials}
-                    className="flex h-6 w-6 items-center justify-center rounded-full border-2
-                               border-white bg-neutral-700 text-[9px] font-semibold text-white"
+                    className="gradient-primary flex h-6 w-6 items-center justify-center rounded-full
+                               border-2 border-card text-[9px] font-semibold text-primary-foreground"
                   >
                     {initials}
                   </span>
