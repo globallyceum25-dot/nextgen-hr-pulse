@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+dist
+dist-ssr
+
+# Agent tooling and local Supabase CLI state — never needed in the image.
+.agents
+.claude
+supabase/.branches
+supabase/.temp
+
+*.log
+.DS_Store
