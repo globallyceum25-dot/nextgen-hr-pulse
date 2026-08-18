@@ -1,0 +1,21 @@
+-- Fix: has_role() was revoked from PUBLIC without being re-granted to authenticated.
+--
+-- Migration 20260714035845 hardened function privileges with:
+--     REVOKE EXECUTE ON FUNCTION public.has_role(uuid, app_role) FROM anon, public;
+-- Every other function hardened in that migration (rbac_has_permission,
+-- rbac_user_*_scope, rbac_can_access_record) received a matching
+--     GRANT EXECUTE ... TO authenticated;
+-- but has_role did not. Revoking from PUBLIC removes the implicit grant that
+-- authenticated relies on, leaving the ACL as {postgres=X/postgres}.
+--
+-- has_role() is called from the USING clause of RLS policies on user_roles and
+-- other tables, so a signed-in user hits:
+--     42501 permission denied for function has_role
+-- and the client falls back to the lowest role. A super_admin then renders as
+-- "Viewer" and is shown Access Denied.
+--
+-- Verified by replaying all migrations onto an empty database: without this
+-- grant a freshly provisioned project locks every authenticated user out.
+-- anon is deliberately NOT granted; it must not evaluate role checks.
+
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;

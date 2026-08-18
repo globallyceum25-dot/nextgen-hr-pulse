@@ -4,7 +4,7 @@ import { useCompanies, useAddCompany, useUpdateCompany, useDeleteCompany, type C
 import { useLocations, useAddLocation, useUpdateLocation, useDeleteLocation, type Location } from "@/hooks/useLocations";
 import { useDepartments, useAddDepartment, useUpdateDepartment, useDeleteDepartment, type Department } from "@/hooks/useDepartments";
 import { useSectors, useAddSector, useUpdateSector, useDeleteSector, type Sector } from "@/hooks/useSectors";
-import { useSubUnits } from "@/hooks/useSubUnits";
+import { useSubUnits, useSubUnitEntities } from "@/hooks/useSubUnits";
 import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2, Building2, MapPin, Briefcase, Network, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 
 interface EmployeesProps {
-  selectedSector: number | null;
+  selectedSector: string | null;
 }
 
 const EMPLOYMENT_STATUSES = ["Active", "Inactive", "On Leave", "Terminated"];
@@ -420,6 +420,7 @@ function LocationMasterTab() {
   const { data: companies = [] } = useCompanies();
   const { data: sectors = [] } = useSectors();
   const { data: subUnits = [] } = useSubUnits();
+  const { data: subUnitEntities = [] } = useSubUnitEntities();
   const addLocation = useAddLocation();
   const updateLocation = useUpdateLocation();
   const deleteLocation = useDeleteLocation();
@@ -428,19 +429,22 @@ function LocationMasterTab() {
   const [editing, setEditing] = useState<Location | null>(null);
   const [search, setSearch] = useState("");
 
-  const emptyForm = { location_name: "", address: "" as string | null, city: "" as string | null, country: "Sri Lanka" as string | null, status: "Active", company_id: "" as string | null, sector_id: "" as string | null, sub_unit_id: "" as string | null };
+  const emptyForm = { location_name: "", address: "" as string | null, city: "" as string | null, country: "Sri Lanka" as string | null, status: "Active", company_id: "" as string | null, sector_id: "" as string | null, sub_unit_id: "" as string | null, sub_unit_entity_id: "" as string | null };
   const [form, setForm] = useState(emptyForm);
   const resetForm = () => setForm(emptyForm);
 
   const filtered = locations.filter(l => !search || l.location_name.toLowerCase().includes(search.toLowerCase()));
 
   const availableSubUnits = subUnits.filter(su => !form.sector_id || su.sector_id === form.sector_id);
+  const availableEntities = form.sub_unit_id
+    ? subUnitEntities.filter(en => en.sub_unit_id === form.sub_unit_id)
+    : [];
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.location_name) { toast({ title: "Error", description: "Location name is required.", variant: "destructive" }); return; }
     try {
-      await addLocation.mutateAsync({ ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null });
+      await addLocation.mutateAsync({ ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null, sub_unit_entity_id: form.sub_unit_entity_id || null });
       toast({ title: "Location Added", description: `${form.location_name} added.` });
       resetForm(); setDialogOpen(false);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -448,7 +452,7 @@ function LocationMasterTab() {
 
   const openEdit = (l: Location) => {
     setEditing(l);
-    setForm({ location_name: l.location_name, address: l.address, city: l.city, country: l.country, status: l.status, company_id: l.company_id, sector_id: l.sector_id, sub_unit_id: l.sub_unit_id });
+    setForm({ location_name: l.location_name, address: l.address, city: l.city, country: l.country, status: l.status, company_id: l.company_id, sector_id: l.sector_id, sub_unit_id: l.sub_unit_id, sub_unit_entity_id: (l as any).sub_unit_entity_id ?? null });
     setEditDialogOpen(true);
   };
 
@@ -456,7 +460,7 @@ function LocationMasterTab() {
     e.preventDefault();
     if (!editing) return;
     try {
-      await updateLocation.mutateAsync({ id: editing.id, ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null });
+      await updateLocation.mutateAsync({ id: editing.id, ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null, sub_unit_entity_id: form.sub_unit_entity_id || null });
       toast({ title: "Location Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
@@ -481,16 +485,23 @@ function LocationMasterTab() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Sector</label>
-          <select className={inputClass} value={form.sector_id || ""} onChange={e => setForm(p => ({ ...p, sector_id: e.target.value || null, sub_unit_id: null }))}>
+          <select className={inputClass} value={form.sector_id || ""} onChange={e => setForm(p => ({ ...p, sector_id: e.target.value || null, sub_unit_id: null, sub_unit_entity_id: null }))}>
             <option value="">— None —</option>
             {sectors.filter(s => s.status === "Active").map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
         <div>
           <label className={labelClass}>Sub-unit</label>
-          <select className={inputClass} value={form.sub_unit_id || ""} onChange={e => setForm(p => ({ ...p, sub_unit_id: e.target.value || null }))} disabled={availableSubUnits.length === 0}>
+          <select className={inputClass} value={form.sub_unit_id || ""} onChange={e => setForm(p => ({ ...p, sub_unit_id: e.target.value || null, sub_unit_entity_id: null }))} disabled={availableSubUnits.length === 0}>
             <option value="">— None —</option>
             {availableSubUnits.map(su => <option key={su.id} value={su.id}>{su.sub_unit_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Entity</label>
+          <select className={inputClass} value={form.sub_unit_entity_id || ""} onChange={e => setForm(p => ({ ...p, sub_unit_entity_id: e.target.value || null }))} disabled={availableEntities.length === 0}>
+            <option value="">— None —</option>
+            {availableEntities.map(en => <option key={en.id} value={en.id}>{en.entity_name}</option>)}
           </select>
         </div>
       </div>

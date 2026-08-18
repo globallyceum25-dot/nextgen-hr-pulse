@@ -14,7 +14,7 @@ import { Can } from "@/components/rbac/Can";
 import { useScope } from "@/contexts/ScopeContext";
 
 interface ReportsProps {
-  selectedSector: number | null;
+  selectedSector: string | null;
 }
 
 const inputClass = "text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring";

@@ -145,6 +145,7 @@ export interface CreateTaskInput {
   company_id?: string;
   location_id?: string;
   sub_unit_id?: string;
+  sub_unit_entity_id?: string;
   priority: TaskPriority;
   start_date?: string;
   due_date?: string;
@@ -180,6 +181,7 @@ export function useCreateTask() {
         company_id: input.company_id || null,
         location_id: input.location_id || null,
         sub_unit_id: input.sub_unit_id || null,
+        sub_unit_entity_id: input.sub_unit_entity_id || null,
         priority: input.priority,
         status: (input.assignee_id ? "Assigned" : "Created") as TaskWorkflowStatus,
         start_date: input.start_date || null,

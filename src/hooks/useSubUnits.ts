@@ -23,3 +23,27 @@ export function useSubUnits() {
     },
   });
 }
+
+export interface SubUnitEntity {
+  id: string;
+  entity_name: string;
+  sub_unit_id: string | null;
+  sector_id: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useSubUnitEntities() {
+  return useQuery({
+    queryKey: ["sub_unit_entities"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sub_unit_entities")
+        .select("*")
+        .order("entity_name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as SubUnitEntity[];
+    },
+  });
+}

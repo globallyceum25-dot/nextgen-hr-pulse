@@ -7,7 +7,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useDepartments } from "@/hooks/useDepartments";
 import { useLocations } from "@/hooks/useLocations";
-import { useSubUnits } from "@/hooks/useSubUnits";
+import { useSubUnits, useSubUnitEntities } from "@/hooks/useSubUnits";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceType } from "@/types/tasks";
 import { WORKFLOW_STATUSES, MAIN_TASK_STATUSES, PRIORITIES, getWeightFromPriority, getStatusColor, getPriorityColor, getDeadlineInfo, getProgressFromStatus } from "@/types/tasks";
@@ -26,7 +26,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useScope } from "@/contexts/ScopeContext";
 
 interface TasksProps {
-  selectedSector: number | null;
+  selectedSector: string | null;
 }
 
 const inputClass = "w-full px-3 py-2 text-sm rounded-md border bg-card text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring";
@@ -67,6 +67,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const { data: departments = [] } = useDepartments();
   const { data: locations = [] } = useLocations();
   const { data: subUnits = [] } = useSubUnits();
+  const { data: subUnitEntities = [] } = useSubUnitEntities();
 
 
 
@@ -160,6 +161,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     company_id: "",
     location_id: "",
     sub_unit_id: "",
+    sub_unit_entity_id: "",
     priority: "Medium" as TaskPriority,
     start_date: new Date().toISOString().split("T")[0],
     due_date: "",
@@ -186,7 +188,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     setFormData({
       title: "", description: "", category_id: "", type_id: "",
       assignee_name: "", department_id: "", sector_id: "",
-      company_id: "", location_id: "", sub_unit_id: "", priority: "Medium",
+      company_id: "", location_id: "", sub_unit_id: "", sub_unit_entity_id: "", priority: "Medium",
       start_date: new Date().toISOString().split("T")[0], due_date: "",
       kpi_target_percent: 100, remarks: "", sla_frequency: "Day 1",
       escalation_person: "", recurrence: "none", recurrence_count: 0,
@@ -206,6 +208,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
     }
     return locations;
   }, [locations, sectors, formData.sub_unit_id, formData.sector_id]);
+
+  const availableEntities = useMemo(
+    () => (formData.sub_unit_id
+      ? subUnitEntities.filter(e => e.sub_unit_id === formData.sub_unit_id)
+      : []),
+    [subUnitEntities, formData.sub_unit_id]
+  );
 
   const availableSubUnits = useMemo(
     () => (formData.sector_id ? subUnits.filter(su => su.sector_id === formData.sector_id) : subUnits),
@@ -262,6 +271,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         company_id: formData.company_id || undefined,
         location_id: formData.location_id || undefined,
         sub_unit_id: formData.sub_unit_id || undefined,
+        sub_unit_entity_id: formData.sub_unit_entity_id || undefined,
         priority: formData.priority,
         start_date: formData.start_date || undefined,
         due_date: formData.due_date || undefined,
@@ -299,6 +309,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           company_id: formData.company_id || null,
           location_id: formData.location_id || null,
           sub_unit_id: formData.sub_unit_id || null,
+          sub_unit_entity_id: formData.sub_unit_entity_id || null,
           priority: formData.priority as any,
           start_date: formData.start_date || null,
           due_date: formData.due_date || null,
@@ -333,6 +344,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       company_id: task.company_id || "",
       location_id: task.location_id || "",
       sub_unit_id: (task as any).sub_unit_id || "",
+      sub_unit_entity_id: (task as any).sub_unit_entity_id || "",
       priority: task.priority,
       start_date: task.start_date || "",
       due_date: task.due_date || "",
@@ -607,7 +619,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </div>
                   <div>
                     <label className={labelClass}>Sector</label>
-                    <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value, sub_unit_id: "", location_id: "" }))}>
+                    <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value, sub_unit_id: "", sub_unit_entity_id: "", location_id: "" }))}>
                       <option value="">Select sector</option>
                       {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
@@ -616,9 +628,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelClass}>Sub-unit</label>
-                    <select className={inputClass} value={formData.sub_unit_id} disabled={availableSubUnits.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_id: e.target.value, location_id: "" }))}>
+                    <select className={inputClass} value={formData.sub_unit_id} disabled={availableSubUnits.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_id: e.target.value, sub_unit_entity_id: "", location_id: "" }))}>
                       <option value="">{availableSubUnits.length === 0 ? "— None —" : "Select sub-unit"}</option>
                       {availableSubUnits.map(su => <option key={su.id} value={su.id}>{su.sub_unit_name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Entity</label>
+                    <select className={inputClass} value={formData.sub_unit_entity_id} disabled={availableEntities.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_entity_id: e.target.value }))}>
+                      <option value="">{availableEntities.length === 0 ? "— None —" : "Select entity"}</option>
+                      {availableEntities.map(en => <option key={en.id} value={en.id}>{en.entity_name}</option>)}
                     </select>
                   </div>
                   <div>
@@ -1030,7 +1049,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div>
                   <label className={labelClass}>Sector</label>
-                  <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value, sub_unit_id: "", location_id: "" }))}>
+                  <select className={inputClass} value={formData.sector_id} onChange={e => setFormData(p => ({ ...p, sector_id: e.target.value, sub_unit_id: "", sub_unit_entity_id: "", location_id: "" }))}>
                     <option value="">Select sector</option>
                     {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
@@ -1039,9 +1058,16 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Sub-unit</label>
-                  <select className={inputClass} value={formData.sub_unit_id} disabled={availableSubUnits.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_id: e.target.value, location_id: "" }))}>
+                  <select className={inputClass} value={formData.sub_unit_id} disabled={availableSubUnits.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_id: e.target.value, sub_unit_entity_id: "", location_id: "" }))}>
                     <option value="">{availableSubUnits.length === 0 ? "— None —" : "Select sub-unit"}</option>
                     {availableSubUnits.map(su => <option key={su.id} value={su.id}>{su.sub_unit_name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Entity</label>
+                  <select className={inputClass} value={formData.sub_unit_entity_id} disabled={availableEntities.length === 0} onChange={e => setFormData(p => ({ ...p, sub_unit_entity_id: e.target.value }))}>
+                    <option value="">{availableEntities.length === 0 ? "— None —" : "Select entity"}</option>
+                    {availableEntities.map(en => <option key={en.id} value={en.id}>{en.entity_name}</option>)}
                   </select>
                 </div>
                 <div>

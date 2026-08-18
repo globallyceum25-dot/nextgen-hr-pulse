@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
 interface LogRow {
-  id: string; user_id: string | null; action: string; module: string | null;
+  id: string; user_id: string | null; employee_id: string | null;
+  action: string; module: string | null;
   record_id: string | null; old_value: unknown; new_value: unknown;
-  ip_address: string | null; created_at: string;
+  ip_address: string | null; user_agent: string | null; created_at: string;
 }
 
 export default function RbacAuditLog() {
@@ -61,20 +62,26 @@ export default function RbacAuditLog() {
         <CardContent className="p-0">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>When</TableHead><TableHead>User</TableHead><TableHead>Action</TableHead>
+              <TableHead>When</TableHead><TableHead>User</TableHead><TableHead>Employee</TableHead>
+              <TableHead>Action</TableHead>
               <TableHead>Module</TableHead><TableHead>Record</TableHead><TableHead>IP</TableHead>
+              <TableHead>Device</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-              : filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No audit entries yet</TableCell></TableRow>
+              {loading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
+              : filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No audit entries yet</TableCell></TableRow>
               : filtered.map(r => (
                 <TableRow key={r.id}>
                   <TableCell className="text-xs whitespace-nowrap">{format(new Date(r.created_at), "yyyy-MM-dd HH:mm:ss")}</TableCell>
                   <TableCell className="font-mono text-[10px]">{r.user_id?.slice(0, 8) ?? "—"}</TableCell>
+                  <TableCell className="font-mono text-[10px]">{r.employee_id?.slice(0, 8) ?? "—"}</TableCell>
                   <TableCell><Badge variant="secondary">{r.action}</Badge></TableCell>
                   <TableCell className="text-sm">{r.module ?? "—"}</TableCell>
                   <TableCell className="text-xs font-mono">{r.record_id ?? "—"}</TableCell>
                   <TableCell className="text-xs">{r.ip_address ?? "—"}</TableCell>
+                  <TableCell className="text-xs max-w-[220px] truncate" title={r.user_agent ?? undefined}>
+                    {r.user_agent ?? "—"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
