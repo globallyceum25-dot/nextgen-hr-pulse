@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { SECTORS, LYCEUM_CAMPUSES, LEDU_SUB_UNIT_ENTITIES } from "@/data/mockData";
 import {
   LayoutDashboard, ListTodo, BarChart3, Users, Building2,
   ChevronLeft, ChevronRight, ChevronDown, Settings, LogOut, FileText, Shield,
@@ -11,10 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { usePermissions, RbacModuleKey } from "@/hooks/usePermissions";
 import { Module } from "@/config/rbac";
+import { useSectors } from "@/hooks/useSectors";
+import { useSubUnits, useSubUnitEntities, SubUnit, SubUnitEntity } from "@/hooks/useSubUnits";
 
 interface AppSidebarProps {
-  selectedSector: number | null;
-  onSectorChange: (id: number | null) => void;
+  selectedSector: string | null;
+  onSectorChange: (id: string | null) => void;
 }
 
 const allNavItems: { label: string; icon: typeof LayoutDashboard; path: string; module: Module }[] = [
@@ -33,6 +34,9 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
   const location = useLocation();
   const { role, can, loading } = useUserRole();
   const { can: rbacCan, isSuperAdmin } = usePermissions();
+  const { data: sectors = [] } = useSectors();
+  const { data: subUnits = [] } = useSubUnits();
+  const { data: subUnitEntities = [] } = useSubUnitEntities();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -121,9 +125,12 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
                   <Building2 size={14} />
                   All Sectors
                 </button>
-                {SECTORS.map(s => {
+                {sectors.filter(s => s.is_active !== false).map(s => {
                   const isSelected = selectedSector === s.id;
-                  const isLedu = s.type === "LEDU";
+                  const isLedu = s.sector_type === "LEDU";
+                  const sectorSubUnits = subUnits.filter(
+                    su => su.sector_id === s.id && su.status !== "Inactive"
+                  );
                   return (
                     <div key={s.id}>
                       <button
@@ -151,8 +158,8 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
                       </button>
 
                       {/* LEDU sub-units */}
-                      {isLedu && isSelected && s.subUnits && (
-                        <LeduSubtree subUnits={s.subUnits} />
+                      {isLedu && isSelected && sectorSubUnits.length > 0 && (
+                        <LeduSubtree subUnits={sectorSubUnits} entities={subUnitEntities} />
                       )}
                     </div>
                   );
@@ -167,17 +174,19 @@ export default function AppSidebar({ selectedSector, onSectorChange }: AppSideba
   );
 }
 
-function LeduSubtree({ subUnits }: { subUnits: string[] }) {
+function LeduSubtree({ subUnits, entities }: { subUnits: SubUnit[]; entities: SubUnitEntity[] }) {
   const [selectedSubUnit, setSelectedSubUnit] = useState<string | null>(null);
   return (
     <div className="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border/40 pl-2">
       {subUnits.map(su => {
-        const active = selectedSubUnit === su;
-        const entities = LEDU_SUB_UNIT_ENTITIES[su] ?? [];
+        const active = selectedSubUnit === su.id;
+        const subUnitEntities = entities.filter(
+          e => e.sub_unit_id === su.id && e.status !== "Inactive"
+        );
         return (
-          <div key={su}>
+          <div key={su.id}>
             <button
-              onClick={() => setSelectedSubUnit(active ? null : su)}
+              onClick={() => setSelectedSubUnit(active ? null : su.id)}
               className={cn(
                 "flex items-center gap-2 w-full px-2 py-1 rounded text-[11px] transition-snappy",
                 active
@@ -186,17 +195,17 @@ function LeduSubtree({ subUnits }: { subUnits: string[] }) {
               )}
             >
               <ChevronDown size={11} className={cn("transition-snappy", active ? "rotate-0" : "-rotate-90")} />
-              <span className="truncate">{su}</span>
+              <span className="truncate">{su.sub_unit_name}</span>
             </button>
-            {active && entities.length > 0 && (
+            {active && subUnitEntities.length > 0 && (
               <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border/30 pl-2">
-                {entities.map(c => (
+                {subUnitEntities.map(e => (
                   <button
-                    key={c}
+                    key={e.id}
                     className="block w-full text-left px-2 py-0.5 rounded text-[10.5px] text-sidebar-foreground/45 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground/80 truncate"
-                    title={c}
+                    title={e.entity_name}
                   >
-                    {c}
+                    {e.entity_name}
                   </button>
                 ))}
               </div>

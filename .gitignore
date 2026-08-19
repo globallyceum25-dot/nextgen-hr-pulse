@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Supabase CLI local state
+supabase/.branches
+supabase/.temp
+
+# Agent tooling: installed skill content and machine-local settings.
+# skills-lock.json is committed; restore the content with `npx skills add`.
+.agents/
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

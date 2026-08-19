@@ -6,11 +6,11 @@ import ThemeToggle from "@/components/layout/ThemeToggle";
 import HeaderScopeSelector from "@/components/layout/HeaderScopeSelector";
 
 interface AppLayoutProps {
-  children: (props: { selectedSector: number | null }) => React.ReactNode;
+  children: (props: { selectedSector: string | null }) => React.ReactNode;
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const [selectedSector, setSelectedSector] = useState<number | null>(null);
+  const [selectedSector, setSelectedSector] = useState<string | null>(null);
 
   return (
     <div className="flex min-h-screen bg-background">

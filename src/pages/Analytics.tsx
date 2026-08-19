@@ -8,7 +8,7 @@ import TaskProgressVisualization from "@/components/analytics/TaskProgressVisual
 import { ListChecks, CheckCircle2, TrendingUp, Clock, AlertTriangle, Users, Calendar } from "lucide-react";
 
 interface AnalyticsProps {
-  selectedSector: number | null;
+  selectedSector: string | null;
 }
 
 // Formal corporate color palette for donut/pie charts - deep purple tones
