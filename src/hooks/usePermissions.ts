@@ -3,13 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
 export type RbacModuleKey =
-  | "dashboard" | "tasks" | "employees" | "companies" | "departments"
-  | "locations" | "user_management" | "reports" | "documents" | "audit_logs"
+  | "dashboard" | "tasks" | "employees" | "sectors" | "companies" | "departments"
+  | "locations" | "user_management" | "reports"
+  | "documents" | "audit_logs" // retired modules — kept for existing grant rows
   | "admin" | "analytics"; // legacy aliases tolerated
 
 export type RbacActionKey =
   | "view" | "create" | "edit" | "delete" | "deactivate"
-  | "approve" | "export" | "upload" | "assign_access";
+  | "approve" | "export" | "upload" | "assign_access"
+  | "create_subtask";
 
 interface MatrixRow {
   module_key: string;

@@ -115,6 +115,18 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const canEditSubTask = (st: DbSubTask): boolean =>
     isAdmin || isSuperAdmin || (rbacCan("tasks", "edit") && isOwnSubTask(st));
 
+  // Only the person who assigned/created the task may change its priority. The
+  // assignee can see it but not edit it. Mirrors the database trigger
+  // enforce_task_field_permissions() — the UI check is convenience, not security.
+  const canChangePriority = (t: DbTask | null): boolean => {
+    if (!t) return true; // creating a new task: the creator sets the initial priority
+    return (
+      isAdmin || isSuperAdmin ||
+      (!!currentUserId && (t.assigned_by === currentUserId || t.created_by === currentUserId))
+    );
+  };
+  const canCreateSubTask = isAdmin || isSuperAdmin || rbacCan("tasks", "create_subtask");
+
   // Filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskWorkflowStatus | "All">("All");
@@ -591,6 +603,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
                       {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
                   </div>
+                  <div>
+                    <label className={labelClass}>Assigned By</label>
+                    <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                      {currentUserEmployeeName || currentUserEmail || "You"}
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Recorded automatically as the assigner</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -687,7 +706,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelClass}>Sub-tasks Count</label>
-                    <input type="number" min={0} max={50} className={inputClass} value={formData.sub_task_count} onChange={e => setFormData(p => ({ ...p, sub_task_count: Math.max(0, Number(e.target.value)) }))} />
+                    {canCreateSubTask ? (
+                      <input type="number" min={0} max={50} className={inputClass} value={formData.sub_task_count} onChange={e => setFormData(p => ({ ...p, sub_task_count: Math.max(0, Number(e.target.value)) }))} />
+                    ) : (
+                      <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                        0
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Requires Create Sub-Task permission</p>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className={labelClass}>Related Module</label>
@@ -997,9 +1023,25 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div>
                   <label className={labelClass}>Priority</label>
-                  <select className={inputClass} value={formData.priority} onChange={e => setFormData(p => ({ ...p, priority: e.target.value as TaskPriority }))}>
-                    {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  {canChangePriority(editingTask) ? (
+                    <select className={inputClass} value={formData.priority} onChange={e => setFormData(p => ({ ...p, priority: e.target.value as TaskPriority }))}>
+                      {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  ) : (
+                    <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                      {formData.priority}
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Only the assigner can change priority</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Assigned By</label>
+                <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                  {editingTask?.assigned_by_profile?.full_name
+                    || editingTask?.assigned_by_profile?.email
+                    || "—"}
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Set automatically; cannot be changed</p>
                 </div>
               </div>
               <div>

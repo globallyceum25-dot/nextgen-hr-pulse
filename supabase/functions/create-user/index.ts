@@ -3,7 +3,11 @@ import { z } from "npm:zod@3.24.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  // A JSON POST triggers a CORS preflight. Without Allow-Methods the preflight can be
+  // rejected by the browser, which surfaces in the UI as an opaque "Failed to fetch".
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Max-Age": "86400",
 };
 
 const CreateUserSchema = z.object({

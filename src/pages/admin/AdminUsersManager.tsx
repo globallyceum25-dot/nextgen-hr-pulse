@@ -200,7 +200,17 @@ export default function AdminUsersManager() {
         fetchUsers();
       }
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      // "Failed to fetch" means the request never reached the server (function not
+      // deployed, or blocked by CORS) — surface that instead of the opaque browser text.
+      const isNetworkError =
+        err?.name === "TypeError" || /failed to fetch|networkerror|load failed/i.test(err?.message ?? "");
+      toast({
+        title: "Error",
+        description: isNetworkError
+          ? "Could not reach the create-user service. The 'create-user' Edge Function is likely not deployed to Supabase (Dashboard → Edge Functions)."
+          : err.message,
+        variant: "destructive",
+      });
     } finally {
       setAssigning(false);
     }

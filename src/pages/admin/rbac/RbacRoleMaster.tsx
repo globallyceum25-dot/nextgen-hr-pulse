@@ -45,9 +45,13 @@ export default function RbacRoleMaster() {
     const [rolesRes, userRolesRes, rpRes] = await Promise.all([
       supabase.from("rbac_roles").select("*").order("is_system", { ascending: false }).order("role_name"),
       supabase.from("user_roles").select("role"),
+      // Only surface modules that are still active. Retired modules keep their
+      // grant rows (so they can be re-activated) but must not show in Role Master,
+      // which is how stale modules lingered here after being retired.
       supabase.from("rbac_role_permissions")
-        .select("granted, rbac_roles(role_key), rbac_modules(module_label), rbac_permissions(permission_name)")
-        .eq("granted", true),
+        .select("granted, rbac_roles(role_key), rbac_modules!inner(module_label,status), rbac_permissions(permission_name)")
+        .eq("granted", true)
+        .eq("rbac_modules.status", "active"),
     ]);
     if (rolesRes.error) toast({ title: "Error", description: rolesRes.error.message, variant: "destructive" });
     else setRows((rolesRes.data as Role[]) ?? []);
@@ -60,10 +64,13 @@ export default function RbacRoleMaster() {
     ((rpRes.data ?? []) as unknown as Array<{
       granted: boolean;
       rbac_roles: { role_key: string } | null;
-      rbac_modules: { module_label: string } | null;
+      rbac_modules: { module_label: string; status: string } | null;
       rbac_permissions: { permission_name: string } | null;
     }>).forEach(r => {
       const rk = r.rbac_roles?.role_key; if (!rk) return;
+      // Belt-and-braces: also drop retired modules here, so the list is correct even
+      // if the embedded status filter on the query is not applied.
+      if (r.rbac_modules && r.rbac_modules.status !== "active") return;
       if (!m[rk]) m[rk] = { modules: [], permissions: [] };
       const mod = r.rbac_modules?.module_label; const perm = r.rbac_permissions?.permission_name;
       if (mod && !m[rk].modules.includes(mod)) m[rk].modules.push(mod);

@@ -422,8 +422,14 @@ export function useUpdateSubTask() {
         .update(cleanSubUpdates)
         .eq("id", id)
         .select()
-        .single();
+        .maybeSingle();
       if (error) throw error;
+      // RLS silently matches zero rows when the user may not edit this sub-task.
+      // Without this, .single() failed with the opaque PostgREST message
+      // "Cannot coerce the result to a single JSON object".
+      if (!data) {
+        throw new Error("You do not have permission to edit this sub-task.");
+      }
 
       // Recalculate parent task progress
       const taskId = data.task_id;
