@@ -118,18 +118,24 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
   // Resolve a person to their Employee Master name. Email stays the internal
   // identifier; the UI shows "First Last". Never falls back to showing an email.
+  // Order matters: profiles is readable by every authenticated user, employees is not
+  // (it needs employees:view). Preferring the profile name means non-admins resolve
+  // names too, instead of falling through to "Unmapped User".
   const displayPersonName = (
     profile?: { full_name?: string | null; email?: string | null } | null,
     fallbackEmail?: string | null,
   ): string => {
+    const fn = profile?.full_name?.trim();
+    if (fn && !fn.includes("@")) return fn;
+
     const email = (profile?.email || fallbackEmail || "").toLowerCase();
     if (email) {
       const emp = employeesList.find(e => e.email?.toLowerCase() === email);
-      if (emp) return `${emp.employee_name}${emp.last_name ? " " + emp.last_name : ""}`.trim();
+      if (emp) {
+        const full = `${emp.employee_name}${emp.last_name ? " " + emp.last_name : ""}`.trim();
+        if (full) return full;
+      }
     }
-    // Fall back to the profile's full name only if it is a real name, not an email.
-    const fn = profile?.full_name?.trim();
-    if (fn && !fn.includes("@")) return fn;
     return "Unmapped User";
   };
 
