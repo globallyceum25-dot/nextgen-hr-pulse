@@ -116,6 +116,23 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const canEditSubTask = (st: DbSubTask): boolean =>
     isAdmin || isSuperAdmin || (rbacCan("tasks", "edit") && isOwnSubTask(st));
 
+  // Resolve a person to their Employee Master name. Email stays the internal
+  // identifier; the UI shows "First Last". Never falls back to showing an email.
+  const displayPersonName = (
+    profile?: { full_name?: string | null; email?: string | null } | null,
+    fallbackEmail?: string | null,
+  ): string => {
+    const email = (profile?.email || fallbackEmail || "").toLowerCase();
+    if (email) {
+      const emp = employeesList.find(e => e.email?.toLowerCase() === email);
+      if (emp) return `${emp.employee_name}${emp.last_name ? " " + emp.last_name : ""}`.trim();
+    }
+    // Fall back to the profile's full name only if it is a real name, not an email.
+    const fn = profile?.full_name?.trim();
+    if (fn && !fn.includes("@")) return fn;
+    return "Unmapped User";
+  };
+
   // Only the person who assigned/created the task may change its priority. The
   // assignee can see it but not edit it. Mirrors the database trigger
   // enforce_task_field_permissions() — the UI check is convenience, not security.
@@ -126,6 +143,21 @@ export default function Tasks({ selectedSector }: TasksProps) {
       (!!currentUserId && (t.assigned_by === currentUserId || t.created_by === currentUserId))
     );
   };
+  // Deadline follows the same rule as priority: assigner-only.
+  const canChangeDeadline = (t: DbTask | null): boolean => canChangePriority(t);
+
+  // For a sub-task the "assigner" is its creator, or the parent task's assigner.
+  // Mirrors enforce_sub_task_field_permissions().
+  const canChangeSubTaskProtected = (parent: DbTask | null, st: DbSubTask | null): boolean => {
+    if (!st) return true;
+    if (isAdmin || isSuperAdmin) return true;
+    if (!currentUserId) return false;
+    return (
+      (st as any).created_by === currentUserId ||
+      (!!parent && (parent.assigned_by === currentUserId || parent.created_by === currentUserId))
+    );
+  };
+
   const canCreateSubTask = isAdmin || isSuperAdmin || rbacCan("tasks", "create_subtask");
 
   // Filters
@@ -150,6 +182,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [selectedTask, setSelectedTask] = useState<DbTask | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: DbSubTask } | null>(null);
+  // Whether the current user may edit a sub-task's protected fields (priority,
+  // deadline, assignee). Status and remarks stay editable for the assignee.
+  const subTaskProtectedEditable = !editingSubTask
+    ? true
+    : canChangeSubTaskProtected(
+        tasks.find(t => t.id === editingSubTask.taskId) ?? null,
+        editingSubTask.subTask,
+      );
   const [subTaskDetailOpen, setSubTaskDetailOpen] = useState(false);
   const [detailSubTask, setDetailSubTask] = useState<{ task: DbTask; subTask: DbSubTask } | null>(null);
 
@@ -1057,9 +1097,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div>
                 <label className={labelClass}>Assigned By</label>
                 <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
-                  {editingTask?.assigned_by_profile?.full_name
-                    || editingTask?.assigned_by_profile?.email
-                    || "—"}
+                  {editingTask ? displayPersonName(editingTask.assigned_by_profile) : "—"}
                   <p className="text-[10px] text-muted-foreground mt-0.5">Set automatically; cannot be changed</p>
                 </div>
               </div>
@@ -1168,7 +1206,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
                 </div>
                 <div>
                   <label className={labelClass}>Due Date *</label>
-                  <input type="date" className={inputClass} value={formData.due_date} onChange={e => setFormData(p => ({ ...p, due_date: e.target.value }))} />
+                  {canChangeDeadline(editingTask) ? (
+                    <input type="date" className={inputClass} value={formData.due_date} onChange={e => setFormData(p => ({ ...p, due_date: e.target.value }))} />
+                  ) : (
+                    <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                      {formData.due_date || "—"}
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Only the assigner can change the deadline</p>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className={labelClass}>KPI Target %</label>
@@ -1240,22 +1285,42 @@ export default function Tasks({ selectedSector }: TasksProps) {
               </div>
               <div>
                 <label className={labelClass}>Priority</label>
-                <select className={inputClass} value={subTaskForm.priority} onChange={e => setSubTaskForm(p => ({ ...p, priority: e.target.value as TaskPriority }))}>
-                  {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
+                {subTaskProtectedEditable ? (
+                  <select className={inputClass} value={subTaskForm.priority} onChange={e => setSubTaskForm(p => ({ ...p, priority: e.target.value as TaskPriority }))}>
+                    {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                ) : (
+                  <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                    {subTaskForm.priority}
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Only the assigner can change priority</p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Owner / Assignee</label>
-                <select className={inputClass} value={subTaskForm.assignee_name} onChange={e => setSubTaskForm(p => ({ ...p, assignee_name: e.target.value }))}>
-                  <option value="">Select person</option>
-                  {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
-                </select>
+                {subTaskProtectedEditable ? (
+                  <select className={inputClass} value={subTaskForm.assignee_name} onChange={e => setSubTaskForm(p => ({ ...p, assignee_name: e.target.value }))}>
+                    <option value="">Select person</option>
+                    {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
+                  </select>
+                ) : (
+                  <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                    {subTaskForm.assignee_name || "—"}
+                  </div>
+                )}
               </div>
               <div>
                 <label className={labelClass}>Due Date</label>
-                <input type="date" className={inputClass} value={subTaskForm.due_date} onChange={e => setSubTaskForm(p => ({ ...p, due_date: e.target.value }))} />
+                {subTaskProtectedEditable ? (
+                  <input type="date" className={inputClass} value={subTaskForm.due_date} onChange={e => setSubTaskForm(p => ({ ...p, due_date: e.target.value }))} />
+                ) : (
+                  <div className={inputClass + " bg-muted cursor-not-allowed opacity-70"}>
+                    {subTaskForm.due_date || "—"}
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Only the assigner can change the deadline</p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -1322,13 +1387,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
         onEdit={openEditDialog}
         isAdmin={isAdmin}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
+        resolveName={displayPersonName}
       />
     </div>
   );
 }
 
 // Task Detail Side Drawer Component
-function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, isAdmin, canEdit }: {
+function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, isAdmin, canEdit, resolveName }: {
   task: DbTask | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -1336,6 +1402,8 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
   onEdit: (task: DbTask) => void;
   isAdmin: boolean;
   canEdit: boolean;
+  /** Resolves a profile to its Employee Master name, never an email. */
+  resolveName: (p?: { full_name?: string | null; email?: string | null } | null) => string;
 }) {
   const { data: comments = [] } = useTaskComments(task?.id || null);
   const addComment = useAddComment();
@@ -1406,7 +1474,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
           {/* Details Grid */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div><span className="text-muted-foreground text-xs">Assignee</span><p className="font-medium">{(task as any).assignee_name || task.assignee_profile?.full_name || "—"}</p></div>
-            <div><span className="text-muted-foreground text-xs">Assigned By</span><p className="font-medium">{task.assigned_by_profile?.full_name || "—"}</p></div>
+            <div><span className="text-muted-foreground text-xs">Assigned By</span><p className="font-medium">{resolveName(task.assigned_by_profile)}</p></div>
             <div><span className="text-muted-foreground text-xs">Category</span><p className="font-medium">{task.category?.name || "—"}</p></div>
             <div><span className="text-muted-foreground text-xs">Type</span><p className="font-medium">{task.type?.name || "—"}</p></div>
             <div><span className="text-muted-foreground text-xs">Department</span><p className="font-medium">{task.department?.department_name || "—"}</p></div>
