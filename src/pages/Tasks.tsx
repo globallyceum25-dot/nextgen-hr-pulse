@@ -495,31 +495,26 @@ export default function Tasks({ selectedSector }: TasksProps) {
     weekEnd.setDate(weekEnd.getDate() + 7);
 
     return tasks.filter(t => {
-      // My Tasks view: narrow to tasks the current user is involved in (assigned to,
-      // assigned by, created by, or a related sub-task). Only active in myTasksMode.
+      // My Tasks view: work assigned TO the current user only.
+      // Tasks they assigned to someone else (assigned_by / created_by) are deliberately
+      // excluded — those belong in the main Task Management list, not "My Tasks".
       if (myTasksMode && (currentUserEmployeeName || currentUserId || currentUserEmail)) {
         const nameLower = currentUserEmployeeName?.toLowerCase();
         const emailLower = currentUserEmail?.toLowerCase();
-        // Check if user is the assignee (by name, id, or email)
+        // Assignee of the task itself (matched by id, name, or email)
         const isAssignee = !!(
           (nameLower && (t as any).assignee_name?.toLowerCase() === nameLower) ||
           (currentUserId && t.assignee_id === currentUserId) ||
           (emailLower && (t as any).assignee_profile?.email?.toLowerCase() === emailLower)
         );
-        // Check if user assigned the task (assigned_by)
-        const isAssigner = !!(currentUserId && t.assigned_by === currentUserId);
-        // Check if user created the task
-        const isCreator = !!(currentUserId && t.created_by === currentUserId);
-        // Check sub-tasks: assigned to user or created by user
-        const hasRelatedSubTask = (t.sub_tasks || []).some((st: any) => {
-          const stAssignee = !!(
+        // Assignee of a sub-task under this task — still their own work to do.
+        const isSubTaskAssignee = (t.sub_tasks || []).some((st: any) =>
+          !!(
             (nameLower && st.assignee_name?.toLowerCase() === nameLower) ||
             (currentUserId && st.assignee_id === currentUserId)
-          );
-          const stCreator = !!(currentUserId && st.created_by === currentUserId);
-          return stAssignee || stCreator;
-        });
-        if (!isAssignee && !isAssigner && !isCreator && !hasRelatedSubTask) return false;
+          )
+        );
+        if (!isAssignee && !isSubTaskAssignee) return false;
       }
 
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
