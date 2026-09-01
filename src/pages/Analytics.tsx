@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useTasks } from "@/hooks/useTasks";
+import { useScope } from "@/contexts/ScopeContext";
 import type { DbTask } from "@/types/tasks";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine, LabelList, AreaChart, Area } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,8 +61,17 @@ function renderPieLabel(total: number) {
 
 export default function Analytics({ selectedSector }: AnalyticsProps) {
   const { data: tasks = [], isLoading } = useTasks();
+  const { companyId: scopeCompanyId, sectorId: scopeSectorId, departmentId: scopeDepartmentId } = useScope();
 
-  const filtered = useMemo(() => tasks, [tasks]);
+  // Honour the global Company / Sector / Department pickers in the top bar, the same
+  // way the Tasks page does. Every chart below derives from `filtered`, so scoping it
+  // here narrows the whole Task Analysis page consistently.
+  const filtered = useMemo(() => tasks.filter(t => {
+    if (scopeCompanyId && t.company_id !== scopeCompanyId) return false;
+    if (scopeSectorId && t.sector_id !== scopeSectorId) return false;
+    if (scopeDepartmentId && t.department_id !== scopeDepartmentId) return false;
+    return true;
+  }), [tasks, scopeCompanyId, scopeSectorId, scopeDepartmentId]);
 
   // Executive Summary - Dashboard-style cards for Tasks
   const execTaskStats = useMemo(() => {
