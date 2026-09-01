@@ -1353,6 +1353,27 @@ export default function Tasks({ selectedSector }: TasksProps) {
               )}
             </div>
 
+            {/* Break the task into sub-tasks. Available to the assigner and to the
+                assignee when their role includes tasks:edit. */}
+            {canAddSubTaskTo(editingTask) && (
+              <div className="border-t pt-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className={labelClass}>Sub-tasks</label>
+                    <p className="text-[11px] text-muted-foreground">
+                      {editingTask?.sub_tasks?.length
+                        ? `${editingTask.sub_tasks.length} sub-task${editingTask.sub_tasks.length === 1 ? "" : "s"} — divide this task further`
+                        : "Divide this task into smaller steps"}
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" className="gap-1.5"
+                    onClick={() => { if (editingTask) { setEditDialogOpen(false); openAddSubTask(editingTask); } }}>
+                    <Plus size={14} /> Add Sub-task
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={updateTask.isPending}>{updateTask.isPending ? "Saving..." : "Save Changes"}</Button>
