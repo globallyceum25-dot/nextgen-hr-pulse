@@ -476,6 +476,64 @@ export function useUpdateSubTask() {
   });
 }
 
+export interface CreateSubTaskInput {
+  task_id: string;
+  title: string;
+  priority: TaskPriority;
+  assignee_name?: string | null;
+  assignee_id?: string | null;
+  due_date?: string | null;
+  remarks?: string | null;
+}
+
+/** Add a sub-task to an existing task, i.e. break a task down into smaller pieces. */
+export function useCreateSubTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateSubTaskInput) => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Append after the current last sub-task so ordering stays stable.
+      const { data: existing } = await supabase
+        .from("sub_tasks")
+        .select("sort_order")
+        .eq("task_id", input.task_id)
+        .order("sort_order", { ascending: false })
+        .limit(1);
+      const nextOrder = existing && existing.length > 0 ? Number(existing[0].sort_order) + 1 : 0;
+
+      const { data, error } = await supabase
+        .from("sub_tasks")
+        .insert({
+          task_id: input.task_id,
+          title: input.title,
+          status: "Created" as TaskWorkflowStatus,
+          progress: 0,
+          priority: input.priority,
+          task_weight: getWeightFromPriority(input.priority),
+          weighted_score: 0,
+          assignee_name: input.assignee_name || null,
+          assignee_id: input.assignee_id || null,
+          due_date: input.due_date || null,
+          remarks: input.remarks || null,
+          sort_order: nextOrder,
+          created_by: user?.id || null,
+          updated_by: user?.id || null,
+        })
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      // RLS returns zero rows when the user may not add sub-tasks here.
+      if (!data) throw new Error("You do not have permission to add a sub-task to this task.");
+      return data as DbSubTask;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+      queryClient.invalidateQueries({ queryKey: SUB_TASKS_KEY });
+    },
+  });
+}
+
 export function useDeleteSubTask() {
   const queryClient = useQueryClient();
   return useMutation({

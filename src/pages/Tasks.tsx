@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateSubTask, useDeleteSubTask, useTaskComments, useAddComment } from "@/hooks/useTasks";
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useCreateSubTask, useUpdateSubTask, useDeleteSubTask, useTaskComments, useAddComment } from "@/hooks/useTasks";
 import { useCurrentUser, useProfiles } from "@/hooks/useProfiles";
 import { useTaskCategories, useTaskTypes, useSectors } from "@/hooks/useTaskMasterData";
 import { useEmployees } from "@/hooks/useEmployees";
@@ -169,6 +169,23 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
   const canCreateSubTask = isAdmin || isSuperAdmin || rbacCan("tasks", "create_subtask");
 
+  /**
+   * Who may break a specific task down into sub-tasks: anyone with the blanket
+   * create_subtask permission, or the task's own assignee provided they hold
+   * tasks:edit — an assignee who can edit their task can divide it into steps.
+   * Mirrored by the sub_tasks INSERT policy in the database.
+   */
+  const canAddSubTaskTo = (t: DbTask | null): boolean => {
+    if (!t) return false;
+    if (canCreateSubTask) return true;
+    if (!rbacCan("tasks", "edit")) return false;
+    const nameKey = normName(currentUserEmployeeName);
+    return !!(
+      (currentUserId && t.assignee_id === currentUserId) ||
+      (nameKey && normName(t.assignee_name) === nameKey)
+    );
+  };
+
   // Filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskWorkflowStatus | "All">("All");
@@ -191,6 +208,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [selectedTask, setSelectedTask] = useState<DbTask | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: DbSubTask } | null>(null);
+  const [addSubTaskFor, setAddSubTaskFor] = useState<DbTask | null>(null);
   const [subTaskDetailOpen, setSubTaskDetailOpen] = useState(false);
   const [detailSubTask, setDetailSubTask] = useState<{ task: DbTask; subTask: DbSubTask } | null>(null);
 
@@ -210,6 +228,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  const createSubTask = useCreateSubTask();
   const updateSubTask = useUpdateSubTask();
   const deleteSubTask = useDeleteSubTask();
 
@@ -487,6 +506,45 @@ export default function Tasks({ selectedSector }: TasksProps) {
       remarks: st.remarks || "",
     });
     setSubTaskEditOpen(true);
+  };
+
+  /** Open the "divide this task" dialog, inheriting sensible defaults from the parent. */
+  const openAddSubTask = (task: DbTask) => {
+    setSubTaskForm({
+      title: "",
+      status: "Created" as TaskWorkflowStatus,
+      priority: task.priority,
+      assignee_name: task.assignee_name || "",
+      assignee_id: task.assignee_id || "",
+      due_date: task.due_date || "",
+      remarks: "",
+    });
+    setAddSubTaskFor(task);
+  };
+
+  const handleAddSubTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addSubTaskFor) return;
+    if (!subTaskForm.title.trim()) {
+      toast({ title: "Error", description: "Sub-task title is required.", variant: "destructive" });
+      return;
+    }
+    try {
+      await createSubTask.mutateAsync({
+        task_id: addSubTaskFor.id,
+        title: subTaskForm.title.trim(),
+        priority: subTaskForm.priority,
+        assignee_name: subTaskForm.assignee_name || null,
+        assignee_id: subTaskForm.assignee_id || null,
+        due_date: subTaskForm.due_date || null,
+        remarks: subTaskForm.remarks || null,
+      });
+      toast({ title: "Sub-task Added", description: `"${subTaskForm.title.trim()}" added to ${addSubTaskFor.title}.` });
+      setAddSubTaskFor(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not add the sub-task.";
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
   };
 
   const handleSubTaskEditSubmit = async (e: React.FormEvent) => {
@@ -1303,6 +1361,56 @@ export default function Tasks({ selectedSector }: TasksProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Add Sub-task Dialog — divide an existing task into smaller pieces */}
+      <Dialog open={!!addSubTaskFor} onOpenChange={open => { if (!open) setAddSubTaskFor(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Sub-task{addSubTaskFor ? ` — ${addSubTaskFor.title}` : ""}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddSubTaskSubmit} className="space-y-3 mt-2">
+            <div>
+              <label className={labelClass}>Title *</label>
+              <input className={inputClass} value={subTaskForm.title} placeholder="e.g. Draft the first section"
+                onChange={e => setSubTaskForm(p => ({ ...p, title: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Priority</label>
+                <select className={inputClass} value={subTaskForm.priority} onChange={e => setSubTaskForm(p => ({ ...p, priority: e.target.value as TaskPriority }))}>
+                  {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Due Date</label>
+                <input type="date" className={inputClass} value={subTaskForm.due_date} onChange={e => setSubTaskForm(p => ({ ...p, due_date: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Owner / Assignee</label>
+              <select className={inputClass} value={subTaskForm.assignee_name} onChange={e => {
+                const name = e.target.value;
+                const emp = employeesList.find(x => `${x.employee_name}${x.last_name ? " " + x.last_name : ""}` === name);
+                setSubTaskForm(p => ({ ...p, assignee_name: name, assignee_id: resolveAssigneeUserId(name, emp?.email) || "" }));
+              }}>
+                <option value="">Select person</option>
+                {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
+              </select>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Defaults to the task's assignee.</p>
+            </div>
+            <div>
+              <label className={labelClass}>Remarks</label>
+              <textarea className={inputClass + " min-h-[60px]"} value={subTaskForm.remarks} onChange={e => setSubTaskForm(p => ({ ...p, remarks: e.target.value }))} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setAddSubTaskFor(null)}>Cancel</Button>
+              <Button type="submit" disabled={createSubTask.isPending}>
+                {createSubTask.isPending ? "Adding..." : "Add Sub-task"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Sub-task Edit Dialog */}
       <Dialog open={subTaskEditOpen} onOpenChange={open => { setSubTaskEditOpen(open); if (!open) setEditingSubTask(null); }}>
         <DialogContent className="sm:max-w-md">
@@ -1426,7 +1534,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
         onStatusChange={handleStatusChange}
         onEdit={openEditDialog}
         isAdmin={isAdmin}
+        onAddSubTask={openAddSubTask}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
+        canAddSubTask={canAddSubTaskTo(selectedTask)}
         resolveName={displayPersonName}
       />
     </div>
@@ -1434,14 +1544,17 @@ export default function Tasks({ selectedSector }: TasksProps) {
 }
 
 // Task Detail Side Drawer Component
-function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, isAdmin, canEdit, resolveName }: {
+function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, onAddSubTask, isAdmin, canEdit, canAddSubTask, resolveName }: {
   task: DbTask | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusChange: (task: DbTask, status: TaskWorkflowStatus) => void;
   onEdit: (task: DbTask) => void;
+  /** Break this task down into sub-tasks. */
+  onAddSubTask: (task: DbTask) => void;
   isAdmin: boolean;
   canEdit: boolean;
+  canAddSubTask: boolean;
   /** Resolves a profile to its Employee Master name, never an email. */
   resolveName: (p?: { full_name?: string | null; email?: string | null } | null) => string;
 }) {
@@ -1489,6 +1602,11 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, is
             {canEdit && (
               <Button size="sm" variant="outline" onClick={() => { onEdit(task); onOpenChange(false); }}>
                 <Pencil size={14} className="mr-1" /> Edit
+              </Button>
+            )}
+            {canAddSubTask && (
+              <Button size="sm" variant="outline" onClick={() => { onAddSubTask(task); onOpenChange(false); }}>
+                <Plus size={14} className="mr-1" /> Add Sub-task
               </Button>
             )}
             {subTasks.length > 0 ? (
