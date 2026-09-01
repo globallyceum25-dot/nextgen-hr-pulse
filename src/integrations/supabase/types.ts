@@ -53,6 +53,36 @@ export type Database = {
         }
         Relationships: []
       }
+      designations: {
+        Row: {
+          created_at: string
+          description: string | null
+          designation_code: string
+          designation_name: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          designation_code: string
+          designation_name: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          designation_code?: string
+          designation_name?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           applies_to: string

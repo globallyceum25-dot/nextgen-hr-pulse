@@ -1,11 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useEmployees, useAddEmployee, useUpdateEmployee, useDeleteEmployee, type Employee } from "@/hooks/useEmployees";
 import { useCompanies, useAddCompany, useUpdateCompany, useDeleteCompany, type Company } from "@/hooks/useCompanies";
 import { useLocations, useAddLocation, useUpdateLocation, useDeleteLocation, type Location } from "@/hooks/useLocations";
 import { useDepartments, useAddDepartment, useUpdateDepartment, useDeleteDepartment, type Department } from "@/hooks/useDepartments";
+import { useDesignations, useAddDesignation, useUpdateDesignation, useDeleteDesignation, type Designation } from "@/hooks/useDesignations";
 import { useSectors, useAddSector, useUpdateSector, useDeleteSector, type Sector } from "@/hooks/useSectors";
 import { useSubUnits, useSubUnitEntities } from "@/hooks/useSubUnits";
-import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2, Building2, MapPin, Briefcase, Network, GraduationCap } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, Upload, FileSpreadsheet, X, CheckCircle2, Building2, MapPin, Briefcase, Network, GraduationCap, IdCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,11 +27,8 @@ interface EmployeesProps {
 }
 
 const EMPLOYMENT_STATUSES = ["Active", "Inactive", "On Leave", "Terminated"];
-const DESIGNATIONS = [
-  "HR Executive", "HR Manager", "Senior HR Executive", "HR Assistant",
-  "Payroll Officer", "Recruitment Specialist", "Training Coordinator",
-  "Compliance Officer", "HR Intern",
-];
+// Designations now live in the Designation Master (public.designations) rather than
+// a hardcoded list, so HR can add or retire job titles without a code change.
 
 const inputClass = "w-full px-3 py-2 text-sm rounded-md border bg-card text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring";
 const labelClass = "block text-xs font-medium text-foreground mb-1";
@@ -595,6 +593,7 @@ function EmployeeMasterTab() {
   const { data: companies = [] } = useCompanies();
   const { data: locations = [] } = useLocations();
   const { data: departments = [] } = useDepartments();
+  const { data: designations = [] } = useDesignations();
   const addEmployee = useAddEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
@@ -629,6 +628,15 @@ function EmployeeMasterTab() {
 
   const [form, setForm] = useState(emptyForm);
   const resetForm = () => { setForm({ ...emptyForm, company_name: activeCompanies[0]?.company_name || "" }); setBulkData([]); setBulkFileName(""); setAddMode("single"); };
+
+  // Designation options come from the Designation Master. Only Active ones are
+  // offered, but the employee's current designation is always retained in the list
+  // so editing them cannot silently blank a value that was later retired.
+  const designationOptions = useMemo(() => {
+    const active = designations.filter(d => d.status === "Active").map(d => d.designation_name);
+    const current = form.designation?.trim();
+    return current && !active.includes(current) ? [...active, current] : active;
+  }, [designations, form.designation]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -758,7 +766,7 @@ function EmployeeMasterTab() {
           <label className={labelClass}>Designation</label>
           <select className={inputClass} value={form.designation || ""} onChange={e => setForm(p => ({ ...p, designation: e.target.value || null }))}>
             <option value="">Select designation</option>
-            {DESIGNATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+            {designationOptions.map(d => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
       </div>
@@ -1074,6 +1082,155 @@ function DepartmentMasterTab() {
   );
 }
 
+// ─── Designation Master Tab ───
+function DesignationMasterTab() {
+  const { data: designations = [], isLoading } = useDesignations();
+  const addDesignation = useAddDesignation();
+  const updateDesignation = useUpdateDesignation();
+  const deleteDesignation = useDeleteDesignation();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Designation | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+
+  const emptyForm = { designation_name: "", description: "" as string | null, status: "Active" };
+  const [form, setForm] = useState(emptyForm);
+  const resetForm = () => setForm(emptyForm);
+
+  const filtered = designations.filter(d => {
+    if (statusFilter !== "All" && d.status !== statusFilter) return false;
+    if (search && !d.designation_name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.designation_name.trim()) { toast({ title: "Error", description: "Designation name is required.", variant: "destructive" }); return; }
+    try {
+      await addDesignation.mutateAsync({ designation_name: form.designation_name.trim(), description: form.description || null, status: form.status });
+      toast({ title: "Designation Added", description: `${form.designation_name.trim()} added.` });
+      resetForm(); setDialogOpen(false);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const openEdit = (d: Designation) => {
+    setEditing(d);
+    setForm({ designation_name: d.designation_name, description: d.description ?? "", status: d.status });
+    setEditDialogOpen(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    try {
+      await updateDesignation.mutateAsync({ id: editing.id, designation_name: form.designation_name.trim(), description: form.description || null, status: form.status });
+      toast({ title: "Designation Updated" });
+      resetForm(); setEditDialogOpen(false); setEditing(null);
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const handleDelete = async (d: Designation) => {
+    try { await deleteDesignation.mutateAsync(d.id); toast({ title: "Designation Deleted" }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const toggleStatus = async (d: Designation) => {
+    const next = d.status === "Active" ? "Inactive" : "Active";
+    try { await updateDesignation.mutateAsync({ id: d.id, status: next }); toast({ title: `Marked ${next}` }); }
+    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (
+    <form onSubmit={onSubmit} className="space-y-4 mt-2">
+      <div>
+        <label className={labelClass}>Designation Name *</label>
+        <input className={inputClass} placeholder="e.g. HR Manager" value={form.designation_name} onChange={e => setForm(p => ({ ...p, designation_name: e.target.value }))} />
+      </div>
+      <div>
+        <label className={labelClass}>Status</label>
+        <select className={inputClass} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+          <option value="Active">Active</option><option value="Inactive">Inactive</option>
+        </select>
+        <p className="text-[11px] text-muted-foreground mt-1">Only Active designations appear in the Employee form.</p>
+      </div>
+      <div>
+        <label className={labelClass}>Description</label>
+        <textarea className={inputClass} rows={3} value={form.description || ""} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
+      </div>
+      <div className="flex justify-end pt-2"><Button type="submit" disabled={addDesignation.isPending || updateDesignation.isPending}>{label}</Button></div>
+    </form>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{filtered.length} designation{filtered.length !== 1 ? "s" : ""}</p>
+        <Can module="employees" action="create">
+          <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus size={14} /> Add Designation</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Add Designation</DialogTitle></DialogHeader>{renderForm(handleAdd, "Add Designation")}</DialogContent>
+          </Dialog>
+        </Can>
+      </div>
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input className={inputClass + " pl-9"} placeholder="Search designations..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className={inputClass + " w-auto"} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="All">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      {isLoading ? <div className="text-center text-muted-foreground py-8">Loading...</div> : (
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead className="w-24">Desig. ID</TableHead>
+              <TableHead>Designation Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-28">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No designations found</TableCell></TableRow> :
+                filtered.map(d => (
+                  <TableRow key={d.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{d.designation_code}</TableCell>
+                    <TableCell className="font-semibold">{d.designation_name}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-md"><div className="line-clamp-2" title={d.description || ""}>{d.description || "—"}</div></TableCell>
+                    <TableCell>
+                      <button onClick={() => toggleStatus(d)} className="cursor-pointer">
+                        <Badge variant={d.status === "Active" ? "default" : "secondary"}>{d.status}</Badge>
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Can module="employees" action="edit">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        </Can>
+                        <Can module="employees" action="delete">
+                          <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Designation</AlertDialogTitle><AlertDialogDescription>Delete {d.designation_name}? Employees already using it keep their stored value.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(d)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        </Can>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      <Dialog open={editDialogOpen} onOpenChange={o => { setEditDialogOpen(o); if (!o) { resetForm(); setEditing(null); } }}>
+        <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Edit Designation</DialogTitle></DialogHeader>{renderForm(handleEdit, "Save Changes")}</DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ─── Main Employees Page ───
 export default function Employees({ selectedSector }: EmployeesProps) {
   return (
@@ -1089,6 +1246,7 @@ export default function Employees({ selectedSector }: EmployeesProps) {
           <TabsTrigger value="companies" className="gap-1.5 text-xs"><Building2 className="h-3.5 w-3.5" /> Company Master</TabsTrigger>
           <TabsTrigger value="locations" className="gap-1.5 text-xs"><MapPin className="h-3.5 w-3.5" /> Location Master</TabsTrigger>
           <TabsTrigger value="departments" className="gap-1.5 text-xs"><Briefcase className="h-3.5 w-3.5" /> Department Master</TabsTrigger>
+          <TabsTrigger value="designations" className="gap-1.5 text-xs"><IdCard className="h-3.5 w-3.5" /> Designation Master</TabsTrigger>
         </TabsList>
 
         <TabsContent value="employees"><EmployeeMasterTab /></TabsContent>
@@ -1096,6 +1254,7 @@ export default function Employees({ selectedSector }: EmployeesProps) {
         <TabsContent value="companies"><CompanyMasterTab /></TabsContent>
         <TabsContent value="locations"><LocationMasterTab /></TabsContent>
         <TabsContent value="departments"><DepartmentMasterTab /></TabsContent>
+        <TabsContent value="designations"><DesignationMasterTab /></TabsContent>
       </Tabs>
     </div>
   );
