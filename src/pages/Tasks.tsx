@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateSubTask, useDeleteSubTask, useTaskComments, useAddComment } from "@/hooks/useTasks";
+import { useCurrentUser, useProfiles } from "@/hooks/useProfiles";
 import { useTaskCategories, useTaskTypes, useSectors } from "@/hooks/useTaskMasterData";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -71,33 +71,32 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
 
 
-  // Current user identity for My Tasks filtering
-  const [currentUserEmployeeName, setCurrentUserEmployeeName] = useState<string | null>(null);
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  useEffect(() => {
-    async function matchEmployee() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setCurrentUserId(user.id);
-      setCurrentUserEmail(user.email?.toLowerCase() || null);
-      const matched = employeesList.find(
-        e => e.email?.toLowerCase() === user.email?.toLowerCase()
-      );
-      setCurrentUserEmployeeName(matched ? `${matched.employee_name}${matched.last_name ? " " + matched.last_name : ""}` : null);
-    }
-    matchEmployee();
-  }, [employeesList]);
+  // Current user identity for My Tasks filtering.
+  const { data: currentUser } = useCurrentUser();
+  const { data: profiles = [] } = useProfiles();
+  const currentUserId = currentUser?.userId ?? null;
+  const currentUserEmail = currentUser?.email ?? null;
+
+  // The profile directory is readable by every authenticated user; the Employee
+  // Master is not (it needs employees:view). Resolving the name from the profile
+  // is what makes My Tasks work for non-admins — deriving it from employeesList
+  // left it null for them, so no task ever matched and the view came up empty.
+  const currentUserEmployeeName = useMemo(() => {
+    const fromProfile = currentUser?.fullName?.trim();
+    if (fromProfile) return fromProfile;
+    const emp = employeesList.find(e => e.email?.toLowerCase() === currentUserEmail);
+    return emp ? `${emp.employee_name}${emp.last_name ? " " + emp.last_name : ""}` : null;
+  }, [currentUser, employeesList, currentUserEmail]);
 
   // Edit gating: everyone can VIEW all tasks, but only an admin or the task's owner
   // (assignee / creator / assigner) who also holds the tasks:edit permission may edit
   // it. Roles without tasks:edit (e.g. Viewer) can edit nothing.
   const isOwnTask = (t: DbTask): boolean => {
-    const nameLower = currentUserEmployeeName?.toLowerCase();
+    const nameKey = normName(currentUserEmployeeName);
     const emailLower = currentUserEmail?.toLowerCase();
     return !!(
       (currentUserId && t.assignee_id === currentUserId) ||
-      (nameLower && (t as any).assignee_name?.toLowerCase() === nameLower) ||
+      (nameKey && normName((t as any).assignee_name) === nameKey) ||
       (emailLower && (t as any).assignee_profile?.email?.toLowerCase() === emailLower) ||
       (currentUserId && t.created_by === currentUserId) ||
       (currentUserId && t.assigned_by === currentUserId)
@@ -106,10 +105,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const canEditTask = (t: DbTask): boolean =>
     isAdmin || isSuperAdmin || (rbacCan("tasks", "edit") && isOwnTask(t));
   const isOwnSubTask = (st: DbSubTask): boolean => {
-    const nameLower = currentUserEmployeeName?.toLowerCase();
+    const nameKey = normName(currentUserEmployeeName);
     return !!(
       (currentUserId && (st as any).assignee_id === currentUserId) ||
-      (nameLower && (st as any).assignee_name?.toLowerCase() === nameLower) ||
+      (nameKey && normName((st as any).assignee_name) === nameKey) ||
       (currentUserId && (st as any).created_by === currentUserId)
     );
   };
@@ -118,6 +117,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
   // Resolve a person to their Employee Master name. Email stays the internal
   // identifier; the UI shows "First Last". Never falls back to showing an email.
+  // Compare names case-insensitively and whitespace-tolerantly, so "Jane  Doe " and
+  // "jane doe" still match and a task is not silently dropped from My Tasks.
+  const normName = (s?: string | null) => (s || "").trim().replace(/\s+/g, " ").toLowerCase();
+
   // Order matters: profiles is readable by every authenticated user, employees is not
   // (it needs employees:view). Preferring the profile name means non-admins resolve
   // names too, instead of falling through to "Unmapped User".
@@ -188,19 +191,22 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [selectedTask, setSelectedTask] = useState<DbTask | null>(null);
   const [subTaskEditOpen, setSubTaskEditOpen] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState<{ taskId: string; subTask: DbSubTask } | null>(null);
+  const [subTaskDetailOpen, setSubTaskDetailOpen] = useState(false);
+  const [detailSubTask, setDetailSubTask] = useState<{ task: DbTask; subTask: DbSubTask } | null>(null);
+
+  // Data hooks
+  const { data: tasks = [], isLoading } = useTasks({ search: search || undefined });
+
   // Whether the current user may edit a sub-task's protected fields (priority,
   // deadline, assignee). Status and remarks stay editable for the assignee.
+  // Declared after `tasks` — reading it above the declaration threw a
+  // ReferenceError whenever the sub-task edit dialog was open.
   const subTaskProtectedEditable = !editingSubTask
     ? true
     : canChangeSubTaskProtected(
         tasks.find(t => t.id === editingSubTask.taskId) ?? null,
         editingSubTask.subTask,
       );
-  const [subTaskDetailOpen, setSubTaskDetailOpen] = useState(false);
-  const [detailSubTask, setDetailSubTask] = useState<{ task: DbTask; subTask: DbSubTask } | null>(null);
-
-  // Data hooks
-  const { data: tasks = [], isLoading } = useTasks({ search: search || undefined });
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
@@ -214,6 +220,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     category_id: "",
     type_id: "",
     assignee_name: "",
+    assignee_id: "",
     department_id: "",
     sector_id: "",
     company_id: "",
@@ -238,6 +245,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
     status: "Created" as TaskWorkflowStatus,
     priority: "Medium" as TaskPriority,
     assignee_name: "",
+    assignee_id: "",
     due_date: "",
     remarks: "",
   });
@@ -245,7 +253,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const resetForm = () => {
     setFormData({
       title: "", description: "", category_id: "", type_id: "",
-      assignee_name: "", department_id: "", sector_id: "",
+      assignee_name: "", assignee_id: "", department_id: "", sector_id: "",
       company_id: "", location_id: "", sub_unit_id: "", sub_unit_entity_id: "", priority: "Medium",
       start_date: new Date().toISOString().split("T")[0], due_date: "",
       kpi_target_percent: 100, remarks: "", sla_frequency: "Day 1",
@@ -288,8 +296,26 @@ export default function Tasks({ selectedSector }: TasksProps) {
     return departments.filter(d => d.status === "Active");
   }, [departments, sectors, formData.sector_id]);
 
+  /**
+   * Map an assignee to their auth user id so tasks are linked by id, not just by a
+   * display string. Email is the strong key; an ambiguous name resolves to null
+   * rather than guessing and mis-assigning the task.
+   */
+  const resolveAssigneeUserId = useCallback((name: string, email?: string | null): string | null => {
+    const emailLower = email?.toLowerCase();
+    if (emailLower) {
+      const byEmail = profiles.find(p => p.email?.toLowerCase() === emailLower);
+      if (byEmail) return byEmail.user_id;
+    }
+    const key = normName(name);
+    if (!key) return null;
+    const hits = profiles.filter(p => normName(p.full_name) === key);
+    return hits.length === 1 ? hits[0].user_id : null;
+  }, [profiles]);
+
   const handleAssigneeChange = (name: string) => {
     const emp = employeesList.find(e => `${e.employee_name}${e.last_name ? " " + e.last_name : ""}` === name || e.employee_name === name);
+    const resolvedId = resolveAssigneeUserId(name, emp?.email) || "";
     if (emp) {
       const comp = companies.find(c => c.company_name === emp.company_name);
       const loc = locations.find(l => l.location_name === emp.location);
@@ -297,12 +323,13 @@ export default function Tasks({ selectedSector }: TasksProps) {
       setFormData(p => ({
         ...p,
         assignee_name: name,
+        assignee_id: resolvedId,
         company_id: comp?.id || "",
         location_id: loc?.id || "",
         department_id: dept?.id || "",
       }));
     } else {
-      setFormData(p => ({ ...p, assignee_name: name }));
+      setFormData(p => ({ ...p, assignee_name: name, assignee_id: resolvedId }));
     }
   };
 
@@ -324,6 +351,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
         category_id: formData.category_id || undefined,
         type_id: formData.type_id || undefined,
         assignee_name: formData.assignee_name || undefined,
+        assignee_id: formData.assignee_id || undefined,
         department_id: formData.department_id || undefined,
         sector_id: formData.sector_id || undefined,
         company_id: formData.company_id || undefined,
@@ -362,6 +390,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           category_id: formData.category_id || null,
           type_id: formData.type_id || null,
           assignee_name: formData.assignee_name || null,
+          assignee_id: formData.assignee_id || null,
           department_id: formData.department_id || null,
           sector_id: formData.sector_id || null,
           company_id: formData.company_id || null,
@@ -397,6 +426,9 @@ export default function Tasks({ selectedSector }: TasksProps) {
       category_id: task.category_id || "",
       type_id: task.type_id || "",
       assignee_name: (task as any).assignee_name || "",
+      // Preserve the existing link. Without this, editing a task (e.g. only its
+      // status) would null out assignee_id and drop it from the assignee's My Tasks.
+      assignee_id: task.assignee_id || "",
       department_id: task.department_id || "",
       sector_id: task.sector_id || "",
       company_id: task.company_id || "",
@@ -449,6 +481,8 @@ export default function Tasks({ selectedSector }: TasksProps) {
       status: st.status,
       priority: st.priority,
       assignee_name: (st as any).assignee_name || "",
+      // Preserve the existing link, as with tasks.
+      assignee_id: st.assignee_id || "",
       due_date: st.due_date || "",
       remarks: st.remarks || "",
     });
@@ -474,6 +508,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
           task_weight: newWeight,
           weighted_score: newWeightedScore,
           assignee_name: subTaskForm.assignee_name || null,
+          assignee_id: subTaskForm.assignee_id || null,
           due_date: subTaskForm.due_date || null,
           remarks: subTaskForm.remarks || null,
           completed_date: subTaskForm.status === "Completed" ? new Date().toISOString().split("T")[0] : null,
@@ -499,18 +534,18 @@ export default function Tasks({ selectedSector }: TasksProps) {
       // Tasks they assigned to someone else (assigned_by / created_by) are deliberately
       // excluded — those belong in the main Task Management list, not "My Tasks".
       if (myTasksMode && (currentUserEmployeeName || currentUserId || currentUserEmail)) {
-        const nameLower = currentUserEmployeeName?.toLowerCase();
+        const nameKey = normName(currentUserEmployeeName);
         const emailLower = currentUserEmail?.toLowerCase();
         // Assignee of the task itself (matched by id, name, or email)
         const isAssignee = !!(
-          (nameLower && (t as any).assignee_name?.toLowerCase() === nameLower) ||
+          (nameKey && normName((t as any).assignee_name) === nameKey) ||
           (currentUserId && t.assignee_id === currentUserId) ||
           (emailLower && (t as any).assignee_profile?.email?.toLowerCase() === emailLower)
         );
         // Assignee of a sub-task under this task — still their own work to do.
         const isSubTaskAssignee = (t.sub_tasks || []).some((st: any) =>
           !!(
-            (nameLower && st.assignee_name?.toLowerCase() === nameLower) ||
+            (nameKey && normName(st.assignee_name) === nameKey) ||
             (currentUserId && st.assignee_id === currentUserId)
           )
         );
@@ -1302,7 +1337,11 @@ export default function Tasks({ selectedSector }: TasksProps) {
               <div>
                 <label className={labelClass}>Owner / Assignee</label>
                 {subTaskProtectedEditable ? (
-                  <select className={inputClass} value={subTaskForm.assignee_name} onChange={e => setSubTaskForm(p => ({ ...p, assignee_name: e.target.value }))}>
+                  <select className={inputClass} value={subTaskForm.assignee_name} onChange={e => {
+                    const name = e.target.value;
+                    const emp = employeesList.find(x => `${x.employee_name}${x.last_name ? " " + x.last_name : ""}` === name);
+                    setSubTaskForm(p => ({ ...p, assignee_name: name, assignee_id: resolveAssigneeUserId(name, emp?.email) || "" }));
+                  }}>
                     <option value="">Select person</option>
                     {employeesList.filter(e => e.employment_status === "Active").map(e => { const full = `${e.employee_name}${e.last_name ? " " + e.last_name : ""}`; return <option key={e.id} value={full}>{full}</option>; })}
                   </select>
