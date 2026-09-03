@@ -140,8 +140,10 @@ export default function AdminUsersManager() {
       toast({ title: "Validation Error", description: "Email and password are required.", variant: "destructive" });
       return;
     }
-    if (newPassword.length < 6) {
-      toast({ title: "Validation Error", description: "Password must be at least 6 characters.", variant: "destructive" });
+    // Must match the create-user function's schema, or the server rejects the
+    // request with a less helpful error after the round-trip.
+    if (newPassword.length < 12) {
+      toast({ title: "Validation Error", description: "Password must be at least 12 characters.", variant: "destructive" });
       return;
     }
 

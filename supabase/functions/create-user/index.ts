@@ -10,11 +10,22 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
+// Roles must be allow-listed. Accepting a free-form string let an admin mint an
+// account with any role name, including super_admin.
+const APP_ROLES = [
+  "super_admin", "sector_hr_admin", "group_admin", "company_admin",
+  "department_manager", "location_manager", "responsible_person",
+  "data_entry_user", "employee_user", "viewer",
+] as const;
+
+/** Roles only a super_admin may hand out. */
+const PRIVILEGED_ROLES = new Set(["super_admin", "sector_hr_admin"]);
+
 const CreateUserSchema = z.object({
   email: z.string().trim().email().max(255),
-  password: z.string().min(6).max(128),
+  password: z.string().min(12).max(128),
   full_name: z.string().trim().min(1).max(120).optional().or(z.literal("")),
-  role: z.string().trim().min(1).max(64),
+  role: z.enum(APP_ROLES),
 });
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>
@@ -29,10 +40,13 @@ const findExistingUserByEmail = async (
 ) => {
   const normalizedEmail = email.toLowerCase();
 
+  // Exact match, not ILIKE: `_` is legal in an email local-part and is also
+  // ILIKE's single-character wildcard, so "a_b@x.com" would match "axb@x.com"
+  // and resolve to the wrong account.
   const { data: profile } = await adminClient
     .from("profiles")
     .select("user_id, email, full_name")
-    .ilike("email", normalizedEmail)
+    .eq("email", normalizedEmail)
     .maybeSingle();
 
   if (profile?.user_id) {
@@ -104,10 +118,9 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: callerRolesError.message }, 500);
     }
 
-    const isAdmin = callerRoles?.some(
-      (assignedRole) =>
-        assignedRole.role === "super_admin" || assignedRole.role === "sector_hr_admin",
-    );
+    const callerIsSuperAdmin = !!callerRoles?.some((r) => r.role === "super_admin");
+    const isAdmin = callerIsSuperAdmin
+      || !!callerRoles?.some((r) => r.role === "sector_hr_admin");
 
     if (!isAdmin) {
       return jsonResponse({ error: "Only admins can create users" }, 403);
@@ -132,27 +145,33 @@ Deno.serve(async (req) => {
     }
 
     const { email, password, full_name, role } = parsedBody.data;
+
+    // Only a super_admin may grant the roles that can themselves grant roles.
+    // Without this a sector_hr_admin could mint a new super_admin account.
+    if (PRIVILEGED_ROLES.has(role) && !callerIsSuperAdmin) {
+      return jsonResponse(
+        { error: `Only a Super Admin can assign the ${role} role` },
+        403,
+      );
+    }
+
     const normalizedEmail = email.toLowerCase();
     let targetUserId: string | null = null;
     let userCreated = false;
 
     const existingUser = await findExistingUserByEmail(adminClient, normalizedEmail);
     if (existingUser?.userId) {
+      // The account already exists. Deliberately DO NOT touch its password.
+      //
+      // This previously called updateUserById({ password }), which meant any
+      // admin -- including a sector_hr_admin -- could submit a super_admin's
+      // email with a password of their choosing, silently overwrite it, and
+      // then sign in as that account. Password resets belong in a separate,
+      // super_admin-only flow, not in "create user".
+      //
+      // Assigning a role to an existing user is still legitimate, so we fall
+      // through to the role-assignment step below.
       targetUserId = existingUser.userId;
-
-      // Update the password and confirm email for existing user
-      const { error: updateError } = await adminClient.auth.admin.updateUserById(
-        targetUserId,
-        {
-          password,
-          email_confirm: true,
-          user_metadata: { full_name: full_name || existingUser.fullName || normalizedEmail },
-        },
-      );
-
-      if (updateError) {
-        console.error("Failed to update existing user password:", updateError.message);
-      }
     } else {
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email: normalizedEmail,
@@ -162,15 +181,12 @@ Deno.serve(async (req) => {
       });
 
       if (createError) {
+        // createUser can fail because the account already exists (a race, or an
+        // account findExistingUserByEmail missed). Re-resolve it, but as above
+        // do NOT reset its password -- that was the same takeover path.
         const recoveredUser = await findExistingUserByEmail(adminClient, normalizedEmail);
         if (recoveredUser?.userId) {
           targetUserId = recoveredUser.userId;
-
-          // Also update password for recovered user
-          await adminClient.auth.admin.updateUserById(targetUserId, {
-            password,
-            email_confirm: true,
-          });
         } else {
           return jsonResponse({ error: createError.message }, 400);
         }
@@ -230,7 +246,8 @@ Deno.serve(async (req) => {
       role_assigned: true,
       message: userCreated
         ? "User created and role assigned successfully"
-        : "Existing user found and role assigned successfully",
+        // Be explicit: the password was intentionally left untouched.
+        : "This account already existed — the role was assigned and the existing password was kept unchanged.",
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unexpected error";
