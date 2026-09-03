@@ -79,12 +79,22 @@ const aliasModule = (m: string): string => {
 
 export function usePermissions() {
   const [userId, setUserId] = useState<string | null>(null);
+  // Tracks whether auth has answered yet. Without this, the permissions query is
+  // still disabled on first render, react-query reports isLoading === false for a
+  // disabled query, and RouteGuard renders a full-page "Access Denied" before we
+  // have even asked who the user is.
+  const [authResolved, setAuthResolved] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) =>
-      setUserId(s?.user?.id ?? null)
-    );
+    supabase.auth
+      .getUser()
+      .then(({ data }) => setUserId(data.user?.id ?? null))
+      .catch(() => setUserId(null))
+      .finally(() => setAuthResolved(true));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
+      setUserId(s?.user?.id ?? null);
+      setAuthResolved(true);
+    });
     return () => subscription.unsubscribe();
   }, []);
 
@@ -265,7 +275,10 @@ export function usePermissions() {
   };
 
   return {
-    loading: query.isLoading,
+    // Stay "loading" until auth has answered AND the permission query has settled.
+    // query.isLoading is false while the query is still disabled (userId not known
+    // yet), which previously let RouteGuard flash "Access Denied" on first paint.
+    loading: !authResolved || (!!userId && query.isPending),
     state,
     can,
     canViewField,

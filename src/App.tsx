@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import AppLayout from "@/components/layout/AppLayout";
 import RouteGuard from "@/components/layout/RouteGuard";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const Tasks = lazy(() => import("@/pages/Tasks"));
 const Analytics = lazy(() => import("@/pages/Analytics"));
@@ -22,7 +23,18 @@ const AccessControl = lazy(() => import("@/pages/admin/rbac/AccessControl"));
 const Login = lazy(() => import("@/pages/Login"));
 const ProfileSettings = lazy(() => import("@/pages/ProfileSettings"));
 
-const queryClient = new QueryClient();
+// Defaults matter here: the task list fetches every task with its relations and
+// sub-tasks, so the stock staleTime of 0 + refetchOnWindowFocus meant the whole
+// payload was re-fetched every time the user alt-tabbed back to the browser.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -70,6 +82,9 @@ const App = () => (
               <AppLayout>
                 {({ selectedSector }) => (
                   <RouteGuard>
+                    {/* Per-page boundary: a render error in one page shows a recoverable
+                        message instead of unmounting the whole app to a blank screen. */}
+                    <ErrorBoundary>
                     <Suspense fallback={<div className="flex items-center justify-center h-full"><p className="text-muted-foreground">Loading...</p></div>}>
                       <Routes>
                         <Route path="/" element={<Analytics selectedSector={selectedSector} />} />
@@ -83,6 +98,7 @@ const App = () => (
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
+                    </ErrorBoundary>
                   </RouteGuard>
                 )}
               </AppLayout>
