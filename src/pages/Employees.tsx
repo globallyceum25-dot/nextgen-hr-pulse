@@ -21,6 +21,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useScope } from "@/contexts/ScopeContext";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface EmployeesProps {
   selectedSector: string | null;
@@ -59,7 +60,7 @@ function CompanyMasterTab() {
       await addCompany.mutateAsync({ ...form, registration_no: form.registration_no || null, address: form.address || null, contact_number: form.contact_number || null, email: form.email || null });
       toast({ title: "Company Added", description: `${form.company_name} added.` });
       resetForm(); setDialogOpen(false);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const openEdit = (c: Company) => {
@@ -75,12 +76,12 @@ function CompanyMasterTab() {
       await updateCompany.mutateAsync({ id: editing.id, ...form, registration_no: form.registration_no || null, address: form.address || null, contact_number: form.contact_number || null, email: form.email || null });
       toast({ title: "Company Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const handleDelete = async (c: Company) => {
     try { await deleteCompany.mutateAsync(c.id); toast({ title: "Company Deleted" }); }
-    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (
@@ -248,12 +249,12 @@ function SectorMasterTab() {
         ...toUnlink.map(id => updateLocation.mutateAsync({ id, sector_id: null })),
       ]);
       resetForm(); setSelectedLocationIds([]); setMultiLocation(false); setDialogOpen(false); setEditing(null);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const handleDelete = async (s: Sector) => {
     try { await deleteSector.mutateAsync(s.id); toast({ title: "Sector Deleted" }); }
-    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   return (
@@ -445,7 +446,7 @@ function LocationMasterTab() {
       await addLocation.mutateAsync({ ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null, sub_unit_entity_id: form.sub_unit_entity_id || null });
       toast({ title: "Location Added", description: `${form.location_name} added.` });
       resetForm(); setDialogOpen(false);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const openEdit = (l: Location) => {
@@ -461,12 +462,12 @@ function LocationMasterTab() {
       await updateLocation.mutateAsync({ id: editing.id, ...form, address: form.address || null, city: form.city || null, country: form.country || null, company_id: form.company_id || null, sector_id: form.sector_id || null, sub_unit_id: form.sub_unit_id || null, sub_unit_entity_id: form.sub_unit_entity_id || null });
       toast({ title: "Location Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const handleDelete = async (l: Location) => {
     try { await deleteLocation.mutateAsync(l.id); toast({ title: "Location Deleted" }); }
-    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const getCompanyName = (id: string | null) => companies.find(c => c.id === id)?.company_name || "—";
@@ -716,7 +717,7 @@ function EmployeeMasterTab() {
       await addEmployee.mutateAsync({ ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null, email: form.email || null });
       toast({ title: "Employee Added", description: `${form.employee_name} has been added.` });
       resetForm(); setDialogOpen(false);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const openEdit = (emp: Employee) => {
@@ -732,12 +733,12 @@ function EmployeeMasterTab() {
       await updateEmployee.mutateAsync({ id: editingEmployee.id, ...form, location: form.location || null, designation: form.designation || null, department: form.department || null, reporting_manager: form.reporting_manager || null, date_joined: form.date_joined || null, email: form.email || null });
       toast({ title: "Employee Updated", description: `${form.employee_name} has been updated.` });
       resetForm(); setEditDialogOpen(false); setEditingEmployee(null);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const handleDelete = async (emp: Employee) => {
     try { await deleteEmployee.mutateAsync(emp.id); toast({ title: "Employee Deleted", description: `${emp.employee_name} has been removed.` }); }
-    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const renderForm = (onSubmit: (e: React.FormEvent) => void, submitLabel: string) => (
@@ -950,7 +951,7 @@ function DepartmentMasterTab() {
       await addDepartment.mutateAsync({ department_name: form.department_name, applies_to: form.applies_to, description: form.description || null, status: form.status } as any);
       toast({ title: "Department Added", description: `${form.department_name} added.` });
       resetForm(); setDialogOpen(false);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const openEdit = (d: Department) => {
@@ -966,18 +967,18 @@ function DepartmentMasterTab() {
       await updateDepartment.mutateAsync({ id: editing.id, department_name: form.department_name, applies_to: form.applies_to, description: form.description || null, status: form.status } as any);
       toast({ title: "Department Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const handleDelete = async (d: Department) => {
     try { await deleteDepartment.mutateAsync(d.id); toast({ title: "Department Deleted" }); }
-    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const toggleStatus = async (d: Department) => {
     const next = d.status === "Active" ? "Inactive" : "Active";
     try { await updateDepartment.mutateAsync({ id: d.id, status: next } as any); toast({ title: `Marked ${next}` }); }
-    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const appliesBadge = (v: string) =>
@@ -1111,7 +1112,7 @@ function DesignationMasterTab() {
       await addDesignation.mutateAsync({ designation_name: form.designation_name.trim(), description: form.description || null, status: form.status });
       toast({ title: "Designation Added", description: `${form.designation_name.trim()} added.` });
       resetForm(); setDialogOpen(false);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const openEdit = (d: Designation) => {
@@ -1127,18 +1128,18 @@ function DesignationMasterTab() {
       await updateDesignation.mutateAsync({ id: editing.id, designation_name: form.designation_name.trim(), description: form.description || null, status: form.status });
       toast({ title: "Designation Updated" });
       resetForm(); setEditDialogOpen(false); setEditing(null);
-    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const handleDelete = async (d: Designation) => {
     try { await deleteDesignation.mutateAsync(d.id); toast({ title: "Designation Deleted" }); }
-    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const toggleStatus = async (d: Designation) => {
     const next = d.status === "Active" ? "Inactive" : "Active";
     try { await updateDesignation.mutateAsync({ id: d.id, status: next }); toast({ title: `Marked ${next}` }); }
-    catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    catch (err: any) { toast({ title: "Error", description: friendlyError(err), variant: "destructive" }); }
   };
 
   const renderForm = (onSubmit: (e: React.FormEvent) => void, label: string) => (

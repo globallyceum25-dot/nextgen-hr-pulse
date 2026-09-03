@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Save } from "lucide-react";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface Role { id: string; role_name: string; }
 interface Mod { id: string; module_key: string; module_label: string; }
@@ -52,7 +53,7 @@ export default function RbacFieldPermissions() {
   const save = async () => {
     const payload = rows.map(({ id, ...rest }) => ({ id, ...rest }));
     const { error } = await supabase.from("rbac_field_permissions").upsert(payload);
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Field permissions saved" });
     load();
   };
@@ -65,7 +66,7 @@ export default function RbacFieldPermissions() {
       field_label: newField.field_label || newField.field_key,
       category: newField.category, can_view: true, can_edit: false,
     });
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     setNewField({ field_key: "", field_label: "", category: "basic" });
     load();
   };

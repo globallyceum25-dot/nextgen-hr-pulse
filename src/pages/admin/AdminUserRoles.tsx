@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Shield, Trash2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
+import { friendlyError } from "@/lib/errorMessage";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -94,7 +95,7 @@ export default function AdminUserRoles() {
   const handleDeleteRole = async (roleId: string) => {
     const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     } else {
       toast({ title: "Role removed" });
       fetchUsers();
@@ -180,7 +181,7 @@ export default function AdminUserRoles() {
                       .insert({ user_id: profile.user_id, role: newRole });
 
                     if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                      toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
                     } else {
                       toast({ title: "Role assigned" });
                       setDialogOpen(false);

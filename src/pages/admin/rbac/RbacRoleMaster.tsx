@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Pencil, Power, Trash2, Search } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface Role {
   id: string;
@@ -102,7 +103,7 @@ export default function RbacRoleMaster() {
     const { error } = editing.id
       ? await supabase.from("rbac_roles").update(payload).eq("id", editing.id)
       : await supabase.from("rbac_roles").insert(payload);
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Saved", description: `Role ${editing.id ? "updated" : "created"}.` });
     setEditing(null);
     load();
@@ -110,14 +111,14 @@ export default function RbacRoleMaster() {
 
   const toggleStatus = async (r: Role) => {
     const { error } = await supabase.from("rbac_roles").update({ status: r.status === "active" ? "inactive" : "active" }).eq("id", r.id);
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     load();
   };
 
   const remove = async (r: Role) => {
     if (!confirm(`Delete role "${r.role_name}"? This cannot be undone.`)) return;
     const { error } = await supabase.from("rbac_roles").delete().eq("id", r.id);
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Deleted" });
     load();
   };

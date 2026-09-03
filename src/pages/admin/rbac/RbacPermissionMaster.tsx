@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pencil, Power, Search } from "lucide-react";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface Perm {
   id: string;
@@ -30,7 +31,7 @@ export default function RbacPermissionMaster() {
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase.from("rbac_permissions").select("*").order("permission_name");
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     else setRows((data as Perm[]) ?? []);
     setLoading(false);
   };
@@ -43,7 +44,7 @@ export default function RbacPermissionMaster() {
     const { error } = await supabase.from("rbac_permissions")
       .update({ permission_name: form.permission_name, description: form.description || null })
       .eq("id", editing.id);
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Saved" });
     setEditing(null); load();
   };

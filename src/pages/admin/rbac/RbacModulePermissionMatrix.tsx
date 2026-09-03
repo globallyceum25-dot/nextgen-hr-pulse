@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Save } from "lucide-react";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface Role { id: string; role_key: string; role_name: string; }
 interface Mod { id: string; module_key: string; module_label: string; }
@@ -67,7 +68,7 @@ export default function RbacModulePermissionMatrix() {
     const { error } = await supabase.from("rbac_role_permissions")
       .upsert(payload, { onConflict: "role_id,module_id,permission_id" });
     setSaving(false);
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Matrix saved" });
   };
 

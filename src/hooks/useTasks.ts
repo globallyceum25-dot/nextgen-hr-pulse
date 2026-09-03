@@ -47,7 +47,11 @@ export function useTasks(filters?: {
           location:locations(id, location_name),
           assignee_profile:profiles!tasks_assignee_id_fkey(id, full_name, email),
           assigned_by_profile:profiles!tasks_assigned_by_fkey(id, full_name, email),
-          sub_tasks(*)
+          sub_tasks(
+            id, task_id, title, status, progress, priority, task_weight,
+            weighted_score, assignee_id, assignee_name, due_date,
+            completed_date, remarks, sort_order, created_by
+          )
         `)
         .order("created_at", { ascending: false });
 

@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Database } from "@/integrations/supabase/types";
+import { friendlyError } from "@/lib/errorMessage";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -130,7 +131,7 @@ export default function AdminRolesManager() {
       .select("role");
 
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
       setLoading(false);
       return;
     }

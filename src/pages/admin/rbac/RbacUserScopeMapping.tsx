@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Pencil, Search, ChevronsUpDown, Check, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface Profile { user_id: string; full_name: string | null; email: string | null; }
 interface Role { id: string; role_name: string; role_key: string; }
@@ -223,7 +224,7 @@ export default function RbacUserScopeMapping() {
     };
     const { error } = await supabase.from("rbac_user_scopes")
       .upsert(payload, { onConflict: "user_id" });
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Scope saved" });
     setEditing(null); load();
   };

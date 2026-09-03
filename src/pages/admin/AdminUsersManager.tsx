@@ -12,6 +12,7 @@ import { UserPlus, Trash2, RefreshCw, Users, Shield, Pencil } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 import { Can } from "@/components/rbac/Can";
+import { friendlyError } from "@/lib/errorMessage";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -128,7 +129,7 @@ export default function AdminUsersManager() {
   const handleDeleteRole = async (roleId: string) => {
     const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     } else {
       toast({ title: "User role removed" });
       fetchUsers();
@@ -262,7 +263,7 @@ export default function AdminUsersManager() {
       setEditUser(null);
       fetchUsers();
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(err), variant: "destructive" });
     } finally {
       setSaving(false);
     }

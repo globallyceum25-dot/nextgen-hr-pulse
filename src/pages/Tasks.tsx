@@ -24,6 +24,7 @@ import ProgressBar from "@/components/dashboard/ProgressBar";
 import { Can } from "@/components/rbac/Can";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useScope } from "@/contexts/ScopeContext";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface TasksProps {
   selectedSector: string | null;
@@ -213,7 +214,10 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const [detailSubTask, setDetailSubTask] = useState<{ task: DbTask; subTask: DbSubTask } | null>(null);
 
   // Data hooks
-  const { data: tasks = [], isLoading } = useTasks({ search: search || undefined });
+  // isError matters: without it a failed fetch falls back to [] and the table
+  // reports "No tasks found", which reads as "your department has no work"
+  // rather than "we could not load your work".
+  const { data: tasks = [], isLoading, isError, error: tasksError, refetch: refetchTasks } = useTasks({ search: search || undefined });
 
   // Whether the current user may edit a sub-task's protected fields (priority,
   // deadline, assignee). Status and remarks stay editable for the assignee.
@@ -392,7 +396,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       resetForm();
       setDialogOpen(false);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(err), variant: "destructive" });
     }
   };
 
@@ -433,7 +437,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       setEditingTask(null);
       resetForm();
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(err), variant: "destructive" });
     }
   };
 
@@ -474,7 +478,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       await deleteTask.mutateAsync(task.id);
       toast({ title: "Task Deleted", description: `"${task.title}" has been removed.` });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(err), variant: "destructive" });
     }
   };
 
@@ -489,7 +493,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       });
       toast({ title: "Status Updated", description: `Task moved to "${newStatus}".` });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(err), variant: "destructive" });
     }
   };
 
@@ -576,7 +580,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
       setSubTaskEditOpen(false);
       setEditingSubTask(null);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(err), variant: "destructive" });
     }
   };
 
@@ -1121,7 +1125,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
                                             <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => {
                                               deleteSubTask.mutateAsync({ id: st.id, taskId: task.id }).then(() => {
                                                 toast({ title: "Sub-task Deleted", description: `"${st.title}" removed. Parent recalculated.` });
-                                              }).catch((err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }));
+                                              }).catch((err: any) => toast({ title: "Error", description: friendlyError(err), variant: "destructive" }));
                                             }}>Delete</AlertDialogAction>
                                           </AlertDialogFooter>
                                         </AlertDialogContent>
@@ -1138,13 +1142,29 @@ export default function Tasks({ selectedSector }: TasksProps) {
                   </Fragment>
                 );
               })}
-              {filtered.length === 0 && (
+              {isError ? (
+                <tr>
+                  <td colSpan={12} className="px-4 py-12 text-center">
+                    <p className="text-sm font-medium text-destructive">Could not load tasks</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{friendlyError(tasksError)}</p>
+                    <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchTasks()}>
+                      Retry
+                    </Button>
+                  </td>
+                </tr>
+              ) : isLoading ? (
+                <tr>
+                  <td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">
+                    Loading tasks…
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">
                     No tasks found matching your filters.
                   </td>
                 </tr>
-              )}
+              ) : null}
             </tbody>
           </table>
         </div>
@@ -1595,7 +1615,7 @@ function TaskDetailDrawer({ task, open, onOpenChange, onStatusChange, onEdit, on
       await addComment.mutateAsync({ task_id: task.id, content: newComment.trim() });
       setNewComment("");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(err), variant: "destructive" });
     }
   };
 

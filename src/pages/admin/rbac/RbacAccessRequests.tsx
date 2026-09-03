@@ -16,6 +16,7 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Check, X, Eye, Send, Search, Inbox } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface RequestRow {
   id: string;
@@ -84,7 +85,7 @@ export default function RbacAccessRequests() {
   const submit = async (r: RequestRow) => {
     const { error } = await supabase.from("rbac_access_requests")
       .update({ status: "submitted" }).eq("id", r.id);
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Submitted", description: "Request sent for approval." });
     load();
   };
@@ -145,7 +146,7 @@ export default function RbacAccessRequests() {
       })
       .eq("id", row.id);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(error), variant: "destructive" });
     } else {
       toast({ title: action === "approve" ? "Approved" : "Rejected" });
     }

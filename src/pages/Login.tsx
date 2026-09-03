@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { friendlyError } from "@/lib/errorMessage";
 
 /**
  * Split-panel sign-in: form on the left, photography with floating status
@@ -35,7 +36,7 @@ export default function Login() {
     if (error) {
       toast({
         title: "Login failed",
-        description: error.message,
+        description: friendlyError(error),
         variant: "destructive",
       });
     }
