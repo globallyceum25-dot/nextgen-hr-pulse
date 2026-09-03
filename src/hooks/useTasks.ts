@@ -275,13 +275,11 @@ export function useCreateTask() {
         }
       }
 
-      // Log activity
-      await supabase.from("task_activity_log").insert({
-        task_id: task.id,
-        user_id: userId,
-        action: "created",
-        description: `Task "${input.title}" created`,
-      });
+      // Activity is logged by the trg_tasks_audit trigger, which records the
+      // actor and the changed values server-side and cannot be forged by a
+      // client. Inserting from here as well produced a duplicate, less
+      // informative row and required an INSERT grant that let any user write
+      // fabricated history onto any task.
 
       return task;
     },
@@ -362,12 +360,9 @@ export function useUpdateTask() {
         .single();
       if (error) throw error;
 
-      await supabase.from("task_activity_log").insert({
-        task_id: id,
-        user_id: user?.id,
-        action: "updated",
-        description: `Task updated`,
-      });
+      // See the note in useCreateTask: trg_tasks_audit already records this
+      // update server-side, with the field name and old/new values, which this
+      // generic "Task updated" row did not carry.
 
       return data;
     },
