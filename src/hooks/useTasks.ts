@@ -2,6 +2,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceType } from "@/types/tasks";
 import { getWeightFromPriority } from "@/types/tasks";
+import { resolveKpiTargets, deriveKpi } from "@/lib/taskKpi";
+
+/**
+ * Read a task's KPI targets. Throws if the row cannot be read, so callers abort
+ * instead of writing a score derived from assumed targets.
+ */
+async function fetchKpiTargets(taskId: string) {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("kpi_target_percent, task_weight")
+    .eq("id", taskId)
+    .maybeSingle();
+  if (error) throw error;
+  return resolveKpiTargets(data);
+}
 
 const TASKS_KEY = ["tasks"];
 const SUB_TASKS_KEY = ["sub_tasks"];
@@ -314,11 +329,7 @@ export function useUpdateTask() {
         const { getStatusFromProgress } = await import("@/types/tasks");
         const autoStatus = getStatusFromProgress(progress);
 
-        const { data: taskMeta } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", id).single();
-        const kpiTarget = taskMeta?.kpi_target_percent || 100;
-        const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
-        const taskWeight = taskMeta?.task_weight || 0.6;
-        const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
+        const { kpiAchievement, weightedScore } = deriveKpi(progress, await fetchKpiTargets(id));
 
         // Remove any user-supplied status override — status is auto-calculated
         delete (finalUpdates as any).status;
@@ -334,11 +345,7 @@ export function useUpdateTask() {
         // No sub-tasks — calculate progress from task status
         const progress = statusToProgress[updates.status as string] ?? 0;
 
-        const { data: taskMeta } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", id).single();
-        const kpiTarget = taskMeta?.kpi_target_percent || 100;
-        const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
-        const taskWeight = taskMeta?.task_weight || 0.6;
-        const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
+        const { kpiAchievement, weightedScore } = deriveKpi(progress, await fetchKpiTargets(id));
 
         finalUpdates = {
           ...finalUpdates,
@@ -446,11 +453,7 @@ export function useUpdateSubTask() {
         const progress = Math.round(avgProgress * 100) / 100;
 
         // Get parent task for KPI target
-        const { data: parentTask } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", taskId).single();
-        const kpiTarget = parentTask?.kpi_target_percent || 100;
-        const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
-        const taskWeight = parentTask?.task_weight || 0.6;
-        const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
+        const { kpiAchievement, weightedScore } = deriveKpi(progress, await fetchKpiTargets(taskId));
 
         let newStatus: TaskWorkflowStatus = "In Progress";
         if (progress === 0) newStatus = "Created";
@@ -551,11 +554,7 @@ export function useDeleteSubTask() {
         const completedCount = allSubTasks.filter(s => s.status === "Completed" || s.status === "Closed").length;
         const avgProgress = allSubTasks.reduce((sum, s) => sum + Number(s.progress), 0) / total;
         const progress = Math.round(avgProgress * 100) / 100;
-        const { data: parentTask } = await supabase.from("tasks").select("kpi_target_percent, task_weight").eq("id", taskId).single();
-        const kpiTarget = parentTask?.kpi_target_percent || 100;
-        const kpiAchievement = kpiTarget > 0 ? Math.min(100, Math.round((progress / kpiTarget) * 10000) / 100) : 0;
-        const taskWeight = parentTask?.task_weight || 0.6;
-        const weightedScore = Math.round(taskWeight * (progress / 100) * 10000) / 10000;
+        const { kpiAchievement, weightedScore } = deriveKpi(progress, await fetchKpiTargets(taskId));
 
         let newStatus: TaskWorkflowStatus = "In Progress";
         if (progress === 0) newStatus = "Created";
