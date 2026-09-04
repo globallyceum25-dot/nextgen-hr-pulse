@@ -25,6 +25,7 @@ import { Can } from "@/components/rbac/Can";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useScope } from "@/contexts/ScopeContext";
 import { friendlyError } from "@/lib/errorMessage";
+import * as perms from "@/lib/taskPermissions";
 
 interface TasksProps {
   selectedSector: string | null;
@@ -116,76 +117,29 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const canEditSubTask = (st: DbSubTask): boolean =>
     isAdmin || isSuperAdmin || (rbacCan("tasks", "edit") && isOwnSubTask(st));
 
-  // Resolve a person to their Employee Master name. Email stays the internal
-  // identifier; the UI shows "First Last". Never falls back to showing an email.
-  // Compare names case-insensitively and whitespace-tolerantly, so "Jane  Doe " and
-  // "jane doe" still match and a task is not silently dropped from My Tasks.
-  const normName = (s?: string | null) => (s || "").trim().replace(/\s+/g, " ").toLowerCase();
+  // The permission rules live in @/lib/taskPermissions as pure functions so they
+  // can be unit-tested without React or Supabase — see taskPermissions.test.ts.
+  // Everything below is a thin binding of those rules to the current viewer.
+  const viewer: perms.Viewer = useMemo(() => ({
+    userId: currentUserId,
+    employeeName: currentUserEmployeeName,
+    isAdmin: isAdmin || isSuperAdmin,
+    canEdit: rbacCan("tasks", "edit"),
+    canCreateSubTask: isAdmin || isSuperAdmin || rbacCan("tasks", "create_subtask"),
+  }), [currentUserId, currentUserEmployeeName, isAdmin, isSuperAdmin, rbacCan]);
 
-  // Order matters: profiles is readable by every authenticated user, employees is not
-  // (it needs employees:view). Preferring the profile name means non-admins resolve
-  // names too, instead of falling through to "Unmapped User".
+  const normName = perms.normName;
   const displayPersonName = (
     profile?: { full_name?: string | null; email?: string | null } | null,
     fallbackEmail?: string | null,
-  ): string => {
-    const fn = profile?.full_name?.trim();
-    if (fn && !fn.includes("@")) return fn;
+  ): string => perms.displayPersonName(profile, employeesList, fallbackEmail);
 
-    const email = (profile?.email || fallbackEmail || "").toLowerCase();
-    if (email) {
-      const emp = employeesList.find(e => e.email?.toLowerCase() === email);
-      if (emp) {
-        const full = `${emp.employee_name}${emp.last_name ? " " + emp.last_name : ""}`.trim();
-        if (full) return full;
-      }
-    }
-    return "Unmapped User";
-  };
-
-  // Only the person who assigned/created the task may change its priority. The
-  // assignee can see it but not edit it. Mirrors the database trigger
-  // enforce_task_field_permissions() — the UI check is convenience, not security.
-  const canChangePriority = (t: DbTask | null): boolean => {
-    if (!t) return true; // creating a new task: the creator sets the initial priority
-    return (
-      isAdmin || isSuperAdmin ||
-      (!!currentUserId && (t.assigned_by === currentUserId || t.created_by === currentUserId))
-    );
-  };
-  // Deadline follows the same rule as priority: assigner-only.
-  const canChangeDeadline = (t: DbTask | null): boolean => canChangePriority(t);
-
-  // For a sub-task the "assigner" is its creator, or the parent task's assigner.
-  // Mirrors enforce_sub_task_field_permissions().
-  const canChangeSubTaskProtected = (parent: DbTask | null, st: DbSubTask | null): boolean => {
-    if (!st) return true;
-    if (isAdmin || isSuperAdmin) return true;
-    if (!currentUserId) return false;
-    return (
-      (st as any).created_by === currentUserId ||
-      (!!parent && (parent.assigned_by === currentUserId || parent.created_by === currentUserId))
-    );
-  };
-
-  const canCreateSubTask = isAdmin || isSuperAdmin || rbacCan("tasks", "create_subtask");
-
-  /**
-   * Who may break a specific task down into sub-tasks: anyone with the blanket
-   * create_subtask permission, or the task's own assignee provided they hold
-   * tasks:edit — an assignee who can edit their task can divide it into steps.
-   * Mirrored by the sub_tasks INSERT policy in the database.
-   */
-  const canAddSubTaskTo = (t: DbTask | null): boolean => {
-    if (!t) return false;
-    if (canCreateSubTask) return true;
-    if (!rbacCan("tasks", "edit")) return false;
-    const nameKey = normName(currentUserEmployeeName);
-    return !!(
-      (currentUserId && t.assignee_id === currentUserId) ||
-      (nameKey && normName(t.assignee_name) === nameKey)
-    );
-  };
+  const canChangePriority = (t: DbTask | null): boolean => perms.canChangePriority(t, viewer);
+  const canChangeDeadline = (t: DbTask | null): boolean => perms.canChangeDeadline(t, viewer);
+  const canChangeSubTaskProtected = (parent: DbTask | null, st: DbSubTask | null): boolean =>
+    perms.canChangeSubTaskProtected(parent, st, viewer);
+  const canCreateSubTask = viewer.canCreateSubTask;
+  const canAddSubTaskTo = (t: DbTask | null): boolean => perms.canAddSubTaskTo(t, viewer);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -596,22 +550,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
       // Tasks they assigned to someone else (assigned_by / created_by) are deliberately
       // excluded — those belong in the main Task Management list, not "My Tasks".
       if (myTasksMode && (currentUserEmployeeName || currentUserId || currentUserEmail)) {
-        const nameKey = normName(currentUserEmployeeName);
+        // perms.isMyTask covers assignment by id, by name, and via a sub-task.
+        // The extra email check catches rows where only the joined profile
+        // identifies the assignee.
         const emailLower = currentUserEmail?.toLowerCase();
-        // Assignee of the task itself (matched by id, name, or email)
-        const isAssignee = !!(
-          (nameKey && normName((t as any).assignee_name) === nameKey) ||
-          (currentUserId && t.assignee_id === currentUserId) ||
-          (emailLower && (t as any).assignee_profile?.email?.toLowerCase() === emailLower)
+        const matchedByEmail = !!(
+          emailLower && (t as any).assignee_profile?.email?.toLowerCase() === emailLower
         );
-        // Assignee of a sub-task under this task — still their own work to do.
-        const isSubTaskAssignee = (t.sub_tasks || []).some((st: any) =>
-          !!(
-            (nameKey && normName(st.assignee_name) === nameKey) ||
-            (currentUserId && st.assignee_id === currentUserId)
-          )
-        );
-        if (!isAssignee && !isSubTaskAssignee) return false;
+        if (!perms.isMyTask(t, viewer) && !matchedByEmail) return false;
       }
 
       if (statusFilter !== "All" && t.status !== statusFilter) return false;
