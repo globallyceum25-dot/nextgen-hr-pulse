@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceType } from "@/types/tasks";
 import { getWeightFromPriority } from "@/types/tasks";
 import { resolveKpiTargets, deriveKpi } from "@/lib/taskKpi";
+import { buildRecurrenceSchedule } from "@/lib/recurrence";
 
 /**
  * Read a task's KPI targets. Throws if the row cannot be read, so callers abort
@@ -243,50 +244,56 @@ export function useCreateTask() {
         if (stError) throw stError;
       }
 
-      // Create recurring copies
-      if (input.recurrence && input.recurrence !== "none" && input.recurrence_count && input.recurrence_count > 0) {
-        for (let i = 1; i <= input.recurrence_count; i++) {
-          const futureStart = input.start_date ? new Date(input.start_date) : new Date();
-          const futureDue = input.due_date ? new Date(input.due_date) : new Date();
+      // Create recurring copies.
+      //
+      // These used to be inserted one at a time inside a loop -- up to 52
+      // occurrences, each with its own sub-task insert, so 104 sequential
+      // round-trips. If one failed partway the earlier rows stayed committed
+      // and the user retried onto a half-created series. Both inserts are now
+      // single batched calls, which are atomic in Postgres.
+      const schedule = buildRecurrenceSchedule(
+        input.start_date,
+        input.due_date,
+        input.recurrence,
+        input.recurrence_count,
+      );
 
-          if (input.recurrence === "daily") {
-            futureStart.setDate(futureStart.getDate() + i);
-            futureDue.setDate(futureDue.getDate() + i);
-          } else if (input.recurrence === "weekly") {
-            futureStart.setDate(futureStart.getDate() + i * 7);
-            futureDue.setDate(futureDue.getDate() + i * 7);
-          } else {
-            futureStart.setMonth(futureStart.getMonth() + i);
-            futureDue.setMonth(futureDue.getMonth() + i);
-          }
-
-          const { data: recurTask, error: recurError } = await supabase
-            .from("tasks")
-            .insert({
+      if (schedule.length > 0) {
+        const { data: recurTasks, error: recurError } = await supabase
+          .from("tasks")
+          .insert(
+            schedule.map((occurrence) => ({
               ...taskData,
-              start_date: futureStart.toISOString().split("T")[0],
-              due_date: futureDue.toISOString().split("T")[0],
+              start_date: occurrence.start_date,
+              due_date: occurrence.due_date,
               parent_recurring_id: task.id,
-            })
-            .select()
-            .single();
-          if (recurError) throw recurError;
+            })),
+          )
+          .select();
+        if (recurError) throw recurError;
 
-          if (input.sub_task_count && input.sub_task_count > 0) {
-            const subTasks = Array.from({ length: input.sub_task_count }, (_, j) => ({
+        if (input.sub_task_count && input.sub_task_count > 0 && recurTasks?.length) {
+          const recurringSubTasks = recurTasks.flatMap((recurTask, index) =>
+            Array.from({ length: input.sub_task_count! }, (_, j) => ({
               task_id: recurTask.id,
               title: `Sub Task ${j + 1}`,
               status: "Created" as TaskWorkflowStatus,
               priority: input.priority,
               task_weight: weight,
               assignee_id: input.assignee_id || null,
-              due_date: futureDue.toISOString().split("T")[0],
+              due_date: schedule[index]?.due_date ?? null,
               sort_order: j,
               created_by: userId || null,
               updated_by: userId || null,
-            }));
-            await supabase.from("sub_tasks").insert(subTasks);
-          }
+            })),
+          );
+
+          // This error used to be discarded, so a blocked insert left the
+          // recurring tasks with no sub-tasks and reported success.
+          const { error: recurSubError } = await supabase
+            .from("sub_tasks")
+            .insert(recurringSubTasks);
+          if (recurSubError) throw recurSubError;
         }
       }
 

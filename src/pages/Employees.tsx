@@ -607,6 +607,8 @@ function EmployeeMasterTab() {
   const [addMode, setAddMode] = useState<"single" | "bulk">("single");
   const [bulkData, setBulkData] = useState<typeof emptyForm[]>([]);
   const [bulkFileName, setBulkFileName] = useState("");
+  /** Per-row failures from the last bulk import, shown above the preview table. */
+  const [bulkErrors, setBulkErrors] = useState<Array<{ row: number; name: string; reason: string }>>([]);
   const [isBulkAdding, setIsBulkAdding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -670,12 +672,46 @@ function EmployeeMasterTab() {
   const handleBulkAdd = async () => {
     if (bulkData.length === 0) return;
     setIsBulkAdding(true);
-    let success = 0, failed = 0;
-    for (const emp of bulkData) {
-      try { await addEmployee.mutateAsync(emp); success++; } catch { failed++; }
+
+    // Previously this was `catch { failed++ }` — every reason was discarded, so
+    // a 400-row sheet could report "0 added, 400 failed" with nothing to act on.
+    // Keep the row number and the reason for each failure.
+    const failures: Array<{ row: number; name: string; reason: string }> = [];
+    let success = 0;
+
+    for (let i = 0; i < bulkData.length; i++) {
+      const emp = bulkData[i];
+      try {
+        await addEmployee.mutateAsync(emp);
+        success++;
+      } catch (err) {
+        failures.push({
+          // +2: sheet rows are 1-based and row 1 is the header.
+          row: i + 2,
+          name: `${emp.employee_name ?? ""} ${emp.last_name ?? ""}`.trim() || "(no name)",
+          reason: friendlyError(err, "Could not be added."),
+        });
+      }
     }
-    toast({ title: "Bulk Import Complete", description: `${success} added, ${failed} failed.` });
-    setBulkData([]); setBulkFileName(""); setAddMode("single"); setDialogOpen(false); setIsBulkAdding(false);
+
+    if (failures.length === 0) {
+      toast({ title: "Bulk Import Complete", description: `${success} employee${success !== 1 ? "s" : ""} added.` });
+      setBulkData([]); setBulkFileName(""); setAddMode("single"); setDialogOpen(false);
+    } else {
+      const preview = failures.slice(0, 3).map(f => `Row ${f.row} (${f.name}): ${f.reason}`).join(" · ");
+      toast({
+        title: `${success} added, ${failures.length} failed`,
+        description: failures.length > 3 ? `${preview} — and ${failures.length - 3} more.` : preview,
+        variant: "destructive",
+      });
+      // Keep the dialog open with only the failed rows still listed, so the user
+      // can correct them instead of re-uploading the whole sheet and creating
+      // duplicates of the rows that already succeeded.
+      const failedRows = new Set(failures.map(f => f.row - 2));
+      setBulkData(prev => prev.filter((_, i) => failedRows.has(i)));
+      setBulkErrors(failures);
+    }
+    setIsBulkAdding(false);
   };
 
   const removeBulkRow = (index: number) => setBulkData(prev => prev.filter((_, i) => i !== index));
@@ -828,11 +864,26 @@ function EmployeeMasterTab() {
                     <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
                     {bulkFileName && <p className="text-xs text-primary font-medium">📎 {bulkFileName}</p>}
                   </div>
+                  {bulkErrors.length > 0 && (
+                    <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-1">
+                      <p className="text-sm font-semibold text-destructive">
+                        {bulkErrors.length} row{bulkErrors.length !== 1 ? "s" : ""} could not be added
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Only the failed rows are listed below — correct them and add again.
+                      </p>
+                      <ul className="max-h-32 overflow-y-auto text-xs text-muted-foreground space-y-0.5 pt-1">
+                        {bulkErrors.map(f => (
+                          <li key={f.row}><span className="font-medium text-foreground">Row {f.row}</span> ({f.name}): {f.reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   {bulkData.length > 0 && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> Preview — {bulkData.length} employee{bulkData.length !== 1 ? "s" : ""}</p>
-                        <Button variant="ghost" size="sm" onClick={() => { setBulkData([]); setBulkFileName(""); }}><X size={14} className="mr-1" /> Clear</Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setBulkData([]); setBulkFileName(""); setBulkErrors([]); }}><X size={14} className="mr-1" /> Clear</Button>
                       </div>
                       <div className="max-h-60 overflow-auto border rounded-md">
                         <Table>
