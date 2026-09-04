@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import TaskProgressVisualization from "@/components/analytics/TaskProgressVisualization";
 import { ListChecks, CheckCircle2, TrendingUp, Clock, AlertTriangle, Users, Calendar } from "lucide-react";
+import { friendlyError } from "@/lib/errorMessage";
+import { Button } from "@/components/ui/button";
 
 interface AnalyticsProps {
   selectedSector: string | null;
@@ -60,7 +62,7 @@ function renderPieLabel(total: number) {
 }
 
 export default function Analytics({ selectedSector }: AnalyticsProps) {
-  const { data: tasks = [], isLoading } = useTasks();
+  const { data: tasks = [], isLoading, isError, error: tasksError, refetch: refetchTasks } = useTasks();
   const { companyId: scopeCompanyId, sectorId: scopeSectorId, departmentId: scopeDepartmentId } = useScope();
 
   // Honour the global Company / Sector / Department pickers in the top bar, the same
@@ -438,6 +440,19 @@ export default function Analytics({ selectedSector }: AnalyticsProps) {
       }))
       .sort((a, b) => b.totalSubTasks - a.totalSubTasks);
   }, [filtered]);
+
+  // A failed load previously fell through to the full render with `= []`,
+  // so every KPI showed a confident 0 / 0% -- a dashboard reporting that the
+  // company has no work at all. Surface the failure instead.
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-center px-6">
+        <p className="text-sm font-medium text-destructive">Could not load Task Analysis</p>
+        <p className="text-sm text-muted-foreground max-w-sm">{friendlyError(tasksError)}</p>
+        <Button variant="outline" onClick={() => refetchTasks()}>Try again</Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

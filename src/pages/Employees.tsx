@@ -645,12 +645,31 @@ function EmployeeMasterTab() {
     const file = e.target.files?.[0];
     if (!file) return;
     setBulkFileName(file.name);
+    // Clear the previous run's failures — they refer to row numbers in the old
+    // sheet and would otherwise sit above the new preview.
+    setBulkErrors([]);
+    setBulkData([]);
     const reader = new FileReader();
+    reader.onerror = () => {
+      toast({ title: "Could not read the file", description: "The file could not be opened. Please try again.", variant: "destructive" });
+      setBulkFileName("");
+    };
     reader.onload = (evt) => {
+      // Everything below runs inside a DOM event callback, which React error
+      // boundaries do NOT catch. Without this try/catch a corrupt or
+      // password-protected file threw into window.onerror and the dialog just
+      // sat there showing the filename and nothing else, forever.
+      try {
       const data = evt.target?.result;
       const workbook = XLSX.read(data, { type: "binary" });
+      if (!workbook.SheetNames.length) {
+        throw new Error("That file has no sheets in it.");
+      }
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+      if (rows.length === 0) {
+        throw new Error("The first sheet is empty.");
+      }
       const parsed = rows.map(row => ({
         employee_name: String(row["Employee First Name"] || row["Employee Name"] || row["employee_name"] || "").trim(),
         last_name: String(row["Last Name"] || row["last_name"] || "").trim() || null,
@@ -663,7 +682,22 @@ function EmployeeMasterTab() {
         date_joined: row["Date Joined"] || row["date_joined"] ? String(row["Date Joined"] || row["date_joined"]).trim() : null,
         email: String(row["Email"] || row["email"] || "").trim() || null,
       })).filter(r => r.employee_name);
+
+      if (parsed.length === 0) {
+        throw new Error(
+          "No employee names were found. Check that the sheet has an \"Employee First Name\" column — you can download the template above.",
+        );
+      }
       setBulkData(parsed);
+      } catch (err) {
+        toast({
+          title: "Could not read that spreadsheet",
+          description: friendlyError(err, "The file may be corrupt, password-protected, or not a spreadsheet."),
+          variant: "destructive",
+        });
+        setBulkFileName("");
+        setBulkData([]);
+      }
     };
     reader.readAsBinaryString(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1292,7 +1326,7 @@ export default function Employees({ selectedSector }: EmployeesProps) {
       </h1>
 
       <Tabs defaultValue="employees" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-3xl">
+        <TabsList className="grid w-full grid-cols-6 max-w-4xl">
           <TabsTrigger value="employees" className="gap-1.5 text-xs"><Users className="h-3.5 w-3.5" /> Employee Master</TabsTrigger>
           <TabsTrigger value="sectors" className="gap-1.5 text-xs"><Network className="h-3.5 w-3.5" /> Sector Master</TabsTrigger>
           <TabsTrigger value="companies" className="gap-1.5 text-xs"><Building2 className="h-3.5 w-3.5" /> Company Master</TabsTrigger>

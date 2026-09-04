@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import * as XLSX from "xlsx";
 import { Can } from "@/components/rbac/Can";
 import { useScope } from "@/contexts/ScopeContext";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface ReportsProps {
   selectedSector: string | null;
@@ -20,7 +21,7 @@ interface ReportsProps {
 const inputClass = "text-sm border rounded-md px-3 py-2 bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring";
 
 export default function Reports({ selectedSector }: ReportsProps) {
-  const { data: tasks = [], isLoading } = useTasks();
+  const { data: tasks = [], isLoading, isError, error: tasksError, refetch: refetchTasks } = useTasks();
   const { data: companies = [] } = useCompanies();
   const { data: departments = [] } = useDepartments();
   const { data: sectors = [] } = useSectors();
@@ -226,6 +227,19 @@ export default function Reports({ selectedSector }: ReportsProps) {
     const inProgress = filtered.filter(t => t.status === "In Progress").length;
     return { total, completed, overdue, inProgress, rate: total > 0 ? Math.round((completed / total) * 100) : 0 };
   }, [filtered]);
+
+  // A failed load previously fell through to the full render with `= []`,
+  // so every KPI showed a confident 0 / 0% -- a dashboard reporting that the
+  // company has no work at all. Surface the failure instead.
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-center px-6">
+        <p className="text-sm font-medium text-destructive">Could not load Reports</p>
+        <p className="text-sm text-muted-foreground max-w-sm">{friendlyError(tasksError)}</p>
+        <Button variant="outline" onClick={() => refetchTasks()}>Try again</Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <div className="p-6 space-y-4"><Skeleton className="h-8 w-48" /><Skeleton className="h-96" /></div>;

@@ -56,7 +56,7 @@ export function useUserRole(): UseUserRoleReturn {
 
     async function check() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) { setLoading(false); return; }
+      if (!user || cancelled) return;
 
       // Read the role from BOTH systems the super admin can assign through:
       //   - user_roles (legacy enum, written by "Assign User to Role")
@@ -82,11 +82,16 @@ export function useUserRole(): UseUserRoleReturn {
 
       if (!cancelled) {
         setRoles(merged);
-        setLoading(false);
       }
     }
 
-    check();
+    // Always clear the loading flag, even if the lookup rejects. Without this a
+    // network error left `loading` true forever and every consumer — including
+    // the profile page — rendered its loading state indefinitely.
+    check()
+      .catch(() => { if (!cancelled) setRoles([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
     return () => { cancelled = true; };
   }, []);
 

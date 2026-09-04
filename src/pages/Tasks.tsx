@@ -26,6 +26,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useScope } from "@/contexts/ScopeContext";
 import { friendlyError } from "@/lib/errorMessage";
 import * as perms from "@/lib/taskPermissions";
+import { requireText, requireDateOrder, firstError } from "@/lib/validation";
 
 interface TasksProps {
   selectedSector: string | null;
@@ -143,6 +144,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
 
   // Filters
   const [search, setSearch] = useState("");
+  // Debounced copy used for the query key. `search` itself stays immediate so
+  // typing feels responsive; without this every keystroke minted a new cache
+  // key and fired a fresh eight-table join, making the list flicker.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
   const [statusFilter, setStatusFilter] = useState<TaskWorkflowStatus | "All">("All");
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "All">("All");
   const [quickFilter, setQuickFilter] = useState<string>("all");
@@ -171,7 +180,7 @@ export default function Tasks({ selectedSector }: TasksProps) {
   // isError matters: without it a failed fetch falls back to [] and the table
   // reports "No tasks found", which reads as "your department has no work"
   // rather than "we could not load your work".
-  const { data: tasks = [], isLoading, isError, error: tasksError, refetch: refetchTasks } = useTasks({ search: search || undefined });
+  const { data: tasks = [], isLoading, isError, error: tasksError, refetch: refetchTasks } = useTasks({ search: debouncedSearch || undefined });
 
   // Whether the current user may edit a sub-task's protected fields (priority,
   // deadline, assignee). Status and remarks stay editable for the assignee.
@@ -358,6 +367,19 @@ export default function Tasks({ selectedSector }: TasksProps) {
     e.preventDefault();
     if (!editingTask) return;
 
+    // The create path validated; this one only null-checked the dialog target,
+    // so clearing the Title and saving wrote "" — the task then rendered as a
+    // blank row that could not be found by search.
+    const invalid = firstError(
+      requireText(formData.title, "Title"),
+      requireText(formData.due_date, "Due date"),
+      requireDateOrder(formData.start_date, formData.due_date),
+    );
+    if (invalid) {
+      toast({ title: "Validation Error", description: invalid, variant: "destructive" });
+      return;
+    }
+
     try {
       await updateTask.mutateAsync({
         id: editingTask.id,
@@ -508,6 +530,14 @@ export default function Tasks({ selectedSector }: TasksProps) {
   const handleSubTaskEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingSubTask) return;
+
+    // The sibling create path (handleAddSubTaskSubmit) validates the title;
+    // this one did not, so a sub-task could be saved with a blank name.
+    const invalid = requireText(subTaskForm.title, "Sub-task title");
+    if (invalid) {
+      toast({ title: "Validation Error", description: invalid, variant: "destructive" });
+      return;
+    }
 
     const newProgress = getProgressFromStatus(subTaskForm.status);
     const newWeight = getWeightFromPriority(subTaskForm.priority);

@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { User, Camera, Lock, Mail, Shield, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { friendlyError } from "@/lib/errorMessage";
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ export default function ProfileSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
+  /** Set when the profile could not be loaded, so the page shows a reason and a retry. */
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
@@ -45,25 +48,40 @@ export default function ProfileSettings() {
   }, []);
 
   async function loadProfile() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    // Every exit path must clear `loading`. Previously `if (!user) return`
+    // skipped the sole setLoading(false), and the call site had no .catch(),
+    // so an expired session or a network blip left the page stuck on
+    // "Loading profile..." with no error and no way to recover but a refresh.
+    setLoadError(null);
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!user) {
+        setLoadError("Your session has expired. Please sign in again.");
+        return;
+      }
 
-    setUserId(user.id);
-    setEmail(user.email || "");
+      setUserId(user.id);
+      setEmail(user.email || "");
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, avatar_url, email")
-      .eq("user_id", user.id)
-      .maybeSingle();
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url, email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profileError) throw profileError;
 
-    if (profile) {
-      setFullName(profile.full_name || "");
-      setAvatarUrl(profile.avatar_url);
-    } else {
-      setFullName(user.user_metadata?.full_name || "");
+      if (profile) {
+        setFullName(profile.full_name || "");
+        setAvatarUrl(profile.avatar_url);
+      } else {
+        setFullName(user.user_metadata?.full_name || "");
+      }
+    } catch (err) {
+      setLoadError(friendlyError(err, "Could not load your profile."));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const initials = fullName
@@ -178,6 +196,18 @@ export default function ProfileSettings() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <p className="text-muted-foreground">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-center px-6">
+        <p className="text-sm font-medium text-destructive">Could not load your profile</p>
+        <p className="text-sm text-muted-foreground max-w-sm">{loadError}</p>
+        <Button variant="outline" onClick={() => { setLoading(true); loadProfile(); }}>
+          Try again
+        </Button>
       </div>
     );
   }

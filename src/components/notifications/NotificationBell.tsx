@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "@/hooks/use-toast";
+import { friendlyError } from "@/lib/errorMessage";
 
 interface Notification {
   id: string;
@@ -36,16 +38,29 @@ function useNotifications() {
       return (data || []) as Notification[];
     },
     refetchInterval: 30000,
+    // Don't keep polling a tab the user isn't looking at.
+    refetchIntervalInBackground: false,
   });
 }
 
+// Both mutations used to drop the `{ error }` from the update. Supabase resolves
+// rather than throwing on a failed write, so an RLS denial looked like success:
+// onSuccess fired, the refetch returned the still-unread row, and the badge
+// count snapped back — up to 30s later, so it read as the app randomly
+// un-reading notifications, with no error ever shown.
 function useMarkRead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+      const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+    onError: (err) => toast({
+      title: "Could not mark as read",
+      description: friendlyError(err),
+      variant: "destructive",
+    }),
   });
 }
 
@@ -54,10 +69,20 @@ function useMarkAllRead() {
   return useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
+      if (!user) throw new Error("Your session has expired — please sign in again.");
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
+      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+    onError: (err) => toast({
+      title: "Could not mark all as read",
+      description: friendlyError(err),
+      variant: "destructive",
+    }),
   });
 }
 

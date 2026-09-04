@@ -4,6 +4,7 @@ import type { DbTask, DbSubTask, TaskWorkflowStatus, TaskPriority, RecurrenceTyp
 import { getWeightFromPriority } from "@/types/tasks";
 import { resolveKpiTargets, deriveKpi } from "@/lib/taskKpi";
 import { buildRecurrenceSchedule } from "@/lib/recurrence";
+import { buildTaskSearchFilter } from "@/lib/searchFilter";
 
 /**
  * Read a task's KPI targets. Throws if the row cannot be read, so callers abort
@@ -92,8 +93,11 @@ export function useTasks(filters?: {
       if (filters?.assignee_id) {
         query = query.eq("assignee_id", filters.assignee_id);
       }
-      if (filters?.search) {
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+      // Sanitised: `,` separates OR terms and `()` groups them in PostgREST, so
+      // interpolating the raw term made "Colombo, HR" a 400 and emptied the list.
+      const searchFilter = buildTaskSearchFilter(filters?.search);
+      if (searchFilter) {
+        query = query.or(searchFilter);
       }
       if (filters?.due_date_from) {
         query = query.gte("due_date", filters.due_date_from);
@@ -608,9 +612,15 @@ export function useAddComment() {
   return useMutation({
     mutationFn: async ({ task_id, content }: { task_id: string; content: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
+      // Was `user!.id`. The assertion is erased at runtime, so an expired
+      // session produced "Cannot read properties of null (reading 'id')" in a
+      // toast, with the typed comment neither saved nor cleared.
+      if (!user) {
+        throw new Error("Your session has expired — please sign in again.");
+      }
       const { data, error } = await supabase
         .from("task_comments")
-        .insert({ task_id, content, user_id: user!.id })
+        .insert({ task_id, content, user_id: user.id })
         .select()
         .single();
       if (error) throw error;
